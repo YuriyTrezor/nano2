@@ -1,7 +1,10 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Navbar = () => {
+  const { lang, toggleLang } = useLanguage();
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -20,8 +23,18 @@ const Navbar = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center rounded-full border border-border overflow-hidden">
-            <button className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground">RU</button>
-            <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">EN</button>
+            <button
+              onClick={() => lang !== "ru" && toggleLang()}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${lang === "ru" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              RU
+            </button>
+            <button
+              onClick={() => lang !== "en" && toggleLang()}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              EN
+            </button>
           </div>
           <a href="/auth">
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
