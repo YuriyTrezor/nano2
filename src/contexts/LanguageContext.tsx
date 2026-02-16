@@ -15,6 +15,8 @@ const translations: Record<string, Record<Lang, string>> = {
   "Поддержка": { ru: "Поддержка", en: "Help" },
   "Выйти": { ru: "Выйти", en: "Sign Out" },
   "Онлайн-банкинг": { ru: "Онлайн-банкинг", en: "Online Banking" },
+  "Админ": { ru: "Админ", en: "Admin" },
+  "Ещё": { ru: "Ещё", en: "More" },
 
   // Overview
   "Добро пожаловать": { ru: "Добро пожаловать", en: "Welcome" },

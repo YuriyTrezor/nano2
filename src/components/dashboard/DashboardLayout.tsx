@@ -25,6 +25,15 @@ const bottomLinks = [
   { to: "/dashboard/help", icon: HelpCircle, label: "Поддержка" },
 ];
 
+// Mobile tab bar items (subset)
+const mobileTabLinks = [
+  { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
+  { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
+  { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
+  { to: "/dashboard/admin", icon: Shield, label: "Админ" },
+  { to: "/dashboard/settings", icon: Settings, label: "Ещё" },
+];
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -41,7 +50,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <aside className="w-48 border-r border-border flex flex-col fixed h-full bg-background z-10">
+      {/* Desktop sidebar - hidden on mobile */}
+      <aside className="hidden md:flex w-48 border-r border-border flex-col fixed h-full bg-background z-10">
         <div className="p-4 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
             <Home className="w-5 h-5 text-primary" />
@@ -126,9 +136,32 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
       </aside>
 
-      <main className="flex-1 ml-48 p-6">
+      {/* Main content */}
+      <main className="flex-1 md:ml-48 p-4 md:p-6 pb-24 md:pb-6">
         {children}
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="flex items-center justify-around h-14">
+          {mobileTabLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px] transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )
+              }
+            >
+              <link.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{t(link.label)}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 };
