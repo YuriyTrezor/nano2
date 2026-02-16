@@ -1,0 +1,149 @@
+import { Settings, User, Lock, Palette, Globe, Moon, Sun, Droplets, Monitor } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+const SettingsTab = () => {
+  const { t, lang, toggleLang } = useLanguage();
+  const { user } = useAuth();
+  const [displayName, setDisplayName] = useState("Chargeback");
+  const [phone, setPhone] = useState("+7 (900) 000-00-00");
+  const [newPassword, setNewPassword] = useState("");
+  const [theme, setTheme] = useState<"dark" | "light" | "blue" | "system">("dark");
+
+  const handleSaveProfile = () => {
+    toast({ title: t("Информация"), description: "Профиль сохранён" });
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword.trim()) return;
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("Информация"), description: "Пароль изменён" });
+      setNewPassword("");
+    }
+  };
+
+  const themes = [
+    { key: "dark" as const, label: "Тёмная", icon: Moon },
+    { key: "light" as const, label: "Светлая", icon: Sun },
+    { key: "blue" as const, label: "Голубая", icon: Droplets },
+    { key: "system" as const, label: "Системная", icon: Monitor },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <Settings className="w-6 h-6 text-primary" />
+        <h1 className="text-2xl font-bold text-foreground">{t("Настройки")}</h1>
+      </div>
+      <p className="text-muted-foreground text-sm mb-6">Управление личным кабинетом</p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Profile */}
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <User className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-foreground font-semibold">Профиль</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">Email</label>
+              <Input value={user?.email ?? ""} disabled className="bg-secondary border-border text-muted-foreground" />
+            </div>
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">Полное имя</label>
+              <Input value={displayName} onChange={e => setDisplayName(e.target.value)} className="bg-secondary border-border text-foreground" />
+            </div>
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">Телефон</label>
+              <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-secondary border-border text-foreground" placeholder="+7 (900) 000-00-00" />
+            </div>
+            <Button onClick={handleSaveProfile} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+              {t("Сохранить")}
+            </Button>
+          </div>
+        </div>
+
+        {/* Security */}
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <Lock className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-foreground font-semibold">Безопасность</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">Новый пароль</label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-secondary border-border text-foreground" placeholder="••••••" />
+            </div>
+            <Button onClick={handleChangePassword} variant="outline" className="w-full">
+              Изменить пароль
+            </Button>
+          </div>
+        </div>
+
+        {/* Theme */}
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <Palette className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-foreground font-semibold">Тема оформления</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {themes.map(th => (
+              <button
+                key={th.key}
+                onClick={() => setTheme(th.key)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  theme === th.key
+                    ? "bg-primary/10 border border-primary text-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <th.icon className="w-4 h-4" />
+                {th.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Language */}
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <Globe className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-foreground font-semibold">Язык</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => lang !== "ru" && toggleLang()}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                lang === "ru"
+                  ? "bg-primary/10 border border-primary text-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className="text-xs font-bold">RU</span> Русский
+            </button>
+            <button
+              onClick={() => lang !== "en" && toggleLang()}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                lang === "en"
+                  ? "bg-primary/10 border border-primary text-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className="text-xs font-bold">GB</span> English
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsTab;
