@@ -23,9 +23,11 @@ const Navbar = () => {
             <button className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground">RU</button>
             <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">EN</button>
           </div>
-          <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
-            Войти в личный кабинет <ArrowRight className="w-4 h-4" />
-          </Button>
+          <a href="/auth">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
+              Войти в личный кабинет <ArrowRight className="w-4 h-4" />
+            </Button>
+          </a>
         </div>
       </div>
     </nav>
