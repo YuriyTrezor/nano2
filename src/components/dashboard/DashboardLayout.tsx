@@ -1,10 +1,10 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home
 } from "lucide-react";
-
+import { useAuth } from "@/contexts/AuthContext";
 const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
   { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
@@ -28,6 +28,14 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -103,13 +111,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               {link.label}
             </NavLink>
           ))}
-          <a
-            href="/"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-secondary transition-colors"
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-destructive hover:text-destructive/80 hover:bg-secondary transition-colors w-full"
           >
             <LogOut className="w-4 h-4" />
             Выйти
-          </a>
+          </button>
         </div>
       </aside>
 
