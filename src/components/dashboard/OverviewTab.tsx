@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, TouchEvent } from "react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 const transactions = [
@@ -28,6 +28,7 @@ const OverviewTab = () => {
   const { t } = useLanguage();
   const [cardIndex, setCardIndex] = useState(0);
   const touchStartX = useRef(0);
+  const [topUpAlert, setTopUpAlert] = useState(false);
 
   const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: TouchEvent) => {
@@ -42,6 +43,22 @@ const OverviewTab = () => {
 
   return (
     <div>
+      {/* Top up alert dialog */}
+      <AlertDialog open={topUpAlert} onOpenChange={setTopUpAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Пополнение счёта
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, Chargeback 👋</h1>
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
@@ -65,7 +82,7 @@ const OverviewTab = () => {
             </div>
           </div>
 
-          {/* Swipeable card on mobile, shown before transactions */}
+          {/* Swipeable card on mobile */}
           <div className="lg:hidden">
             <div className="bg-card border border-border rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
@@ -101,29 +118,18 @@ const OverviewTab = () => {
             </div>
           </div>
 
-          {/* Quick actions - mobile horizontal */}
+          {/* Quick actions - mobile */}
           <div className="lg:hidden">
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
               <div className="flex gap-3 overflow-x-auto">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Send className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="text-foreground text-[11px]">{t("Перевод")}</span>
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("Информация")}</AlertDialogTitle>
-                      <AlertDialogDescription>Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
                 <button className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Send className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-foreground text-[11px]">{t("Перевод")}</span>
+                </button>
+                <button onClick={() => setTopUpAlert(true)} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <CreditCard className="w-4 h-4 text-primary" />
                   </div>
@@ -168,9 +174,9 @@ const OverviewTab = () => {
           </div>
         </div>
 
-        {/* Right column - hidden on mobile (content shown inline above) */}
+        {/* Right column - desktop */}
         <div className="hidden lg:block w-80 space-y-6">
-          {/* Card preview with swipe */}
+          {/* Card preview */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-muted-foreground text-xs font-medium tracking-wider">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
@@ -215,24 +221,13 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Быстрые действия")}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Send className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="text-foreground text-xs">{t("Перевод")}</span>
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t("Информация")}</AlertDialogTitle>
-                    <AlertDialogDescription>Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
               <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Send className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-foreground text-xs">{t("Перевод")}</span>
+              </button>
+              <button onClick={() => setTopUpAlert(true)} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <CreditCard className="w-4 h-4 text-primary" />
                 </div>

@@ -16,7 +16,7 @@ const Index = () => {
         <ContactsSection />
       </main>
       <footer className="border-t border-border py-8 px-6 text-center text-muted-foreground text-sm">
-        © 2025 NeoBank. Все права защищены.
+        © 2022–2026 NeoBank. All rights reserved.
       </footer>
       <FloatingChat />
     </div>
