@@ -95,14 +95,16 @@ const CardsTab = () => {
             {card.blocked && (
               <p className="text-destructive text-xs mt-2 font-medium">Счёт заблокирован</p>
             )}
-            <Button
-              onClick={() => handleBlockCard(i)}
-              variant={card.blocked ? "outline" : "destructive"}
-              size="sm"
-              className="w-full mt-3"
-            >
-              {card.blocked ? "Разблокировать" : "Заблокировать"}
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={() => handleBlockCard(i)}
+                variant={card.blocked ? "outline" : "destructive"}
+                size="sm"
+                className="w-full mt-3"
+              >
+                {card.blocked ? "Разблокировать" : "Заблокировать"}
+              </Button>
+            )}
           </div>
         ))}
       </div>
