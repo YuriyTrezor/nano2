@@ -20,14 +20,22 @@ const SettingsTab = () => {
     toast({ title: t("Информация"), description: "Профиль сохранён" });
   };
 
-  const handleChangePassword = async () => {
-    if (!newPassword.trim()) return;
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: t("Информация"), description: "Пароль изменён" });
-      setNewPassword("");
+  const handleChangePassword = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!newPassword.trim()) {
+      toast({ title: "Ошибка", description: "Введите новый пароль", variant: "destructive" });
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: t("Информация"), description: "Пароль успешно изменён" });
+        setNewPassword("");
+      }
+    } catch (err) {
+      toast({ title: "Ошибка", description: "Не удалось изменить пароль", variant: "destructive" });
     }
   };
 
@@ -83,7 +91,7 @@ const SettingsTab = () => {
               <label className="text-muted-foreground text-xs mb-1 block">Новый пароль</label>
               <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-secondary border-border text-foreground" placeholder="••••••" />
             </div>
-            <Button onClick={handleChangePassword} variant="outline" className="w-full">
+            <Button type="button" onClick={handleChangePassword} variant="outline" className="w-full cursor-pointer">
               Изменить пароль
             </Button>
           </div>
@@ -96,20 +104,24 @@ const SettingsTab = () => {
             <h3 className="text-foreground font-semibold">Тема оформления</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {themes.map(th => (
-              <button
-                key={th.key}
-                onClick={() => setTheme(th.key)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                  theme === th.key
-                    ? "bg-primary/10 border border-primary text-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <th.icon className="w-4 h-4" />
-                {th.label}
-              </button>
-            ))}
+            {themes.map(th => {
+              const Icon = th.icon;
+              return (
+                <button
+                  type="button"
+                  key={th.key}
+                  onClick={() => setTheme(th.key)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                    theme === th.key
+                      ? "bg-primary/10 border border-primary text-foreground"
+                      : "bg-secondary border border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {th.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
