@@ -2,9 +2,11 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Globe
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
   { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
@@ -29,6 +31,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { signOut } = useAuth();
+  const { t, lang, toggleLang } = useLanguage();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -38,7 +41,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
       <aside className="w-48 border-r border-border flex flex-col fixed h-full bg-background z-10">
         <div className="p-4 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -46,7 +48,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
           <div>
             <div className="text-foreground font-bold text-sm">NeoBank</div>
-            <div className="text-muted-foreground text-[10px]">Онлайн-банкинг</div>
+            <div className="text-muted-foreground text-[10px]">{t("Онлайн-банкинг")}</div>
           </div>
         </div>
 
@@ -59,14 +61,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )
               }
             >
               <link.icon className="w-4 h-4" />
-              {link.label}
+              {t(link.label)}
             </NavLink>
           ))}
 
@@ -87,13 +87,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 }
               >
                 <link.icon className="w-4 h-4" />
-                {link.label}
+                {t(link.label)}
               </NavLink>
             ))}
           </div>
         </nav>
 
         <div className="px-2 pb-4 space-y-0.5">
+          <button
+            onClick={toggleLang}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors w-full"
+          >
+            <Globe className="w-4 h-4" />
+            {lang === "ru" ? "English" : "Русский"}
+          </button>
           {bottomLinks.map((link) => (
             <NavLink
               key={link.to}
@@ -101,14 +108,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )
               }
             >
               <link.icon className="w-4 h-4" />
-              {link.label}
+              {t(link.label)}
             </NavLink>
           ))}
           <button
@@ -116,12 +121,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-destructive hover:text-destructive/80 hover:bg-secondary transition-colors w-full"
           >
             <LogOut className="w-4 h-4" />
-            Выйти
+            {t("Выйти")}
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 ml-48 p-6">
         {children}
       </main>
