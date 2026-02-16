@@ -78,9 +78,11 @@ const HeroSection = () => {
               <Circle className="w-4 h-4 text-primary" /> Переводы SWIFT без ограничений
             </div>
           </div>
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-8">
-            Войти в личный кабинет <ArrowRight className="w-5 h-5" />
-          </Button>
+          <a href="/auth">
+            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-8">
+              Войти в личный кабинет <ArrowRight className="w-5 h-5" />
+            </Button>
+          </a>
         </div>
         <div className="relative flex justify-center lg:justify-end">
           <BankCard

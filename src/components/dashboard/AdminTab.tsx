@@ -1,4 +1,4 @@
-import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2 } from "lucide-react";
+import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -11,6 +11,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 interface Client {
   email: string;
@@ -20,12 +23,14 @@ interface Client {
   statusColor: string;
   date: string;
   blocked: boolean;
+  card?: string;
+  sessions: { ip: string; device: string; time: string }[];
 }
 
 const initialClients: Client[] = [
-  { email: "koltunov.1978@list.ru", name: "Колтунов Павел", balance: "₽ 787 663,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false },
-  { email: "tory_york@mail.ru", name: "Владимир Анатольевич Гончаров", balance: "₽ 21 096 779,00", status: "Заблокирован", statusColor: "text-yellow-500", date: "16.02.2026", blocked: true },
-  { email: "yuriyzhuravlev2018@gmail.com", name: "Chargeback", balance: "₽ 124 350,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false },
+  { email: "koltunov.1978@list.ru", name: "Колтунов Павел", balance: "₽ 787 663,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, card: "Standard", sessions: [{ ip: "185.220.101.34", device: "Windows / Chrome", time: "16.02.2026, 14:23" }] },
+  { email: "tory_york@mail.ru", name: "Владимир Анатольевич Гончаров", balance: "₽ 21 096 779,00", status: "Заблокирован", statusColor: "text-destructive", date: "16.02.2026", blocked: true, card: "Gold", sessions: [{ ip: "94.25.170.12", device: "iPhone / Safari", time: "16.02.2026, 12:01" }, { ip: "94.25.170.12", device: "iPad / Safari", time: "15.02.2026, 09:44" }] },
+  { email: "yuriyzhuravlev2018@gmail.com", name: "Chargeback", balance: "₽ 124 350,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, sessions: [{ ip: "77.88.55.60", device: "Android / Chrome", time: "16.02.2026, 15:58" }] },
 ];
 
 const AdminTab = () => {
@@ -35,6 +40,8 @@ const AdminTab = () => {
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
   const [createOpen, setCreateOpen] = useState(false);
   const [balanceEdit, setBalanceEdit] = useState<{ index: number; amount: string; mode: "add" | "sub" } | null>(null);
+  const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
+  const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
 
   const handleDelete = (index: number) => {
     setClients(prev => prev.filter((_, i) => i !== index));
@@ -43,7 +50,7 @@ const AdminTab = () => {
 
   const handleBlock = (index: number) => {
     setClients(prev => prev.map((c, i) =>
-      i === index ? { ...c, blocked: !c.blocked, status: c.blocked ? "Активен" : "Заблокирован", statusColor: c.blocked ? "text-primary" : "text-yellow-500" } : c
+      i === index ? { ...c, blocked: !c.blocked, status: c.blocked ? "Активен" : "Заблокирован", statusColor: c.blocked ? "text-primary" : "text-destructive" } : c
     ));
   };
 
@@ -60,6 +67,7 @@ const AdminTab = () => {
       email: newUser.email, name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
       date: new Date().toLocaleDateString("ru-RU"), blocked: false,
+      sessions: [],
     };
     setClients(prev => [...prev, client]);
     setNewUser({ email: "", name: "", password: "" });
@@ -79,6 +87,13 @@ const AdminTab = () => {
     }));
     setBalanceEdit(null);
     toast({ title: t("Информация"), description: "Баланс обновлён" });
+  };
+
+  const handleAssignCard = () => {
+    if (!cardAssign) return;
+    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, card: cardAssign.type } : c));
+    setCardAssign(null);
+    toast({ title: t("Информация"), description: "Карта назначена" });
   };
 
   return (
@@ -137,6 +152,47 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Card assign dialog */}
+      <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Назначить карту</DialogTitle></DialogHeader>
+          <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
+            <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Standard">Standard — 14 999 ₽</SelectItem>
+              <SelectItem value="Gold">Gold — 24 999 ₽</SelectItem>
+              <SelectItem value="Platinum">Platinum — 49 999 ₽</SelectItem>
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCardAssign(null)}>{t("Отмена")}</Button>
+            <Button onClick={handleAssignCard}>{t("Сохранить")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sessions dialog */}
+      <Dialog open={!!sessionsView} onOpenChange={open => !open && setSessionsView(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t("Сессии")} — {sessionsView !== null ? clients[sessionsView.index]?.name : ""}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {sessionsView !== null && clients[sessionsView.index]?.sessions.map((s, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 bg-secondary rounded-lg">
+                {s.device.includes("iPhone") || s.device.includes("Android") ? <Smartphone className="w-4 h-4 text-muted-foreground mt-0.5" /> : <Monitor className="w-4 h-4 text-muted-foreground mt-0.5" />}
+                <div className="text-sm">
+                  <p className="text-foreground font-medium">{s.device}</p>
+                  <p className="text-muted-foreground text-xs">IP: {s.ip}</p>
+                  <p className="text-muted-foreground text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {s.time}</p>
+                </div>
+              </div>
+            ))}
+            {sessionsView !== null && clients[sessionsView.index]?.sessions.length === 0 && (
+              <p className="text-muted-foreground text-sm text-center py-4">Нет активных сессий</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="text-foreground font-semibold mb-4">{t("Клиенты")} ({clients.length})</h3>
 
@@ -175,8 +231,8 @@ const AdminTab = () => {
                       <button onClick={() => setBalanceEdit({ index: i, amount: "", mode: "sub" })} className="p-1 text-muted-foreground hover:text-foreground" title="Списать">
                         <Minus className="w-3 h-3" />
                       </button>
-                      <button onClick={() => toast({ title: t("Информация"), description: `Карта: **** 3891` })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
-                        <CreditCard className="w-3 h-3" /> {t("Карта")}
+                      <button onClick={() => setCardAssign({ index: i, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                        <CreditCard className="w-3 h-3" /> {client.card ?? t("Карта")}
                       </button>
                       <button onClick={() => toast({ title: t("Информация"), description: "Операция выполнена" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <Send className="w-3 h-3" /> {t("Операция")}
@@ -187,8 +243,8 @@ const AdminTab = () => {
                       >
                         {client.blocked ? t("Разбл.") : t("Блок.")}
                       </button>
-                      <button onClick={() => toast({ title: t("Сессии"), description: "Активных сессий: 1" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" /> {t("Сессии")}
+                      <button onClick={() => setSessionsView({ index: i })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                        <Monitor className="w-3 h-3" /> {t("Сессии")}
                       </button>
                       <button onClick={() => toast({ title: t("Информация"), description: `${client.email} — ${client.balance}` })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <Eye className="w-3 h-3" />
