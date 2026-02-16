@@ -1,9 +1,10 @@
-import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock } from "lucide-react";
+import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -36,12 +37,53 @@ const initialClients: Client[] = [
 const AdminTab = () => {
   const { t } = useLanguage();
   const [clients, setClients] = useState<Client[]>(initialClients);
+  const [loading, setLoading] = useState(false);
   const [editingName, setEditingName] = useState<{ index: number; name: string } | null>(null);
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
   const [createOpen, setCreateOpen] = useState(false);
   const [balanceEdit, setBalanceEdit] = useState<{ index: number; amount: string; mode: "add" | "sub" } | null>(null);
   const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
   const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
+
+  const fetchRegistrations = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const existingEmails = new Set(initialClients.map(c => c.email));
+        const dbClients: Client[] = data
+          .filter(p => !existingEmails.has(p.display_name ?? ""))
+          .map(p => ({
+            email: p.display_name?.includes("@") ? p.display_name : `user-${p.user_id.slice(0, 8)}`,
+            name: p.display_name ?? "Без имени",
+            balance: "₽ 0,00",
+            status: "Активен",
+            statusColor: "text-primary",
+            date: new Date(p.created_at).toLocaleDateString("ru-RU"),
+            blocked: false,
+            sessions: [],
+          }));
+
+        const mergedEmails = new Set(initialClients.map(c => c.email));
+        const newFromDB = dbClients.filter(c => !mergedEmails.has(c.email));
+        setClients([...initialClients, ...newFromDB]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch registrations:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, []);
 
   const handleDelete = (index: number) => {
     setClients(prev => prev.filter((_, i) => i !== index));
@@ -106,26 +148,32 @@ const AdminTab = () => {
           </div>
           <p className="text-muted-foreground text-sm">{t("Полное управление клиентами и финансами")}</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-              <UserPlus className="w-4 h-4" />
-              {t("Создать пользователя")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{t("Создать пользователя")}</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder={t("Имя")} value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} />
-              <Input placeholder={t("Email")} type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} />
-              <Input placeholder={t("Пароль")} type="password" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateOpen(false)}>{t("Отмена")}</Button>
-              <Button onClick={handleCreateUser}>{t("Создать")}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                <UserPlus className="w-4 h-4" />
+                {t("Создать пользователя")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{t("Создать пользователя")}</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <Input placeholder={t("Имя")} value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} />
+                <Input placeholder={t("Email")} type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} />
+                <Input placeholder={t("Пароль")} type="password" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>{t("Отмена")}</Button>
+                <Button onClick={handleCreateUser}>{t("Создать")}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" size="sm" onClick={fetchRegistrations} disabled={loading} className="gap-2">
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            {t("Обновить")}
+          </Button>
+        </div>
       </div>
 
       {/* Balance edit dialog */}
@@ -254,7 +302,7 @@ const AdminTab = () => {
                       </button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <button className="p-1.5 text-xs px-2 py-1 rounded bg-red-600/20 text-red-400 font-medium flex items-center gap-1">
+                          <button className="p-1.5 text-xs px-2 py-1 rounded bg-destructive/20 text-destructive font-medium flex items-center gap-1">
                             <Trash2 className="w-3 h-3" /> {t("Удалить")}
                           </button>
                         </AlertDialogTrigger>
