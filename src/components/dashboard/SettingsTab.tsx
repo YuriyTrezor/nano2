@@ -3,17 +3,18 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const SettingsTab = () => {
   const { t, lang, toggleLang } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("Chargeback");
   const [phone, setPhone] = useState("+7 (900) 000-00-00");
   const [newPassword, setNewPassword] = useState("");
-  const [theme, setTheme] = useState<"dark" | "light" | "blue" | "system">("dark");
 
   const handleSaveProfile = () => {
     toast({ title: t("Информация"), description: "Профиль сохранён" });
