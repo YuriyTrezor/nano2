@@ -2,10 +2,13 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
@@ -25,13 +28,12 @@ const bottomLinks = [
   { to: "/dashboard/help", icon: HelpCircle, label: "Поддержка" },
 ];
 
-// Mobile tab bar items (subset)
-const mobileTabLinks = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
-  { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
-  { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
-  { to: "/dashboard/admin", icon: Shield, label: "Админ" },
-  { to: "/dashboard/settings", icon: Settings, label: "Ещё" },
+const notifications = [
+  { id: 1, text: "Перевод +103 434 ₽ получен", time: "16:42", read: false },
+  { id: 2, text: "Возврат средств +5 000 ₽", time: "16:25", read: false },
+  { id: 3, text: "Перевод -25 000 ₽ выполнен", time: "16:18", read: true },
+  { id: 4, text: "Перевод -10 000 ₽ выполнен", time: "15:39", read: true },
+  { id: 5, text: "Пополнение баланса +676 ₽", time: "23:21", read: false },
 ];
 
 interface DashboardLayoutProps {
@@ -39,18 +41,39 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { signOut } = useAuth();
+  const { signOut, isAdmin, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
+  useEffect(() => {
+    if (searchOpen && searchRef.current) searchRef.current.focus();
+  }, [searchOpen]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
+  const initials = displayName.substring(0, 2).toUpperCase();
+
+  // Mobile tabs — conditionally include admin
+  const mobileTabLinks = [
+    { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
+    { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
+    { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
+    ...(isAdmin ? [{ to: "/dashboard/admin", icon: Shield, label: "Админ" }] : []),
+    { to: "/dashboard/settings", icon: Settings, label: "Ещё" },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop sidebar - hidden on mobile */}
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-48 border-r border-border flex-col fixed h-full bg-background z-10">
         <div className="p-4 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -80,27 +103,29 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </NavLink>
           ))}
 
-          <div className="pt-2">
-            {adminLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
-                    isActive
-                      ? "text-primary bg-primary/10"
-                      : link.highlight
-                      ? "text-orange-400 hover:text-orange-300 hover:bg-secondary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )
-                }
-              >
-                <link.icon className="w-4 h-4" />
-                {t(link.label)}
-              </NavLink>
-            ))}
-          </div>
+          {isAdmin && (
+            <div className="pt-2">
+              {adminLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                      isActive
+                        ? "text-primary bg-primary/10"
+                        : link.highlight
+                        ? "text-orange-400 hover:text-orange-300 hover:bg-secondary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )
+                  }
+                >
+                  <link.icon className="w-4 h-4" />
+                  {t(link.label)}
+                </NavLink>
+              ))}
+            </div>
+          )}
         </nav>
 
         <div className="px-2 pb-4 space-y-0.5">
@@ -133,16 +158,87 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <main className="flex-1 md:ml-48 pb-24 md:pb-6">
         {/* Top header bar */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-end gap-3">
-          <button className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-            <Search className="w-4 h-4" />
-          </button>
-          <button className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
-            <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">5</span>
-          </button>
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-            CH
-          </div>
+          {/* Search */}
+          {searchOpen ? (
+            <div className="flex items-center gap-2 flex-1 max-w-sm">
+              <Input
+                ref={searchRef}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Поиск по операциям..."
+                className="bg-secondary border-border text-foreground h-9 text-sm"
+              />
+              <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+              <Search className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Notifications */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 p-0">
+              <div className="p-3 border-b border-border">
+                <p className="text-foreground font-semibold text-sm">Уведомления</p>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {notifications.map(n => (
+                  <div key={n.id} className={`px-3 py-2.5 border-b border-border last:border-0 ${!n.read ? "bg-primary/5" : ""}`}>
+                    <div className="flex items-start gap-2">
+                      {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground text-sm">{n.text}</p>
+                        <p className="text-muted-foreground text-xs mt-0.5">{n.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* User avatar menu */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                {initials}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2">
+              <div className="px-3 py-2 border-b border-border mb-1">
+                <p className="text-foreground text-sm font-medium truncate">{displayName}</p>
+                <p className="text-muted-foreground text-xs truncate">{user?.email}</p>
+              </div>
+              <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <Settings className="w-4 h-4" />
+                Настройки
+                <ChevronRight className="w-3 h-3 ml-auto" />
+              </button>
+              <button onClick={() => navigate("/dashboard/support")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <MessageSquare className="w-4 h-4" />
+                Обращения
+                <ChevronRight className="w-3 h-3 ml-auto" />
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-secondary transition-colors mt-1"
+              >
+                <LogOut className="w-4 h-4" />
+                Выйти
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="p-4 md:p-6">
           {children}
