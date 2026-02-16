@@ -7,6 +7,7 @@ import DepositsTab from "@/components/dashboard/DepositsTab";
 import CreditsTab from "@/components/dashboard/CreditsTab";
 import AdminTab from "@/components/dashboard/AdminTab";
 import SupportTab from "@/components/dashboard/SupportTab";
+import SettingsTab from "@/components/dashboard/SettingsTab";
 
 const Dashboard = () => {
   return (
@@ -19,6 +20,7 @@ const Dashboard = () => {
         <Route path="credits" element={<CreditsTab />} />
         <Route path="admin" element={<AdminTab />} />
         <Route path="support" element={<SupportTab />} />
+        <Route path="settings" element={<SettingsTab />} />
       </Routes>
     </DashboardLayout>
   );
