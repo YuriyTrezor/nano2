@@ -1,4 +1,4 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
@@ -52,6 +52,11 @@ const OverviewTab = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
+  const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
+
+  const toggleCvv = (cardName: string) => {
+    setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
+  };
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
@@ -260,7 +265,9 @@ const OverviewTab = () => {
                               <div className="w-8 h-5 bg-yellow-500 rounded" />
                               <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                             </div>
-                            <p className="text-white font-mono text-lg tracking-widest mb-4">{card.number}</p>
+                            <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
+                            <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}</p>
+                            <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                             <div className="flex justify-between items-end">
                               <div>
                                 <p className="text-white/50 text-[10px]">CARDHOLDER</p>
@@ -270,10 +277,10 @@ const OverviewTab = () => {
                                 <p className="text-white/50 text-[10px]">EXPIRES</p>
                                 <p className="text-white text-xs font-medium">{card.expiry}</p>
                               </div>
-                              <div>
+                              <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
                                 <p className="text-white/50 text-[10px]">CVV</p>
-                                <p className="text-white text-xs font-medium">{card.cvv}</p>
-                              </div>
+                                <p className="text-white text-xs font-medium">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                              </button>
                               <p className="text-white font-bold text-lg italic">{card.type}</p>
                             </div>
                           </div>
@@ -392,7 +399,9 @@ const OverviewTab = () => {
                             <div className="w-8 h-5 bg-yellow-500 rounded" />
                             <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                           </div>
-                          <p className="text-white font-mono text-lg tracking-widest mb-4">{card.number}</p>
+                          <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
+                          <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}</p>
+                          <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                           <div className="flex justify-between items-end">
                             <div>
                               <p className="text-white/50 text-[10px]">CARDHOLDER</p>
@@ -402,10 +411,10 @@ const OverviewTab = () => {
                               <p className="text-white/50 text-[10px]">EXPIRES</p>
                               <p className="text-white text-xs font-medium">{card.expiry}</p>
                             </div>
-                            <div>
+                            <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
                               <p className="text-white/50 text-[10px]">CVV</p>
-                              <p className="text-white text-xs font-medium">{card.cvv}</p>
-                            </div>
+                              <p className="text-white text-xs font-medium">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                            </button>
                             <p className="text-white font-bold text-lg italic">{card.type}</p>
                           </div>
                         </div>
