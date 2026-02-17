@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,8 +29,9 @@ interface Client {
   statusColor: string;
   registrationDate: string;
   lastLogin: string;
+  lastIp: string;
   blocked: boolean;
-  card?: string;
+  cards: string[];
   sessions: { ip: string; device: string; time: string }[];
 }
 
@@ -85,13 +86,13 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, card_type")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, last_sign_in_at, last_sign_in_ip")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const dbClients: Client[] = data.map(p => ({
+        const dbClients: Client[] = data.map((p: any) => ({
           userId: p.user_id,
           email: p.email ?? `user-${p.user_id.slice(0, 8)}`,
           phone: p.phone ?? "—",
@@ -100,13 +101,15 @@ const AdminTab = () => {
           status: p.is_blocked ? "Заблокирован" : "Активен",
           statusColor: p.is_blocked ? "text-destructive" : "text-primary",
           registrationDate: new Date(p.created_at).toLocaleDateString("ru-RU"),
-          lastLogin: "—",
+          lastLogin: p.last_sign_in_at
+            ? new Date(p.last_sign_in_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "—",
+          lastIp: p.last_sign_in_ip ?? "—",
           blocked: p.is_blocked,
-          card: (p as any).card_type ?? undefined,
+          cards: p.cards ?? [],
           sessions: [],
         }));
 
-        // Load balances from transactions
         for (const client of dbClients) {
           const { data: txData } = await supabase
             .from("transactions")
@@ -163,7 +166,8 @@ const AdminTab = () => {
     const client: Client = {
       userId: "", email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
-      registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", blocked: false,
+      registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", lastIp: "—", blocked: false,
+      cards: [],
       sessions: [],
     };
     setClients(prev => [...prev, client]);
@@ -204,7 +208,6 @@ const AdminTab = () => {
       return;
     }
 
-    // Update local balance
     setClients(prev => prev.map((c, i) => {
       if (i !== txDialog.index) return c;
       const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\u00a0/g, "").replace(",", ".")) || 0;
@@ -222,12 +225,16 @@ const AdminTab = () => {
   const handleAssignCard = async () => {
     if (!cardAssign) return;
     const client = clients[cardAssign.index];
-    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, card: cardAssign.type } : c));
+    const newCards = client.cards.includes(cardAssign.type)
+      ? client.cards
+      : [...client.cards, cardAssign.type];
+
+    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, cards: newCards } : c));
     if (client.userId) {
-      await supabase.from("profiles").update({ card_type: cardAssign.type } as any).eq("user_id", client.userId);
+      await supabase.from("profiles").update({ cards: newCards } as any).eq("user_id", client.userId);
     }
     setCardAssign(null);
-    toast({ title: t("Информация"), description: `Карта ${cardAssign.type} назначена — ${client.name}` });
+    toast({ title: t("Информация"), description: `Карта ${cardAssign.type} добавлена — ${client.name}` });
   };
 
   return (
@@ -279,53 +286,25 @@ const AdminTab = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Button
-                variant={txDialog?.mode === "add" ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "add" } : null)}
-              >
-                Зачислить
-              </Button>
-              <Button
-                variant={txDialog?.mode === "sub" ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}
-              >
-                Списать
-              </Button>
+              <Button variant={txDialog?.mode === "add" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "add" } : null)}>Зачислить</Button>
+              <Button variant={txDialog?.mode === "sub" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}>Списать</Button>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
-              <Input
-                placeholder="10 000"
-                value={txDialog?.amount ?? ""}
-                onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)}
-                type="number"
-              />
+              <Input placeholder="10 000" value={txDialog?.amount ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)} type="number" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">От кого / Кому</Label>
-              <Input
-                placeholder="Например: ООО Ромашка"
-                value={txDialog?.sender ?? ""}
-                onChange={e => setTxDialog(prev => prev ? { ...prev, sender: e.target.value } : null)}
-              />
+              <Input placeholder="Например: ООО Ромашка" value={txDialog?.sender ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, sender: e.target.value } : null)} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Комментарий</Label>
-              <Textarea
-                placeholder="Пополнение баланса, возврат средств и т.д."
-                value={txDialog?.comment ?? ""}
-                onChange={e => setTxDialog(prev => prev ? { ...prev, comment: e.target.value } : null)}
-                rows={2}
-              />
+              <Textarea placeholder="Пополнение баланса, возврат средств и т.д." value={txDialog?.comment ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, comment: e.target.value } : null)} rows={2} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTxDialog(null)}>{t("Отмена")}</Button>
-            <Button onClick={handleTransaction}>
-              {txDialog?.mode === "add" ? "Зачислить" : "Списать"}
-            </Button>
+            <Button onClick={handleTransaction}>{txDialog?.mode === "add" ? "Зачислить" : "Списать"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -345,7 +324,7 @@ const AdminTab = () => {
       {/* Card assign dialog */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Назначить карту</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Добавить карту</DialogTitle></DialogHeader>
           <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
             <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
             <SelectContent>
@@ -354,9 +333,19 @@ const AdminTab = () => {
               <SelectItem value="Platinum">Platinum — 49 999 ₽</SelectItem>
             </SelectContent>
           </Select>
+          {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-muted-foreground mb-1.5">Текущие карты:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {clients[cardAssign.index].cards.map(c => (
+                  <span key={c} className={`text-xs px-2 py-1 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setCardAssign(null)}>{t("Отмена")}</Button>
-            <Button onClick={handleAssignCard}>{t("Сохранить")}</Button>
+            <Button onClick={handleAssignCard}>{t("Добавить")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -398,6 +387,8 @@ const AdminTab = () => {
                     </button>
                   </th>
                 ))}
+                <th className="text-left pb-3 font-medium text-xs uppercase">IP</th>
+                <th className="text-left pb-3 font-medium text-xs uppercase">Карты</th>
                 <th className="text-right pb-3 font-medium">{t("Действия")}</th>
               </tr>
             </thead>
@@ -419,6 +410,20 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3 text-muted-foreground text-xs">{client.registrationDate}</td>
                   <td className="py-3 text-muted-foreground text-xs">{client.lastLogin}</td>
+                  <td className="py-3 text-muted-foreground text-xs">
+                    <span className="flex items-center gap-1">
+                      <Globe className="w-3 h-3" />
+                      {client.lastIp}
+                    </span>
+                  </td>
+                  <td className="py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {client.cards.map(c => (
+                        <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                      ))}
+                      {client.cards.length === 0 && <span className="text-muted-foreground text-[10px]">—</span>}
+                    </div>
+                  </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
                       <button
@@ -428,8 +433,8 @@ const AdminTab = () => {
                       >
                         <Send className="w-3 h-3" /> Операция
                       </button>
-                      <button onClick={() => setCardAssign({ index: originalIndex, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
-                        <CreditCard className="w-3 h-3" /> {client.card ?? t("Карта")}
+                      <button onClick={() => setCardAssign({ index: originalIndex, type: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
+                        <CreditCard className="w-3 h-3" /> Карта
                       </button>
                       <button
                         onClick={() => handleBlock(originalIndex)}

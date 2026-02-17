@@ -16,34 +16,40 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
-          card_type: string | null
+          cards: string[]
           created_at: string
           display_name: string | null
           email: string | null
           id: string
           is_blocked: boolean
+          last_sign_in_at: string | null
+          last_sign_in_ip: string | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          card_type?: string | null
+          cards?: string[]
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
           is_blocked?: boolean
+          last_sign_in_at?: string | null
+          last_sign_in_ip?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          card_type?: string | null
+          cards?: string[]
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
           is_blocked?: boolean
+          last_sign_in_at?: string | null
+          last_sign_in_ip?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
