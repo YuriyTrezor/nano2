@@ -38,14 +38,22 @@ const TransfersTab = () => {
   const [bankBik, setBankBik] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankName, setBankName] = useState("");
+  const [isBlocked, setIsBlocked] = useState(false);
 
   // Compute balance from transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  // Fetch user transactions from DB
+  // Fetch user transactions and blocked status from DB
   useEffect(() => {
     if (!user) return;
-    const fetchTransactions = async () => {
+    const fetchData = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_blocked")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) setIsBlocked((profile as any).is_blocked ?? false);
+
       const { data } = await supabase
         .from("transactions")
         .select("id, title, category, amount, created_at")
@@ -54,7 +62,7 @@ const TransfersTab = () => {
         .limit(100);
       if (data) setTransactions(data);
     };
-    fetchTransactions();
+    fetchData();
   }, [user]);
 
   useEffect(() => {
@@ -66,6 +74,10 @@ const TransfersTab = () => {
 
   const handleSubmit = async () => {
     if (!user) return;
+    if (isBlocked) {
+      toast.error("Ваш аккаунт заблокирован. Переводы недоступны. Свяжитесь с менеджером.");
+      return;
+    }
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!amount.trim() || isNaN(sum) || sum <= 0) {
       toast.error("Введите корректную сумму");
@@ -145,7 +157,13 @@ const TransfersTab = () => {
             Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="gap-2">
+        <Button onClick={() => {
+          if (isBlocked) {
+            toast.error("Ваш аккаунт заблокирован. Переводы недоступны. Свяжитесь с менеджером.");
+            return;
+          }
+          setShowForm(true);
+        }} className="gap-2">
           <CreditCard className="w-4 h-4" /> Новый перевод
         </Button>
       </div>

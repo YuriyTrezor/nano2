@@ -97,6 +97,12 @@ const CardsTab = () => {
   const [blockedAlert, setBlockedAlert] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
+  const [balance, setBalance] = useState(0);
+
+  const toggleCvv = (cardName: string) => {
+    setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -107,6 +113,13 @@ const CardsTab = () => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) setUserCards((data as any).cards ?? []);
+
+      const { data: txData } = await supabase
+        .from("transactions")
+        .select("amount")
+        .eq("user_id", user.id);
+      if (txData) setBalance(txData.reduce((sum, tx) => sum + Number(tx.amount), 0));
+
       setLoading(false);
     };
     fetchCards();
@@ -182,7 +195,9 @@ const CardsTab = () => {
                         <div className="w-8 h-5 bg-yellow-500 rounded" />
                         <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                       </div>
-                      <p className="text-white font-mono text-base tracking-widest mb-3">{card.number}</p>
+                      <p className="text-white/60 font-mono text-[9px] mb-0.5">BALANCE</p>
+                      <p className="text-white font-bold text-base mb-1">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                      <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-white/50 text-[9px]">CARDHOLDER</p>
@@ -192,10 +207,10 @@ const CardsTab = () => {
                           <p className="text-white/50 text-[9px]">EXPIRES</p>
                           <p className="text-white text-xs">{card.exp}</p>
                         </div>
-                        <div>
+                        <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
                           <p className="text-white/50 text-[9px]">CVV</p>
-                          <p className="text-white text-xs">{card.cvv}</p>
-                        </div>
+                          <p className="text-white text-xs">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                        </button>
                         <p className="text-white font-bold italic">{card.type === "visa" ? "VISA" : "MC"}</p>
                       </div>
                     </div>
