@@ -1,7 +1,7 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
@@ -9,6 +9,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import useEmblaCarousel from "embla-carousel-react";
+
+const transliterate = (text: string): string => {
+  const map: Record<string, string> = {
+    А:'A',Б:'B',В:'V',Г:'G',Д:'D',Е:'E',Ё:'E',Ж:'Zh',З:'Z',И:'I',Й:'Y',К:'K',Л:'L',М:'M',Н:'N',О:'O',П:'P',Р:'R',С:'S',Т:'T',У:'U',Ф:'F',Х:'Kh',Ц:'Ts',Ч:'Ch',Ш:'Sh',Щ:'Shch',Ъ:'',Ы:'Y',Ь:'',Э:'E',Ю:'Yu',Я:'Ya',
+    а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya',
+  };
+  return text.split('').map(c => map[c] ?? c).join('').toUpperCase();
+};
 
 const paymentServices = [
   { icon: Phone, label: "Мобильная связь" },
@@ -19,10 +28,10 @@ const paymentServices = [
   { icon: FileText, label: "Налоги и штрафы" },
 ];
 
-const allCards: Record<string, { name: string; number: string; holder: string; expiry: string; type: string; gradient: string }> = {
-  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted" },
-  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]" },
-  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]" },
+const allCards: Record<string, { name: string; number: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
+  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
+  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
+  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]", cvv: "365" },
 };
 
 interface Transaction {
@@ -122,10 +131,29 @@ const OverviewTab = () => {
     localStorage.setItem(key, String(next));
   };
 
-  // Show first card on overview (primary card)
-  const primaryCardType = userCards.length > 0 ? userCards[userCards.length - 1] : null;
-  const currentCard = primaryCardType && allCards[primaryCardType] ? { ...allCards[primaryCardType], holder: displayName } : null;
+  const holderName = transliterate(displayName);
+  const activeCards = userCards
+    .filter(name => allCards[name])
+    .map(name => ({ ...allCards[name], holder: holderName }));
 
+  // Embla carousel
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi, onSelect]);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
   const formatAmount = (amount: number) => {
     const prefix = amount >= 0 ? "+" : "";
     return `${prefix}${amount.toLocaleString("ru-RU", { minimumFractionDigits: 0 })} ₽`;
@@ -218,32 +246,60 @@ const OverviewTab = () => {
           </div>
 
           {/* Card on mobile */}
-          {currentCard && (
+          {activeCards.length > 0 ? (
             <div className="lg:hidden">
               <div className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
-                <div className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative select-none`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-8 h-5 bg-yellow-500 rounded" />
-                    <Wifi className="w-4 h-4 text-white/40 rotate-90" />
-                  </div>
-                  <p className="text-white font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-white/50 text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
-                      <p className="text-white text-xs font-medium">{currentCard.holder}</p>
+                <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+                <div className="relative">
+                  <div ref={emblaRef} className="overflow-hidden rounded-xl">
+                    <div className="flex">
+                      {activeCards.map((card, i) => (
+                        <div key={i} className="min-w-0 shrink-0 grow-0 basis-full">
+                          <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative select-none`}>
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="w-8 h-5 bg-yellow-500 rounded" />
+                              <Wifi className="w-4 h-4 text-white/40 rotate-90" />
+                            </div>
+                            <p className="text-white font-mono text-lg tracking-widest mb-4">{card.number}</p>
+                            <div className="flex justify-between items-end">
+                              <div>
+                                <p className="text-white/50 text-[10px]">CARDHOLDER</p>
+                                <p className="text-white text-xs font-medium">{card.holder}</p>
+                              </div>
+                              <div>
+                                <p className="text-white/50 text-[10px]">EXPIRES</p>
+                                <p className="text-white text-xs font-medium">{card.expiry}</p>
+                              </div>
+                              <div>
+                                <p className="text-white/50 text-[10px]">CVV</p>
+                                <p className="text-white text-xs font-medium">{card.cvv}</p>
+                              </div>
+                              <p className="text-white font-bold text-lg italic">{card.type}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <p className="text-white/50 text-[10px]">{t("СРОК")}</p>
-                      <p className="text-white text-xs font-medium">{currentCard.expiry}</p>
-                    </div>
-                    <p className="text-white font-bold text-lg italic">{currentCard.type}</p>
                   </div>
+                  {activeCards.length > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <button onClick={scrollPrev} className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                        <ChevronLeft className="w-4 h-4 text-foreground" />
+                      </button>
+                      <div className="flex gap-1.5">
+                        {activeCards.map((_, i) => (
+                          <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === selectedIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                        ))}
+                      </div>
+                      <button onClick={scrollNext} className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                        <ChevronRight className="w-4 h-4 text-foreground" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          )}
-          {!currentCard && (
+          ) : (
             <div className="lg:hidden">
               <div className="bg-card border border-border rounded-2xl p-4 text-center">
                 <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -323,26 +379,55 @@ const OverviewTab = () => {
         {/* Right column - desktop */}
         <div className="hidden lg:block w-80 space-y-6">
           {/* Card preview */}
-          {currentCard ? (
+          {activeCards.length > 0 ? (
             <div className="bg-card border border-border rounded-2xl p-5">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
-              <div className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative`}>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-8 h-5 bg-yellow-500 rounded" />
-                  <Wifi className="w-4 h-4 text-white/40 rotate-90" />
-                </div>
-                <p className="text-white font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-white/50 text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
-                    <p className="text-white text-xs font-medium">{currentCard.holder}</p>
+              <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+              <div className="relative">
+                <div ref={emblaRef} className="overflow-hidden rounded-xl">
+                  <div className="flex">
+                    {activeCards.map((card, i) => (
+                      <div key={i} className="min-w-0 shrink-0 grow-0 basis-full">
+                        <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative`}>
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="w-8 h-5 bg-yellow-500 rounded" />
+                            <Wifi className="w-4 h-4 text-white/40 rotate-90" />
+                          </div>
+                          <p className="text-white font-mono text-lg tracking-widest mb-4">{card.number}</p>
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-white/50 text-[10px]">CARDHOLDER</p>
+                              <p className="text-white text-xs font-medium">{card.holder}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/50 text-[10px]">EXPIRES</p>
+                              <p className="text-white text-xs font-medium">{card.expiry}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/50 text-[10px]">CVV</p>
+                              <p className="text-white text-xs font-medium">{card.cvv}</p>
+                            </div>
+                            <p className="text-white font-bold text-lg italic">{card.type}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-white/50 text-[10px]">{t("СРОК")}</p>
-                    <p className="text-white text-xs font-medium">{currentCard.expiry}</p>
-                  </div>
-                  <p className="text-white font-bold text-lg italic">{currentCard.type}</p>
                 </div>
+                {activeCards.length > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <button onClick={scrollPrev} className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                      <ChevronLeft className="w-4 h-4 text-foreground" />
+                    </button>
+                    <div className="flex gap-1.5">
+                      {activeCards.map((_, i) => (
+                        <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === selectedIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                      ))}
+                    </div>
+                    <button onClick={scrollNext} className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                      <ChevronRight className="w-4 h-4 text-foreground" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ) : (

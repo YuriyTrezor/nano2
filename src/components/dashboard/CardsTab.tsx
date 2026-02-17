@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+
+const transliterate = (text: string): string => {
+  const map: Record<string, string> = {
+    А:'A',Б:'B',В:'V',Г:'G',Д:'D',Е:'E',Ё:'E',Ж:'Zh',З:'Z',И:'I',Й:'Y',К:'K',Л:'L',М:'M',Н:'N',О:'O',П:'P',Р:'R',С:'S',Т:'T',У:'U',Ф:'F',Х:'Kh',Ц:'Ts',Ч:'Ch',Ш:'Sh',Щ:'Shch',Ъ:'',Ы:'Y',Ь:'',Э:'E',Ю:'Yu',Я:'Ya',
+    а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya',
+  };
+  return text.split('').map(c => map[c] ?? c).join('').toUpperCase();
+};
 import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -24,6 +32,7 @@ const cardCatalog = [
     last4: "3891",
     number: "4 •••• •••• •••• 3891",
     exp: "02/30",
+    cvv: "482",
   },
   {
     name: "Gold",
@@ -37,6 +46,7 @@ const cardCatalog = [
     last4: "7742",
     number: "5 •••• •••• •••• 7742",
     exp: "08/29",
+    cvv: "719",
   },
   {
     name: "Platinum",
@@ -50,6 +60,7 @@ const cardCatalog = [
     last4: "1205",
     number: "4 •••• •••• •••• 1205",
     exp: "11/31",
+    cvv: "365",
   },
 ];
 
@@ -174,12 +185,16 @@ const CardsTab = () => {
                       <p className="text-white font-mono text-base tracking-widest mb-3">{card.number}</p>
                       <div className="flex justify-between items-end">
                         <div>
-                          <p className="text-white/50 text-[9px]">ВЛАДЕЛЕЦ</p>
-                          <p className="text-white text-xs">{user?.user_metadata?.display_name || user?.email?.split("@")[0]}</p>
+                          <p className="text-white/50 text-[9px]">CARDHOLDER</p>
+                          <p className="text-white text-xs">{transliterate(user?.user_metadata?.display_name || user?.email?.split("@")[0] || "")}</p>
                         </div>
                         <div>
-                          <p className="text-white/50 text-[9px]">СРОК</p>
+                          <p className="text-white/50 text-[9px]">EXPIRES</p>
                           <p className="text-white text-xs">{card.exp}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/50 text-[9px]">CVV</p>
+                          <p className="text-white text-xs">{card.cvv}</p>
                         </div>
                         <p className="text-white font-bold italic">{card.type === "visa" ? "VISA" : "MC"}</p>
                       </div>
