@@ -8,6 +8,7 @@ import CreditsTab from "@/components/dashboard/CreditsTab";
 import AdminTab from "@/components/dashboard/AdminTab";
 import SupportTab from "@/components/dashboard/SupportTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
+import FloatingChat from "@/components/FloatingChat";
 
 const Dashboard = () => {
   return (
@@ -22,6 +23,7 @@ const Dashboard = () => {
         <Route path="support" element={<SupportTab />} />
         <Route path="settings" element={<SettingsTab />} />
       </Routes>
+      <FloatingChat />
     </DashboardLayout>
   );
 };

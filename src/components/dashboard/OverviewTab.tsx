@@ -1,13 +1,14 @@
-import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X } from "lucide-react";
+import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useRef, TouchEvent } from "react";
+import { useState, useRef, useEffect, TouchEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const paymentServices = [
   { icon: Phone, label: "Мобильная связь" },
@@ -18,23 +19,19 @@ const paymentServices = [
   { icon: FileText, label: "Налоги и штрафы" },
 ];
 
-const transactions = [
-  { type: "out", title: "Перевод → 121212121", category: "Перевод", amount: "+103 434 ₽", date: "Вчера, 16:42", positive: true },
-  { type: "in", title: "Возврат средств. Причина: неверно указан номер карты (номер введён с пробелами).", category: "Income", amount: "+5 000 ₽", date: "Вчера, 16:25", positive: true },
-  { type: "out", title: "Перевод → 434343", category: "Перевод", amount: "-25 000 ₽", date: "Вчера, 16:18", positive: false },
-  { type: "out", title: "Перевод → 44345678987654444", category: "Перевод", amount: "-10 000 ₽", date: "Вчера, 15:39", positive: false },
-  { type: "out", title: "Перевод → 44345678987654444", category: "Перевод", amount: "-3 434 ₽", date: "14 февр., 23:59", positive: false },
-  { type: "in", title: "Пополнение баланса", category: "Пополнение", amount: "+676 ₽", date: "14 февр., 23:21", positive: true },
-  { type: "in", title: "Пополнение баланса", category: "Пополнение", amount: "+454 ₽", date: "14 февр., 23:03", positive: true },
-  { type: "out", title: "Оплатить: Мобильная связь (у56767667)", category: "Мобильная связь", amount: "-98 781 ₽", date: "14 февр., 22:43", positive: false },
-  { type: "in", title: "Пополнение счёта", category: "Пополнить", amount: "+152 001 ₽", date: "14 февр., 22:42", positive: true },
-];
-
 const cards = [
   { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "Chargeback", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted" },
   { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "Chargeback", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]" },
   { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "Chargeback", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]" },
 ];
+
+interface Transaction {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  created_at: string;
+}
 
 const OverviewTab = () => {
   const { t } = useLanguage();
@@ -44,8 +41,51 @@ const OverviewTab = () => {
   const touchStartX = useRef(0);
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [balance, setBalance] = useState("0,00");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
+
+  // Fetch profile (blocked status, balance placeholder) and transactions
+  useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_blocked")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        setIsBlocked(profile.is_blocked ?? false);
+      }
+
+      const { data: txData } = await supabase
+        .from("transactions")
+        .select("id, title, category, amount, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (txData) setTransactions(txData);
+    };
+    fetchData();
+
+    // Realtime for profile changes (block status)
+    const channel = supabase
+      .channel("profile-block-status")
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setIsBlocked(updated.is_blocked ?? false);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: TouchEvent) => {
@@ -57,6 +97,16 @@ const OverviewTab = () => {
   };
 
   const currentCard = cards[cardIndex];
+
+  const formatAmount = (amount: number) => {
+    const prefix = amount >= 0 ? "+" : "";
+    return `${prefix}${amount.toLocaleString("ru-RU", { minimumFractionDigits: 0 })} ₽`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + ", " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <div>
@@ -98,6 +148,16 @@ const OverviewTab = () => {
         </div>
       )}
 
+      {/* Block warning */}
+      {isBlocked && (
+        <div className="mb-4 p-4 rounded-2xl border border-destructive bg-destructive/10 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <p className="text-destructive text-sm">
+            Ваша карта была заблокирована. Для перевыпуска карты, пожалуйста, свяжитесь с Вашим менеджером или напишите в чат (внизу справа).
+          </p>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, {displayName} 👋</h1>
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
@@ -107,17 +167,19 @@ const OverviewTab = () => {
         {/* Left column */}
         <div className="flex-1 space-y-6">
           {/* Balance card */}
-          <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-primary p-5 md:p-6 relative">
+          <div className={`rounded-2xl p-5 md:p-6 relative ${isBlocked ? "bg-destructive/20 border border-destructive" : "bg-gradient-to-r from-primary/80 to-primary"}`}>
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-primary-foreground/80 text-sm font-medium">{t("Общий баланс")}</p>
-                <p className="text-3xl md:text-4xl font-bold text-primary-foreground mt-1">₽ 124 350,00</p>
-                <div className="flex items-center gap-2 mt-3">
-                  <span className="bg-primary-foreground/20 text-primary-foreground text-xs px-2 py-0.5 rounded-full">↗ +12.5%</span>
-                  <span className="text-primary-foreground/70 text-xs">{t("за последний месяц")}</span>
-                </div>
+                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
+                <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>₽ {balance}</p>
+                {!isBlocked && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="bg-primary-foreground/20 text-primary-foreground text-xs px-2 py-0.5 rounded-full">↗ +12.5%</span>
+                    <span className="text-primary-foreground/70 text-xs">{t("за последний месяц")}</span>
+                  </div>
+                )}
               </div>
-              <Eye className="w-5 h-5 text-primary-foreground/60" />
+              <Eye className={`w-5 h-5 ${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"}`} />
             </div>
           </div>
 
@@ -194,27 +256,33 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Последние операции")}</h3>
             <div className="space-y-0">
-              {transactions.map((tx, i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tx.positive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                      {tx.positive ? (
-                        <ArrowDownLeft className="w-4 h-4 text-primary" />
-                      ) : (
-                        <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-                      )}
+              {transactions.length === 0 && (
+                <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
+              )}
+              {transactions.map((tx) => {
+                const positive = tx.amount >= 0;
+                return (
+                  <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                        {positive ? (
+                          <ArrowDownLeft className="w-4 h-4 text-primary" />
+                        ) : (
+                          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-foreground text-sm font-medium truncate">{tx.title}</p>
+                        <p className="text-muted-foreground text-xs">{tx.category}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-foreground text-sm font-medium truncate">{tx.title}</p>
-                      <p className="text-muted-foreground text-xs">{tx.category}</p>
+                    <div className="text-right shrink-0 ml-2">
+                      <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
+                      <p className="text-muted-foreground text-xs">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <p className={`text-sm font-medium ${tx.positive ? 'text-primary' : 'text-foreground'}`}>{tx.amount}</p>
-                    <p className="text-muted-foreground text-xs">{tx.date}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -298,13 +366,13 @@ const OverviewTab = () => {
             <h3 className="text-foreground font-semibold mb-4">{t("Мои счета")}</h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs font-bold">RUB</div>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${isBlocked ? "bg-destructive text-destructive-foreground" : "bg-destructive text-destructive-foreground"}`}>RUB</div>
                 <div>
                   <p className="text-foreground text-sm font-medium">{t("Основной счёт")}</p>
                   <p className="text-muted-foreground text-xs">RUB</p>
                 </div>
               </div>
-              <p className="text-foreground text-sm font-medium">₽ 124 350,00</p>
+              <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-foreground"}`}>₽ {balance}</p>
             </div>
           </div>
         </div>

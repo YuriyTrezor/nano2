@@ -10,6 +10,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
@@ -26,7 +27,7 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } else {
-      const { error } = await signUp(email, password, displayName);
+      const { error } = await signUp(email, password, displayName, phone);
       if (error) {
         toast({ title: "Ошибка регистрации", description: error.message, variant: "destructive" });
       } else {
@@ -54,14 +55,23 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {!isLogin && (
-            <Input
-              type="text"
-              placeholder="Имя"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
-              required
-            />
+            <>
+              <Input
+                type="text"
+                placeholder="Имя"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
+                required
+              />
+              <Input
+                type="tel"
+                placeholder="Номер телефона"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
+              />
+            </>
           )}
           <Input
             type="email"
