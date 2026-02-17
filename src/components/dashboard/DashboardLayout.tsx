@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 
 const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
@@ -47,6 +48,32 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const [supportUnread, setSupportUnread] = useState(0);
+
+  // Fetch unread support messages count for admin
+  useEffect(() => {
+    if (!isAdmin) return;
+    
+    const fetchUnread = async () => {
+      const { data } = await supabase
+        .from("support_messages")
+        .select("id")
+        .eq("sender_role", "user")
+        .eq("is_read", false);
+      setSupportUnread(data?.length || 0);
+    };
+    
+    fetchUnread();
+    
+    const channel = supabase
+      .channel("sidebar-unread")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+    
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -111,7 +138,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   to={link.to}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                      "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors relative",
                       isActive
                         ? "text-primary bg-primary/10"
                         : link.highlight
@@ -122,6 +149,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 >
                   <link.icon className="w-4 h-4" />
                   {t(link.label)}
+                  {link.to === "/dashboard/support" && supportUnread > 0 && (
+                    <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                      {supportUnread}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>
