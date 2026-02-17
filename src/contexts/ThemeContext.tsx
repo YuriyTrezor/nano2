@@ -19,7 +19,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const applyTheme = (t: Theme) => {
     const resolved = t === "system" ? getSystemTheme() : t;
-    document.documentElement.className = `theme-${resolved}`;
+    document.documentElement.classList.remove("theme-dark", "theme-light", "theme-blue");
+    document.documentElement.classList.add(`theme-${resolved}`);
   };
 
   const setTheme = (t: Theme) => {
