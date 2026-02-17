@@ -1,4 +1,4 @@
-import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw } from "lucide-react";
+import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -44,6 +44,31 @@ const AdminTab = () => {
   const [balanceEdit, setBalanceEdit] = useState<{ index: number; amount: string; mode: "add" | "sub" } | null>(null);
   const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
   const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
+  const sortedClients = [...clients].sort((a, b) => {
+    if (!sortField) return 0;
+    let valA = "", valB = "";
+    switch (sortField) {
+      case "email": valA = a.email; valB = b.email; break;
+      case "name": valA = a.name; valB = b.name; break;
+      case "balance": valA = a.balance; valB = b.balance; break;
+      case "status": valA = a.status; valB = b.status; break;
+      case "date": valA = a.date; valB = b.date; break;
+    }
+    const cmp = valA.localeCompare(valB, "ru");
+    return sortAsc ? cmp : -cmp;
+  });
 
   const fetchRegistrations = async () => {
     setLoading(true);
@@ -248,20 +273,25 @@ const AdminTab = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-muted-foreground text-xs uppercase tracking-wider border-b border-border">
-                <th className="text-left pb-3 font-medium">{t("Email")}</th>
-                <th className="text-left pb-3 font-medium">{t("Имя")}</th>
-                <th className="text-left pb-3 font-medium">{t("Баланс")}</th>
-                <th className="text-left pb-3 font-medium">{t("Статус")}</th>
-                <th className="text-left pb-3 font-medium">{t("Дата")}</th>
+                {["email", "name", "balance", "status", "date"].map(field => (
+                  <th key={field} className="text-left pb-3 font-medium">
+                    <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                      {t(field === "email" ? "Email" : field === "name" ? "Имя" : field === "balance" ? "Баланс" : field === "status" ? "Статус" : "Дата")}
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === field ? "text-primary" : ""}`} />
+                    </button>
+                  </th>
+                ))}
                 <th className="text-right pb-3 font-medium">{t("Действия")}</th>
               </tr>
             </thead>
             <tbody>
-              {clients.map((client, i) => (
+              {sortedClients.map((client, i) => {
+                const originalIndex = clients.indexOf(client);
+                return (
                 <tr key={i} className="border-b border-border last:border-0">
                   <td className="py-3 text-foreground">{client.email}</td>
                   <td className="py-3 text-foreground">
-                    <button onClick={() => setEditingName({ index: i, name: client.name })} className="hover:text-primary hover:underline transition-colors">
+                    <button onClick={() => setEditingName({ index: originalIndex, name: client.name })} className="hover:text-primary hover:underline transition-colors">
                       {client.name}
                     </button>
                   </td>
@@ -272,26 +302,26 @@ const AdminTab = () => {
                   <td className="py-3 text-muted-foreground">{client.date}</td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
-                      <button onClick={() => setBalanceEdit({ index: i, amount: "", mode: "add" })} className="p-1 text-muted-foreground hover:text-foreground" title="Добавить">
+                      <button onClick={() => setBalanceEdit({ index: originalIndex, amount: "", mode: "add" })} className="p-1 text-muted-foreground hover:text-foreground" title="Добавить">
                         <Plus className="w-3 h-3" />
                       </button>
                       <span className="text-muted-foreground">/</span>
-                      <button onClick={() => setBalanceEdit({ index: i, amount: "", mode: "sub" })} className="p-1 text-muted-foreground hover:text-foreground" title="Списать">
+                      <button onClick={() => setBalanceEdit({ index: originalIndex, amount: "", mode: "sub" })} className="p-1 text-muted-foreground hover:text-foreground" title="Списать">
                         <Minus className="w-3 h-3" />
                       </button>
-                      <button onClick={() => setCardAssign({ index: i, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                      <button onClick={() => setCardAssign({ index: originalIndex, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <CreditCard className="w-3 h-3" /> {client.card ?? t("Карта")}
                       </button>
                       <button onClick={() => toast({ title: t("Информация"), description: "Операция выполнена" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <Send className="w-3 h-3" /> {t("Операция")}
                       </button>
                       <button
-                        onClick={() => handleBlock(i)}
+                        onClick={() => handleBlock(originalIndex)}
                         className={`p-1.5 text-xs px-2 py-1 rounded font-medium ${client.blocked ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}
                       >
                         {client.blocked ? t("Разбл.") : t("Блок.")}
                       </button>
-                      <button onClick={() => setSessionsView({ index: i })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                      <button onClick={() => setSessionsView({ index: originalIndex })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <Monitor className="w-3 h-3" /> {t("Сессии")}
                       </button>
                       <button onClick={() => toast({ title: t("Информация"), description: `${client.email} — ${client.balance}` })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
@@ -313,14 +343,14 @@ const AdminTab = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t("Отмена")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(i)}>{t("Удалить")}</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleDelete(originalIndex)}>{t("Удалить")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ); })}
             </tbody>
           </table>
         </div>
