@@ -26,7 +26,7 @@ const adminLinks = [
 
 const bottomLinks = [
   { to: "/dashboard/settings", icon: Settings, label: "Настройки" },
-  { to: "/dashboard/help", icon: HelpCircle, label: "Поддержка" },
+  { to: "/support", icon: HelpCircle, label: "Поддержка" },
 ];
 
 const notifications = [
