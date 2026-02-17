@@ -82,28 +82,43 @@ const MiniCatalogCard = ({ gradient, label, type }: { gradient: string; label: s
 
 const CardsTab = () => {
   const { t } = useLanguage();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [blockedAlert, setBlockedAlert] = useState(false);
-  const [cardType, setCardType] = useState<string | null>(null);
+  const [userCards, setUserCards] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    const fetchCard = async () => {
+    const fetchCards = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("card_type" as any)
+        .select("cards")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) setCardType((data as any).card_type ?? null);
+      if (data) setUserCards((data as any).cards ?? []);
       setLoading(false);
     };
-    fetchCard();
+    fetchCards();
+
+    const channel = supabase
+      .channel("cards-realtime")
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setUserCards(updated.cards ?? []);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  const assignedCard = cardCatalog.find(c => c.name === cardType);
+  const activeCards = cardCatalog.filter(c => userCards.includes(c.name));
 
-  const handleCardAction = (action: string) => {
+  const handleCardAction = () => {
     toast.info("Для выполнения данной операции свяжитесь с Вашим менеджером или напишите в чат поддержки.");
   };
 
@@ -130,71 +145,69 @@ const CardsTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Active card */}
-      {!loading && assignedCard ? (
+      {/* Active cards */}
+      {!loading && activeCards.length > 0 ? (
         <div className="mb-8">
-          <h2 className="text-foreground font-semibold text-lg mb-4">Ваша карта</h2>
-          <div className="max-w-sm">
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="bg-card border border-border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center">
-                        <span className="text-muted-foreground text-[10px]">◇</span>
+          <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeCards.map(card => (
+              <Popover key={card.name}>
+                <PopoverTrigger asChild>
+                  <div className="bg-card border border-border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center">
+                          <span className="text-muted-foreground text-[10px]">◇</span>
+                        </div>
+                        <span className="text-foreground text-sm">NeoBank</span>
                       </div>
-                      <span className="text-foreground text-sm">NeoBank</span>
+                      <div className="flex items-center gap-1.5">
+                        <Wifi className="w-3 h-3 text-primary rotate-90" />
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/20 text-primary">Активна</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Wifi className="w-3 h-3 text-primary rotate-90" />
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/20 text-primary">
-                        Активна
-                      </span>
+                    <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 mt-3`}>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-8 h-5 bg-yellow-500 rounded" />
+                        <Wifi className="w-4 h-4 text-white/40 rotate-90" />
+                      </div>
+                      <p className="text-white font-mono text-base tracking-widest mb-3">{card.number}</p>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-white/50 text-[9px]">ВЛАДЕЛЕЦ</p>
+                          <p className="text-white text-xs">{user?.user_metadata?.display_name || user?.email?.split("@")[0]}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/50 text-[9px]">СРОК</p>
+                          <p className="text-white text-xs">{card.exp}</p>
+                        </div>
+                        <p className="text-white font-bold italic">{card.type === "visa" ? "VISA" : "MC"}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-muted-foreground text-xs">{card.name} • {card.limit}</span>
                     </div>
                   </div>
-                  <div className={`bg-gradient-to-br ${assignedCard.gradient} rounded-xl p-4 mt-3`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="w-8 h-5 bg-yellow-500 rounded" />
-                      <Wifi className="w-4 h-4 text-white/40 rotate-90" />
-                    </div>
-                    <p className="text-white font-mono text-base tracking-widest mb-3">{assignedCard.number}</p>
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-white/50 text-[9px]">ВЛАДЕЛЕЦ</p>
-                        <p className="text-white text-xs">{user?.user_metadata?.display_name || user?.email?.split("@")[0]}</p>
-                      </div>
-                      <div>
-                        <p className="text-white/50 text-[9px]">СРОК</p>
-                        <p className="text-white text-xs">{assignedCard.exp}</p>
-                      </div>
-                      <p className="text-white font-bold italic">
-                        {assignedCard.type === "visa" ? "VISA" : "MC"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-muted-foreground text-xs">{assignedCard.name} • {assignedCard.limit}</span>
-                  </div>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-1.5 bg-popover border border-border" align="center">
-                <button onClick={() => handleCardAction("reissue")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
-                  <RotateCcw className="w-4 h-4 text-muted-foreground" /> Перевыпустить
-                </button>
-                <button onClick={() => handleCardAction("plastic")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
-                  <CardIcon className="w-4 h-4 text-muted-foreground" /> Заказать пластиковую
-                </button>
-                <button onClick={() => handleCardAction("block")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-secondary transition-colors">
-                  <ShieldOff className="w-4 h-4" /> Заблокировать
-                </button>
-              </PopoverContent>
-            </Popover>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-1.5 bg-popover border border-border" align="center">
+                  <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
+                    <RotateCcw className="w-4 h-4 text-muted-foreground" /> Перевыпустить
+                  </button>
+                  <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
+                    <CardIcon className="w-4 h-4 text-muted-foreground" /> Заказать пластиковую
+                  </button>
+                  <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-secondary transition-colors">
+                    <ShieldOff className="w-4 h-4" /> Заблокировать
+                  </button>
+                </PopoverContent>
+              </Popover>
+            ))}
           </div>
         </div>
       ) : !loading ? (
         <div className="mb-8 p-6 bg-card border border-border rounded-2xl text-center">
           <CreditCard className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-foreground font-medium mb-1">У вас нет активной карты</p>
+          <p className="text-foreground font-medium mb-1">У вас нет активных карт</p>
           <p className="text-muted-foreground text-sm">Свяжитесь с менеджером или напишите в чат поддержки для оформления карты.</p>
         </div>
       ) : null}
@@ -204,8 +217,8 @@ const CardsTab = () => {
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {cardCatalog.map((card) => (
-          <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${cardType === card.name ? "border-primary" : "border-border"}`}>
-            {cardType === card.name && (
+          <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${userCards.includes(card.name) ? "border-primary" : "border-border"}`}>
+            {userCards.includes(card.name) && (
               <div className="flex items-center gap-1.5 mb-3">
                 <Check className="w-4 h-4 text-primary" />
                 <span className="text-primary text-xs font-semibold">Ваша карта</span>

@@ -42,7 +42,7 @@ const OverviewTab = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceHidden, setBalanceHidden] = useState(false);
-  const [cardType, setCardType] = useState<string | null>(null);
+  const [userCards, setUserCards] = useState<string[]>([]);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
@@ -72,12 +72,12 @@ const OverviewTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, card_type" as any)
+        .select("is_blocked, cards")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setIsBlocked((profile as any).is_blocked ?? false);
-        setCardType((profile as any).card_type ?? null);
+        setUserCards((profile as any).cards ?? []);
       }
 
       const { data: txData } = await supabase
@@ -100,7 +100,7 @@ const OverviewTab = () => {
       }, (payload) => {
         const updated = payload.new as any;
         setIsBlocked(updated.is_blocked ?? false);
-        setCardType(updated.card_type ?? null);
+        setUserCards(updated.cards ?? []);
       })
       .subscribe();
 
@@ -122,7 +122,9 @@ const OverviewTab = () => {
     localStorage.setItem(key, String(next));
   };
 
-  const currentCard = cardType && allCards[cardType] ? { ...allCards[cardType], holder: displayName } : null;
+  // Show first card on overview (primary card)
+  const primaryCardType = userCards.length > 0 ? userCards[userCards.length - 1] : null;
+  const currentCard = primaryCardType && allCards[primaryCardType] ? { ...allCards[primaryCardType], holder: displayName } : null;
 
   const formatAmount = (amount: number) => {
     const prefix = amount >= 0 ? "+" : "";
