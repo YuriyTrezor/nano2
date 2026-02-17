@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,16 +29,15 @@ const bottomLinks = [
   { to: "/support", icon: HelpCircle, label: "Поддержка" },
 ];
 
-const notifications = [
-  { id: 1, text: "Перевод +103 434 ₽ получен", time: "16:42", read: false },
-  { id: 2, text: "Возврат средств +5 000 ₽", time: "16:25", read: false },
-  { id: 3, text: "Перевод -25 000 ₽ выполнен", time: "16:18", read: true },
-  { id: 4, text: "Перевод -10 000 ₽ выполнен", time: "15:39", read: true },
-  { id: 5, text: "Пополнение баланса +676 ₽", time: "23:21", read: false },
-];
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
+}
+
+interface Notification {
+  id: string;
+  text: string;
+  time: string;
+  read: boolean;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -49,6 +48,63 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const [supportUnread, setSupportUnread] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Fetch real notifications from transactions
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from("transactions")
+        .select("id, title, amount, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (data) {
+        setNotifications(data.map(tx => ({
+          id: tx.id,
+          text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
+          time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
+          read: true,
+        })));
+      }
+    };
+    fetchNotifications();
+
+    const channel = supabase
+      .channel("notifications-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` }, (payload) => {
+        const tx = payload.new as any;
+        setNotifications(prev => [{
+          id: tx.id,
+          text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
+          time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
+          read: false,
+        }, ...prev].slice(0, 10));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // Fetch blocked status
+  useEffect(() => {
+    if (!user) return;
+    const fetchBlocked = async () => {
+      const { data } = await supabase.from("profiles").select("is_blocked").eq("user_id", user.id).maybeSingle();
+      if (data) setIsBlocked(data.is_blocked ?? false);
+    };
+    fetchBlocked();
+
+    const ch = supabase
+      .channel("layout-block")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` }, (payload) => {
+        setIsBlocked((payload.new as any).is_blocked ?? false);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
 
   // Fetch unread support messages count for admin
   useEffect(() => {
@@ -225,6 +281,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <p className="text-foreground font-semibold text-sm">Уведомления</p>
               </div>
               <div className="max-h-64 overflow-y-auto">
+                {notifications.length === 0 && (
+                  <div className="px-3 py-4 text-center text-muted-foreground text-sm">Нет уведомлений</div>
+                )}
                 {notifications.map(n => (
                   <div key={n.id} className={`px-3 py-2.5 border-b border-border last:border-0 ${!n.read ? "bg-primary/5" : ""}`}>
                     <div className="flex items-start gap-2">
@@ -273,7 +332,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <Activity className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-[10px] text-muted-foreground">Статус</p>
-                    <p className="text-foreground text-xs font-medium">Активен</p>
+                    <p className={`text-xs font-medium ${isBlocked ? "text-destructive" : "text-foreground"}`}>
+                      {isBlocked ? "Заблокирован" : "Активен"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -293,6 +354,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                   <Settings className="w-4 h-4" />
                   Настройки
+                </button>
+                <button onClick={() => navigate("/dashboard/verification")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
+                  Верификация
                 </button>
                 <button
                   onClick={handleSignOut}

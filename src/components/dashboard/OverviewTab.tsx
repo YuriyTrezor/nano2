@@ -51,6 +51,23 @@ const OverviewTab = () => {
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
+  // Compute real % change: compare last 30 days vs previous 30 days
+  const computePercentChange = () => {
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const recent = transactions.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
+    const older = transactions.filter(tx => {
+      const age = now - new Date(tx.created_at).getTime();
+      return age >= thirtyDays && age < thirtyDays * 2;
+    });
+    const recentSum = recent.reduce((s, tx) => s + Number(tx.amount), 0);
+    const olderSum = older.reduce((s, tx) => s + Number(tx.amount), 0);
+    if (olderSum === 0 && recentSum === 0) return null;
+    if (olderSum === 0) return recentSum > 0 ? 100 : -100;
+    return ((recentSum - olderSum) / Math.abs(olderSum)) * 100;
+  };
+  const percentChange = computePercentChange();
+
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
@@ -143,7 +160,7 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Pay services modal */}
+      {/* Pay services modal — MIR gateway message */}
       {payAlert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPayAlert(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
@@ -153,7 +170,7 @@ const OverviewTab = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {paymentServices.map((svc, i) => (
-                <button key={i} onClick={() => { setPayAlert(false); toast.info(`Для оплаты «${svc.label}» свяжитесь с менеджером`); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <button key={i} onClick={() => { setPayAlert(false); toast.info("Настройте, пожалуйста, платёжный шлюз МИР для оплаты"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <svc.icon className="w-5 h-5 text-primary" />
                   </div>
@@ -191,9 +208,11 @@ const OverviewTab = () => {
                 <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
                 </p>
-                {!isBlocked && !balanceHidden && (
+                {!isBlocked && !balanceHidden && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
-                    <span className="bg-primary-foreground/20 text-primary-foreground text-xs px-2 py-0.5 rounded-full">↗ +12.5%</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
+                      {percentChange >= 0 ? "↗" : "↘"} {percentChange >= 0 ? "+" : ""}{percentChange.toFixed(1)}%
+                    </span>
                     <span className="text-primary-foreground/70 text-xs">{t("за последний месяц")}</span>
                   </div>
                 )}
