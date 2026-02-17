@@ -1,20 +1,23 @@
-import { Shield, UserPlus, Plus, Minus, CreditCard, Send, Eye, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface Client {
   userId: string;
@@ -39,16 +42,25 @@ const initialClients: Client[] = [
 
 const AdminTab = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [loading, setLoading] = useState(false);
   const [editingName, setEditingName] = useState<{ index: number; name: string } | null>(null);
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
   const [createOpen, setCreateOpen] = useState(false);
-  const [balanceEdit, setBalanceEdit] = useState<{ index: number; amount: string; mode: "add" | "sub" } | null>(null);
   const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
   const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
+
+  // Transaction dialog state
+  const [txDialog, setTxDialog] = useState<{
+    index: number;
+    mode: "add" | "sub";
+    amount: string;
+    comment: string;
+    sender: string;
+  } | null>(null);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -80,7 +92,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at")
+        .select("user_id, display_name, email, phone, created_at, is_blocked")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -95,13 +107,25 @@ const AdminTab = () => {
             phone: p.phone ?? "—",
             name: p.display_name ?? "Без имени",
             balance: "₽ 0,00",
-            status: "Активен",
-            statusColor: "text-primary",
+            status: p.is_blocked ? "Заблокирован" : "Активен",
+            statusColor: p.is_blocked ? "text-destructive" : "text-primary",
             registrationDate: new Date(p.created_at).toLocaleDateString("ru-RU"),
             lastLogin: "—",
-            blocked: false,
+            blocked: p.is_blocked,
             sessions: [],
           }));
+
+        // Also load balances from transactions for DB users
+        for (const client of dbClients) {
+          const { data: txData } = await supabase
+            .from("transactions")
+            .select("amount")
+            .eq("user_id", client.userId);
+          if (txData && txData.length > 0) {
+            const total = txData.reduce((sum, tx) => sum + Number(tx.amount), 0);
+            client.balance = `₽ ${total.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`;
+          }
+        }
 
         const mergedEmails = new Set(initialClients.map(c => c.email));
         const newFromDB = dbClients.filter(c => !mergedEmails.has(c.email));
@@ -129,7 +153,6 @@ const AdminTab = () => {
     setClients(prev => prev.map((c, i) =>
       i === index ? { ...c, blocked: newBlocked, status: newBlocked ? "Заблокирован" : "Активен", statusColor: newBlocked ? "text-destructive" : "text-primary" } : c
     ));
-    // Update in DB if userId exists
     if (client.userId) {
       await supabase.from("profiles").update({ is_blocked: newBlocked }).eq("user_id", client.userId);
     }
@@ -156,18 +179,48 @@ const AdminTab = () => {
     toast({ title: t("Информация"), description: "Пользователь создан" });
   };
 
-  const handleBalanceChange = () => {
-    if (!balanceEdit) return;
-    const amount = parseFloat(balanceEdit.amount.replace(/\s/g, "").replace(",", "."));
-    if (isNaN(amount)) return;
+  const handleTransaction = async () => {
+    if (!txDialog) return;
+    const amount = parseFloat(txDialog.amount.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: "Ошибка", description: "Введите корректную сумму", variant: "destructive" });
+      return;
+    }
+
+    const client = clients[txDialog.index];
+    const finalAmount = txDialog.mode === "add" ? amount : -amount;
+    const title = txDialog.mode === "add"
+      ? `Пополнение${txDialog.sender ? ` от ${txDialog.sender}` : ""}`
+      : `Списание${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
+    const category = txDialog.mode === "add" ? "Пополнение" : "Списание";
+
+    // Save to DB if user exists
+    if (client.userId) {
+      const { error } = await supabase.from("transactions").insert({
+        user_id: client.userId,
+        title: `${title}${txDialog.comment && txDialog.mode === "add" ? `. ${txDialog.comment}` : ""}`,
+        category,
+        amount: finalAmount,
+      });
+      if (error) {
+        toast({ title: "Ошибка", description: "Не удалось сохранить операцию: " + error.message, variant: "destructive" });
+        return;
+      }
+    }
+
+    // Update local balance
     setClients(prev => prev.map((c, i) => {
-      if (i !== balanceEdit.index) return c;
+      if (i !== txDialog.index) return c;
       const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\s/g, "").replace(",", "."));
-      const newBal = balanceEdit.mode === "add" ? current + amount : current - amount;
+      const newBal = current + finalAmount;
       return { ...c, balance: `₽ ${newBal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}` };
     }));
-    setBalanceEdit(null);
-    toast({ title: t("Информация"), description: "Баланс обновлён" });
+
+    toast({
+      title: "Успешно",
+      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${amount.toLocaleString("ru-RU")} ₽ — ${client.name}`,
+    });
+    setTxDialog(null);
   };
 
   const handleAssignCard = () => {
@@ -215,14 +268,64 @@ const AdminTab = () => {
         </div>
       </div>
 
-      {/* Balance edit dialog */}
-      <Dialog open={!!balanceEdit} onOpenChange={open => !open && setBalanceEdit(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{balanceEdit?.mode === "add" ? "Добавить" : "Списать"} средства</DialogTitle></DialogHeader>
-          <Input placeholder="Сумма" value={balanceEdit?.amount ?? ""} onChange={e => setBalanceEdit(prev => prev ? { ...prev, amount: e.target.value } : null)} />
+      {/* Transaction dialog */}
+      <Dialog open={!!txDialog} onOpenChange={open => !open && setTxDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {txDialog?.mode === "add" ? "Зачисление средств" : "Списание средств"}
+              {txDialog && ` — ${clients[txDialog.index]?.name}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={txDialog?.mode === "add" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "add" } : null)}
+              >
+                Зачислить
+              </Button>
+              <Button
+                variant={txDialog?.mode === "sub" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}
+              >
+                Списать
+              </Button>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
+              <Input
+                placeholder="10 000"
+                value={txDialog?.amount ?? ""}
+                onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)}
+                type="number"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">От кого / Кому</Label>
+              <Input
+                placeholder="Например: ООО Ромашка"
+                value={txDialog?.sender ?? ""}
+                onChange={e => setTxDialog(prev => prev ? { ...prev, sender: e.target.value } : null)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Комментарий</Label>
+              <Textarea
+                placeholder="Пополнение баланса, возврат средств и т.д."
+                value={txDialog?.comment ?? ""}
+                onChange={e => setTxDialog(prev => prev ? { ...prev, comment: e.target.value } : null)}
+                rows={2}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBalanceEdit(null)}>{t("Отмена")}</Button>
-            <Button onClick={handleBalanceChange}>{t("Сохранить")}</Button>
+            <Button variant="outline" onClick={() => setTxDialog(null)}>{t("Отмена")}</Button>
+            <Button onClick={handleTransaction}>
+              {txDialog?.mode === "add" ? "Зачислить" : "Списать"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -318,18 +421,15 @@ const AdminTab = () => {
                   <td className="py-3 text-muted-foreground text-xs">{client.lastLogin}</td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
-                      <button onClick={() => setBalanceEdit({ index: originalIndex, amount: "", mode: "add" })} className="p-1 text-muted-foreground hover:text-foreground" title="Добавить">
-                        <Plus className="w-3 h-3" />
+                      <button
+                        onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "" })}
+                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
+                        title="Добавить / Списать средства"
+                      >
+                        <Send className="w-3 h-3" /> Операция
                       </button>
-                      <span className="text-muted-foreground">/</span>
-                      <button onClick={() => setBalanceEdit({ index: originalIndex, amount: "", mode: "sub" })} className="p-1 text-muted-foreground hover:text-foreground" title="Списать">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <button onClick={() => setCardAssign({ index: originalIndex, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                      <button onClick={() => setCardAssign({ index: originalIndex, type: client.card ?? "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <CreditCard className="w-3 h-3" /> {client.card ?? t("Карта")}
-                      </button>
-                      <button onClick={() => toast({ title: t("Информация"), description: "Операция выполнена" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
-                        <Send className="w-3 h-3" /> {t("Операция")}
                       </button>
                       <button
                         onClick={() => handleBlock(originalIndex)}
@@ -339,12 +439,6 @@ const AdminTab = () => {
                       </button>
                       <button onClick={() => setSessionsView({ index: originalIndex })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
                         <Monitor className="w-3 h-3" /> {t("Сессии")}
-                      </button>
-                      <button onClick={() => toast({ title: t("Информация"), description: `${client.email} — ${client.balance}` })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                      </button>
-                      <button onClick={() => toast({ title: t("Операции"), description: "Последних операций: 9" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
-                        {t("Операции")}
                       </button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
