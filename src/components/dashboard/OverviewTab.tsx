@@ -281,7 +281,14 @@ const OverviewTab = () => {
                                 <p className="text-white/50 text-[10px]">CVV</p>
                                 <p className="text-white text-xs font-medium">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
                               </button>
-                              <p className="text-white font-bold text-lg italic">{card.type}</p>
+                            {card.type === "VISA" ? (
+                              <p className="text-white font-bold text-lg italic">VISA</p>
+                            ) : (
+                              <span className="flex items-center">
+                                <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                                <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                              </span>
+                            )}
                             </div>
                           </div>
                         </div>
@@ -415,7 +422,14 @@ const OverviewTab = () => {
                               <p className="text-white/50 text-[10px]">CVV</p>
                               <p className="text-white text-xs font-medium">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
                             </button>
-                            <p className="text-white font-bold text-lg italic">{card.type}</p>
+                            {card.type === "VISA" ? (
+                              <p className="text-white font-bold text-lg italic">VISA</p>
+                            ) : (
+                              <span className="flex items-center">
+                                <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                                <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -211,7 +211,14 @@ const CardsTab = () => {
                           <p className="text-white/50 text-[9px]">CVV</p>
                           <p className="text-white text-xs">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
                         </button>
-                        <p className="text-white font-bold italic">{card.type === "visa" ? "VISA" : "MC"}</p>
+                        {card.type === "visa" ? (
+                          <p className="text-white font-bold italic">VISA</p>
+                        ) : (
+                          <span className="flex items-center">
+                            <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                            <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between">

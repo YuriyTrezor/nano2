@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, ArrowRightLeft, Building2, X } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, ArrowRightLeft, Building2, X, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -6,6 +6,10 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type TransferType = "card" | "own" | "bank";
 
@@ -39,6 +43,7 @@ const TransfersTab = () => {
   const [bankAccount, setBankAccount] = useState("");
   const [bankName, setBankName] = useState("");
   const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedAlert, setBlockedAlert] = useState(false);
 
   // Compute balance from transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -75,7 +80,7 @@ const TransfersTab = () => {
   const handleSubmit = async () => {
     if (!user) return;
     if (isBlocked) {
-      toast.error("Ваш аккаунт заблокирован. Переводы недоступны. Свяжитесь с менеджером.");
+      setBlockedAlert(true);
       return;
     }
     const sum = parseFloat(amount.replace(/\s/g, ""));
@@ -159,7 +164,7 @@ const TransfersTab = () => {
         </div>
         <Button onClick={() => {
           if (isBlocked) {
-            toast.error("Ваш аккаунт заблокирован. Переводы недоступны. Свяжитесь с менеджером.");
+            setBlockedAlert(true);
             return;
           }
           setShowForm(true);
@@ -167,6 +172,22 @@ const TransfersTab = () => {
           <CreditCard className="w-4 h-4" /> Новый перевод
         </Button>
       </div>
+
+      {/* Blocked alert dialog */}
+      <AlertDialog open={blockedAlert} onOpenChange={setBlockedAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Карта заблокирована
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Ваша карта была заблокирована. Для перевыпуска карты, пожалуйста, свяжитесь с Вашим менеджером или напишите в чат (внизу справа).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Transfer form modal */}
       {showForm && (
