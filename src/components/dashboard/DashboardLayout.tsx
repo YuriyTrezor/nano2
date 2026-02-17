@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, ChevronRight
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, ChevronRight, Phone, Mail, BadgeCheck, Calendar, MapPin
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -247,11 +247,47 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 {initials}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-2">
-              <div className="px-3 py-2 border-b border-border mb-1">
-                <p className="text-foreground text-sm font-medium truncate">{displayName}</p>
-                <p className="text-muted-foreground text-xs truncate">{user?.email}</p>
+            <PopoverContent align="end" className="w-72 p-2">
+              {/* Profile card */}
+              <div className="px-3 py-3 border-b border-border mb-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0">
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-foreground text-sm font-semibold truncate">{displayName}</p>
+                    <p className="text-muted-foreground text-xs truncate">ID: {user?.id?.slice(0, 8)}</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{user?.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-3.5 h-3.5 shrink-0" />
+                    <span>+7 (900) 000-00-00</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5 shrink-0" />
+                    <span>Регистрация: {user?.created_at ? new Date(user.created_at).toLocaleDateString("ru-RU") : "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span>Россия, Москва</span>
+                  </div>
+                </div>
               </div>
+              <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <User className="w-4 h-4" />
+                Профиль
+                <ChevronRight className="w-3 h-3 ml-auto" />
+              </button>
+              <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <BadgeCheck className="w-4 h-4" />
+                Верификация
+                <ChevronRight className="w-3 h-3 ml-auto" />
+              </button>
               <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Settings className="w-4 h-4" />
                 Настройки

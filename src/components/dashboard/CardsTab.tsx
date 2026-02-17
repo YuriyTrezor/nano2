@@ -229,7 +229,10 @@ const CardsTab = () => {
               ))}
             </div>
 
-            <Button className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button
+              className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
+            >
               Купить — {card.price}
             </Button>
           </div>

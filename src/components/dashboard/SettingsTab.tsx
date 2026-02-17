@@ -150,7 +150,7 @@ const SettingsTab = () => {
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span className="text-xs font-bold">GB</span> English
+              <span className="text-xs font-bold">EN</span> English
             </button>
           </div>
         </div>
