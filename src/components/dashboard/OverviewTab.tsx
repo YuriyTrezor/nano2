@@ -1,4 +1,4 @@
-import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef, useEffect, TouchEvent } from "react";
@@ -42,12 +42,15 @@ const OverviewTab = () => {
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [balance, setBalance] = useState("0,00");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balanceHidden, setBalanceHidden] = useState(false);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Fetch profile (blocked status, balance placeholder) and transactions
+  // Compute balance from transactions
+  const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
+
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
@@ -65,12 +68,11 @@ const OverviewTab = () => {
         .select("id, title, category, amount, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(100);
       if (txData) setTransactions(txData);
     };
     fetchData();
 
-    // Realtime for profile changes (block status)
     const channel = supabase
       .channel("profile-block-status")
       .on("postgres_changes", {
@@ -86,6 +88,21 @@ const OverviewTab = () => {
 
     return () => { supabase.removeChannel(channel); };
   }, [user]);
+
+  // Load balance hidden preference
+  useEffect(() => {
+    if (!user) return;
+    const key = `balance_hidden_${user.id}`;
+    setBalanceHidden(localStorage.getItem(key) === "true");
+  }, [user]);
+
+  const toggleBalanceHidden = () => {
+    if (!user) return;
+    const key = `balance_hidden_${user.id}`;
+    const next = !balanceHidden;
+    setBalanceHidden(next);
+    localStorage.setItem(key, String(next));
+  };
 
   const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: TouchEvent) => {
@@ -171,15 +188,19 @@ const OverviewTab = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>₽ {balance}</p>
-                {!isBlocked && (
+                <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
+                  {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
+                </p>
+                {!isBlocked && !balanceHidden && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className="bg-primary-foreground/20 text-primary-foreground text-xs px-2 py-0.5 rounded-full">↗ +12.5%</span>
                     <span className="text-primary-foreground/70 text-xs">{t("за последний месяц")}</span>
                   </div>
                 )}
               </div>
-              <Eye className={`w-5 h-5 ${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"}`} />
+              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity`}>
+                {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 
@@ -259,7 +280,7 @@ const OverviewTab = () => {
               {transactions.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
               )}
-              {transactions.map((tx) => {
+              {transactions.slice(0, 20).map((tx) => {
                 const positive = tx.amount >= 0;
                 return (
                   <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
@@ -372,7 +393,9 @@ const OverviewTab = () => {
                   <p className="text-muted-foreground text-xs">RUB</p>
                 </div>
               </div>
-              <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-foreground"}`}>₽ {balance}</p>
+              <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-foreground"}`}>
+                {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
+              </p>
             </div>
           </div>
         </div>
