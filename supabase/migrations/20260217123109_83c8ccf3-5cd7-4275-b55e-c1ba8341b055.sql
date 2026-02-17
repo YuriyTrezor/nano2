@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN card_type text DEFAULT NULL;
