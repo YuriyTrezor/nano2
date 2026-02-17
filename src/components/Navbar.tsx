@@ -19,6 +19,7 @@ const Navbar = () => {
             <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">О картах</a>
             <a href="#reviews" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Отзывы</a>
             <a href="#contacts" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Контакты</a>
+            <a href="/support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Поддержка</a>
           </div>
         </div>
         <div className="flex items-center gap-3">
