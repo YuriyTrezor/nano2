@@ -18,6 +18,7 @@ import {
 
 interface Client {
   email: string;
+  phone: string;
   name: string;
   balance: string;
   status: string;
@@ -29,9 +30,9 @@ interface Client {
 }
 
 const initialClients: Client[] = [
-  { email: "koltunov.1978@list.ru", name: "Колтунов Павел", balance: "₽ 787 663,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, card: "Standard", sessions: [{ ip: "185.220.101.34", device: "Windows / Chrome", time: "16.02.2026, 14:23" }] },
-  { email: "tory_york@mail.ru", name: "Владимир Анатольевич Гончаров", balance: "₽ 21 096 779,00", status: "Заблокирован", statusColor: "text-destructive", date: "16.02.2026", blocked: true, card: "Gold", sessions: [{ ip: "94.25.170.12", device: "iPhone / Safari", time: "16.02.2026, 12:01" }, { ip: "94.25.170.12", device: "iPad / Safari", time: "15.02.2026, 09:44" }] },
-  { email: "yuriyzhuravlev2018@gmail.com", name: "Chargeback", balance: "₽ 124 350,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, sessions: [{ ip: "77.88.55.60", device: "Android / Chrome", time: "16.02.2026, 15:58" }] },
+  { email: "koltunov.1978@list.ru", phone: "+7 (900) 111-22-33", name: "Колтунов Павел", balance: "₽ 787 663,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, card: "Standard", sessions: [{ ip: "185.220.101.34", device: "Windows / Chrome", time: "16.02.2026, 14:23" }] },
+  { email: "tory_york@mail.ru", phone: "+7 (900) 333-44-55", name: "Владимир Анатольевич Гончаров", balance: "₽ 21 096 779,00", status: "Заблокирован", statusColor: "text-destructive", date: "16.02.2026", blocked: true, card: "Gold", sessions: [{ ip: "94.25.170.12", device: "iPhone / Safari", time: "16.02.2026, 12:01" }, { ip: "94.25.170.12", device: "iPad / Safari", time: "15.02.2026, 09:44" }] },
+  { email: "yuriyzhuravlev2018@gmail.com", phone: "+7 (900) 000-00-00", name: "Chargeback", balance: "₽ 124 350,00", status: "Активен", statusColor: "text-primary", date: "14.02.2026", blocked: false, sessions: [{ ip: "77.88.55.60", device: "Android / Chrome", time: "16.02.2026, 15:58" }] },
 ];
 
 const AdminTab = () => {
@@ -61,6 +62,7 @@ const AdminTab = () => {
     let valA = "", valB = "";
     switch (sortField) {
       case "email": valA = a.email; valB = b.email; break;
+      case "phone": valA = a.phone; valB = b.phone; break;
       case "name": valA = a.name; valB = b.name; break;
       case "balance": valA = a.balance; valB = b.balance; break;
       case "status": valA = a.status; valB = b.status; break;
@@ -75,7 +77,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, created_at")
+        .select("user_id, display_name, email, phone, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -83,9 +85,10 @@ const AdminTab = () => {
       if (data && data.length > 0) {
         const existingEmails = new Set(initialClients.map(c => c.email));
         const dbClients: Client[] = data
-          .filter(p => !existingEmails.has(p.display_name ?? ""))
+          .filter(p => !existingEmails.has(p.email ?? ""))
           .map(p => ({
-            email: p.display_name?.includes("@") ? p.display_name : `user-${p.user_id.slice(0, 8)}`,
+            email: p.email ?? `user-${p.user_id.slice(0, 8)}`,
+            phone: p.phone ?? "—",
             name: p.display_name ?? "Без имени",
             balance: "₽ 0,00",
             status: "Активен",
@@ -131,7 +134,7 @@ const AdminTab = () => {
   const handleCreateUser = () => {
     if (!newUser.email || !newUser.name) return;
     const client: Client = {
-      email: newUser.email, name: newUser.name, balance: "₽ 0,00",
+      email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
       date: new Date().toLocaleDateString("ru-RU"), blocked: false,
       sessions: [],
@@ -273,10 +276,10 @@ const AdminTab = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-muted-foreground text-xs uppercase tracking-wider border-b border-border">
-                {["email", "name", "balance", "status", "date"].map(field => (
+                {["email", "phone", "name", "balance", "status", "date"].map(field => (
                   <th key={field} className="text-left pb-3 font-medium">
                     <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                      {t(field === "email" ? "Email" : field === "name" ? "Имя" : field === "balance" ? "Баланс" : field === "status" ? "Статус" : "Дата")}
+                      {t(field === "email" ? "Email" : field === "phone" ? "Телефон" : field === "name" ? "Имя" : field === "balance" ? "Баланс" : field === "status" ? "Статус" : "Дата")}
                       <ArrowUpDown className={`w-3 h-3 ${sortField === field ? "text-primary" : ""}`} />
                     </button>
                   </th>
@@ -289,7 +292,8 @@ const AdminTab = () => {
                 const originalIndex = clients.indexOf(client);
                 return (
                 <tr key={i} className="border-b border-border last:border-0">
-                  <td className="py-3 text-foreground">{client.email}</td>
+                  <td className="py-3 text-foreground text-xs">{client.email}</td>
+                  <td className="py-3 text-muted-foreground text-xs">{client.phone}</td>
                   <td className="py-3 text-foreground">
                     <button onClick={() => setEditingName({ index: originalIndex, name: client.name })} className="hover:text-primary hover:underline transition-colors">
                       {client.name}

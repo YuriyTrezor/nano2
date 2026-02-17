@@ -1,5 +1,6 @@
 import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef, TouchEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -37,11 +38,14 @@ const cards = [
 
 const OverviewTab = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [cardIndex, setCardIndex] = useState(0);
   const touchStartX = useRef(0);
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
+
+  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
   const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: TouchEvent) => {
@@ -95,7 +99,7 @@ const OverviewTab = () => {
       )}
 
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, Chargeback 👋</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, {displayName} 👋</h1>
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
       </div>
 

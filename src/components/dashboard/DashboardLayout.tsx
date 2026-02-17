@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, ChevronRight, Phone, Mail, BadgeCheck, Calendar, MapPin
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, ChevronRight, Phone, Mail, BadgeCheck
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -267,14 +267,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="w-3.5 h-3.5 shrink-0" />
                     <span>+7 (900) 000-00-00</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" />
-                    <span>Регистрация: {user?.created_at ? new Date(user.created_at).toLocaleDateString("ru-RU") : "—"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                    <span>Россия, Москва</span>
                   </div>
                 </div>
               </div>

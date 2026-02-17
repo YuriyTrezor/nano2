@@ -5,7 +5,10 @@
 @tailwind utilities;
 
 @layer base {
-  :root,
+  :root {
+    --radius: 0.75rem;
+  }
+
   .theme-dark {
     --background: 220 20% 10%;
     --foreground: 0 0% 95%;
