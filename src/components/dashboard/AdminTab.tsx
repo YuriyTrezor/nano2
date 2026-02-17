@@ -12,7 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -34,16 +34,10 @@ interface Client {
   sessions: { ip: string; device: string; time: string }[];
 }
 
-const initialClients: Client[] = [
-  { userId: "", email: "koltunov.1978@list.ru", phone: "+7 (900) 111-22-33", name: "Колтунов Павел", balance: "₽ 787 663,00", status: "Активен", statusColor: "text-primary", registrationDate: "14.02.2026", lastLogin: "16.02.2026, 14:23", blocked: false, card: "Standard", sessions: [{ ip: "185.220.101.34", device: "Windows / Chrome", time: "16.02.2026, 14:23" }] },
-  { userId: "", email: "tory_york@mail.ru", phone: "+7 (900) 333-44-55", name: "Владимир Анатольевич Гончаров", balance: "₽ 21 096 779,00", status: "Заблокирован", statusColor: "text-destructive", registrationDate: "16.02.2026", lastLogin: "16.02.2026, 12:01", blocked: true, card: "Gold", sessions: [{ ip: "94.25.170.12", device: "iPhone / Safari", time: "16.02.2026, 12:01" }, { ip: "94.25.170.12", device: "iPad / Safari", time: "15.02.2026, 09:44" }] },
-  { userId: "", email: "yuriyzhuravlev2018@gmail.com", phone: "+7 (900) 000-00-00", name: "Chargeback", balance: "₽ 124 350,00", status: "Активен", statusColor: "text-primary", registrationDate: "14.02.2026", lastLogin: "16.02.2026, 15:58", blocked: false, sessions: [{ ip: "77.88.55.60", device: "Android / Chrome", time: "16.02.2026, 15:58" }] },
-];
-
 const AdminTab = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingName, setEditingName] = useState<{ index: number; name: string } | null>(null);
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
@@ -53,7 +47,6 @@ const AdminTab = () => {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
 
-  // Transaction dialog state
   const [txDialog, setTxDialog] = useState<{
     index: number;
     mode: "add" | "sub";
@@ -98,24 +91,21 @@ const AdminTab = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const existingEmails = new Set(initialClients.map(c => c.email));
-        const dbClients: Client[] = data
-          .filter(p => !existingEmails.has(p.email ?? ""))
-          .map(p => ({
-            userId: p.user_id,
-            email: p.email ?? `user-${p.user_id.slice(0, 8)}`,
-            phone: p.phone ?? "—",
-            name: p.display_name ?? "Без имени",
-            balance: "₽ 0,00",
-            status: p.is_blocked ? "Заблокирован" : "Активен",
-            statusColor: p.is_blocked ? "text-destructive" : "text-primary",
-            registrationDate: new Date(p.created_at).toLocaleDateString("ru-RU"),
-            lastLogin: "—",
-            blocked: p.is_blocked,
-            sessions: [],
-          }));
+        const dbClients: Client[] = data.map(p => ({
+          userId: p.user_id,
+          email: p.email ?? `user-${p.user_id.slice(0, 8)}`,
+          phone: p.phone ?? "—",
+          name: p.display_name ?? "Без имени",
+          balance: "₽ 0,00",
+          status: p.is_blocked ? "Заблокирован" : "Активен",
+          statusColor: p.is_blocked ? "text-destructive" : "text-primary",
+          registrationDate: new Date(p.created_at).toLocaleDateString("ru-RU"),
+          lastLogin: "—",
+          blocked: p.is_blocked,
+          sessions: [],
+        }));
 
-        // Also load balances from transactions for DB users
+        // Load balances from transactions
         for (const client of dbClients) {
           const { data: txData } = await supabase
             .from("transactions")
@@ -127,9 +117,7 @@ const AdminTab = () => {
           }
         }
 
-        const mergedEmails = new Set(initialClients.map(c => c.email));
-        const newFromDB = dbClients.filter(c => !mergedEmails.has(c.email));
-        setClients([...initialClients, ...newFromDB]);
+        setClients(dbClients);
       }
     } catch (err) {
       console.error("Failed to fetch registrations:", err);
@@ -158,9 +146,13 @@ const AdminTab = () => {
     }
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (!editingName) return;
+    const client = clients[editingName.index];
     setClients(prev => prev.map((c, i) => i === editingName.index ? { ...c, name: editingName.name } : c));
+    if (client.userId) {
+      await supabase.from("profiles").update({ display_name: editingName.name }).eq("user_id", client.userId);
+    }
     setEditingName(null);
     toast({ title: t("Информация"), description: "Имя обновлено" });
   };
@@ -190,28 +182,31 @@ const AdminTab = () => {
     const client = clients[txDialog.index];
     const finalAmount = txDialog.mode === "add" ? amount : -amount;
     const title = txDialog.mode === "add"
-      ? `Пополнение${txDialog.sender ? ` от ${txDialog.sender}` : ""}`
+      ? `Пополнение${txDialog.sender ? ` от ${txDialog.sender}` : ""}${txDialog.comment ? `. ${txDialog.comment}` : ""}`
       : `Списание${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
     const category = txDialog.mode === "add" ? "Пополнение" : "Списание";
 
-    // Save to DB if user exists
-    if (client.userId) {
-      const { error } = await supabase.from("transactions").insert({
-        user_id: client.userId,
-        title: `${title}${txDialog.comment && txDialog.mode === "add" ? `. ${txDialog.comment}` : ""}`,
-        category,
-        amount: finalAmount,
-      });
-      if (error) {
-        toast({ title: "Ошибка", description: "Не удалось сохранить операцию: " + error.message, variant: "destructive" });
-        return;
-      }
+    if (!client.userId) {
+      toast({ title: "Ошибка", description: "У клиента нет привязки к аккаунту в БД", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("transactions").insert({
+      user_id: client.userId,
+      title,
+      category,
+      amount: finalAmount,
+    });
+
+    if (error) {
+      toast({ title: "Ошибка", description: "Не удалось сохранить операцию: " + error.message, variant: "destructive" });
+      return;
     }
 
     // Update local balance
     setClients(prev => prev.map((c, i) => {
       if (i !== txDialog.index) return c;
-      const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\s/g, "").replace(",", "."));
+      const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\u00a0/g, "").replace(",", ".")) || 0;
       const newBal = current + finalAmount;
       return { ...c, balance: `₽ ${newBal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}` };
     }));
@@ -405,7 +400,7 @@ const AdminTab = () => {
               {sortedClients.map((client, i) => {
                 const originalIndex = clients.indexOf(client);
                 return (
-                <tr key={i} className="border-b border-border last:border-0">
+                <tr key={client.userId || i} className="border-b border-border last:border-0">
                   <td className="py-3 text-foreground text-xs">{client.email}</td>
                   <td className="py-3 text-muted-foreground text-xs">{client.phone}</td>
                   <td className="py-3 text-foreground">

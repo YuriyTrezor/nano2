@@ -4,17 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-
-const transferHistory = [
-  { type: "in", title: "Перевод → 121212121", category: "Перевод", date: "16 февр. 2026 г., 16:42", amount: "+103 434 ₽", positive: true },
-  { type: "in", title: "Возврат средств. Причина: неверно указан номер карты (номер введён с пробелами).", category: "Перевод", date: "16 февр. 2026 г., 16:25", amount: "+5 000 ₽", positive: true },
-  { type: "out", title: "Перевод → 434343", category: "Перевод", date: "16 февр. 2026 г., 16:18", amount: "-25 000 ₽", positive: false },
-  { type: "out", title: "Перевод → 44345678987654444", category: "Перевод", date: "16 февр. 2026 г., 15:39", amount: "-10 000 ₽", positive: false },
-  { type: "out", title: "Перевод → 44345678987654444", category: "Перевод", date: "14 февр. 2026 г., 23:59", amount: "-3 434 ₽", positive: false },
-  { type: "in", title: "Пополнение баланса", category: "Пополнение", date: "14 февр. 2026 г., 23:21", amount: "+676 ₽", positive: true },
-  { type: "in", title: "Пополнение баланса", category: "Пополнение", date: "14 февр. 2026 г., 23:03", amount: "+454 ₽", positive: true },
-  { type: "out", title: "Оплатить: Мобильная связь (у56767667)", category: "Мобильная связь", date: "14 февр. 2026 г., 22:43", amount: "-98 781 ₽", positive: false },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type TransferType = "card" | "own" | "bank";
 
@@ -24,15 +15,42 @@ const tabs: { key: TransferType; label: string; icon: React.ReactNode }[] = [
   { key: "bank", label: "В другой банк", icon: <Building2 className="w-4 h-4" /> },
 ];
 
+interface Transaction {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  created_at: string;
+}
+
 const TransfersTab = () => {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<TransferType>("card");
   const [cardNumber, setCardNumber] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
-  const [transactions, setTransactions] = useState(transferHistory);
-  const [balance, setBalance] = useState(124350);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Compute balance from transactions
+  const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+  // Fetch user transactions from DB
+  useEffect(() => {
+    if (!user) return;
+    const fetchTransactions = async () => {
+      const { data } = await supabase
+        .from("transactions")
+        .select("id, title, category, amount, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (data) setTransactions(data);
+    };
+    fetchTransactions();
+  }, [user]);
 
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -41,7 +59,8 @@ const TransfersTab = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) return;
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!cardNumber.trim() || !amount.trim() || isNaN(sum) || sum <= 0) {
       toast.error("Заполните все поля корректно");
@@ -52,20 +71,22 @@ const TransfersTab = () => {
       return;
     }
 
-    const newBalance = balance - sum;
-    setBalance(newBalance);
-
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" }) + ", " + now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-
-    setTransactions(prev => [{
-      type: "out",
-      title: `Перевод → ${cardNumber}`,
+    const title = `Перевод → ${cardNumber}`;
+    const { data, error } = await supabase.from("transactions").insert({
+      user_id: user.id,
+      title,
       category: "Перевод",
-      date: dateStr,
-      amount: `-${sum.toLocaleString("ru-RU")} ₽`,
-      positive: false,
-    }, ...prev]);
+      amount: -sum,
+    }).select("id, title, category, amount, created_at").single();
+
+    if (error) {
+      toast.error("Ошибка при переводе: " + error.message);
+      return;
+    }
+
+    if (data) {
+      setTransactions(prev => [data, ...prev]);
+    }
 
     toast.success(`Перевод на сумму ${sum.toLocaleString("ru-RU")} ₽ выполнен`);
     setCardNumber("");
@@ -73,6 +94,20 @@ const TransfersTab = () => {
     setAmount("");
     setShowForm(false);
   };
+
+  const formatAmount = (amt: number) => {
+    const prefix = amt >= 0 ? "+" : "";
+    return `${prefix}${amt.toLocaleString("ru-RU", { minimumFractionDigits: 0 })} ₽`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" }) + ", " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const filtered = searchQuery.trim()
+    ? transactions.filter(tx => tx.title.toLowerCase().includes(searchQuery.toLowerCase()) || tx.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    : transactions;
 
   return (
     <div>
@@ -83,7 +118,7 @@ const TransfersTab = () => {
             <h1 className="text-2xl font-bold text-foreground">Переводы</h1>
           </div>
           <p className="text-muted-foreground text-sm">
-            Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU")},00</span>
+            Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
         <Button onClick={() => setShowForm(true)} className="gap-2">
@@ -154,24 +189,35 @@ const TransfersTab = () => {
           <h3 className="text-foreground font-semibold">История операций</h3>
           <div className="relative w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Поиск..." className="pl-9 bg-secondary border-border h-9 text-sm" />
+            <Input
+              placeholder="Поиск..."
+              className="pl-9 bg-secondary border-border h-9 text-sm"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
         <div className="space-y-0">
-          {transactions.map((tx, i) => (
-            <div key={i} className="flex items-center justify-between py-4 border-b border-border last:border-0">
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${tx.positive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                  {tx.positive ? <ArrowDownLeft className="w-4 h-4 text-primary" /> : <ArrowUpRight className="w-4 h-4 text-muted-foreground" />}
+          {filtered.length === 0 && (
+            <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
+          )}
+          {filtered.map((tx) => {
+            const positive = tx.amount >= 0;
+            return (
+              <div key={tx.id} className="flex items-center justify-between py-4 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                    {positive ? <ArrowDownLeft className="w-4 h-4 text-primary" /> : <ArrowUpRight className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                  <div>
+                    <p className="text-foreground text-sm font-medium">{tx.title}</p>
+                    <p className="text-muted-foreground text-xs">{tx.category} · {formatDate(tx.created_at)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-foreground text-sm font-medium">{tx.title}</p>
-                  <p className="text-muted-foreground text-xs">{tx.category} · {tx.date}</p>
-                </div>
+                <p className={`text-sm font-semibold ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
               </div>
-              <p className={`text-sm font-semibold ${tx.positive ? 'text-primary' : 'text-foreground'}`}>{tx.amount}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
