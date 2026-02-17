@@ -34,6 +34,11 @@ const TransfersTab = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Bank transfer fields
+  const [bankBik, setBankBik] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [bankName, setBankName] = useState("");
+
   // Compute balance from transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
 
@@ -62,8 +67,8 @@ const TransfersTab = () => {
   const handleSubmit = async () => {
     if (!user) return;
     const sum = parseFloat(amount.replace(/\s/g, ""));
-    if (!cardNumber.trim() || !amount.trim() || isNaN(sum) || sum <= 0) {
-      toast.error("Заполните все поля корректно");
+    if (!amount.trim() || isNaN(sum) || sum <= 0) {
+      toast.error("Введите корректную сумму");
       return;
     }
     if (sum > balance) {
@@ -71,11 +76,27 @@ const TransfersTab = () => {
       return;
     }
 
-    const title = `Перевод → ${cardNumber}`;
+    if (activeTab === "bank" && (!bankBik.trim() || !bankAccount.trim())) {
+      toast.error("Заполните реквизиты банка");
+      return;
+    }
+
+    if (activeTab !== "bank" && !cardNumber.trim()) {
+      toast.error("Введите номер карты");
+      return;
+    }
+
+    let title = "";
+    if (activeTab === "bank") {
+      title = `Перевод → ${bankName || "Другой банк"} (${bankAccount.slice(-4)})`;
+    } else {
+      title = `Перевод → ${cardNumber}`;
+    }
+
     const { data, error } = await supabase.from("transactions").insert({
       user_id: user.id,
       title,
-      category: "Перевод",
+      category: activeTab === "bank" ? "Межбанковский перевод" : "Перевод",
       amount: -sum,
     }).select("id, title, category, amount, created_at").single();
 
@@ -92,6 +113,9 @@ const TransfersTab = () => {
     setCardNumber("");
     setRecipientName("");
     setAmount("");
+    setBankBik("");
+    setBankAccount("");
+    setBankName("");
     setShowForm(false);
   };
 
@@ -129,7 +153,7 @@ const TransfersTab = () => {
       {/* Transfer form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 relative" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 relative animate-in zoom-in-95 fade-in duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-foreground text-lg font-bold">Перевод</h2>
               <button onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground">
@@ -156,18 +180,61 @@ const TransfersTab = () => {
 
             {/* Form fields */}
             <div className="space-y-4">
-              <Input
-                placeholder="Номер карты"
-                value={cardNumber}
-                onChange={e => setCardNumber(e.target.value)}
-                className="bg-secondary border-border"
-              />
-              <Input
-                placeholder="Имя получателя"
-                value={recipientName}
-                onChange={e => setRecipientName(e.target.value)}
-                className="bg-secondary border-border"
-              />
+              {activeTab === "bank" ? (
+                <>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Наименование банка</label>
+                    <Input
+                      placeholder="Например: Сбербанк"
+                      value={bankName}
+                      onChange={e => setBankName(e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">БИК банка</label>
+                    <Input
+                      placeholder="044525225"
+                      value={bankBik}
+                      onChange={e => setBankBik(e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Расчётный счёт</label>
+                    <Input
+                      placeholder="40817810000000000000"
+                      value={bankAccount}
+                      onChange={e => setBankAccount(e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">ФИО получателя</label>
+                    <Input
+                      placeholder="Имя получателя"
+                      value={recipientName}
+                      onChange={e => setRecipientName(e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Input
+                    placeholder="Номер карты"
+                    value={cardNumber}
+                    onChange={e => setCardNumber(e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                  <Input
+                    placeholder="Имя получателя"
+                    value={recipientName}
+                    onChange={e => setRecipientName(e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </>
+              )}
               <Input
                 placeholder="Сумма ₽"
                 value={amount}
