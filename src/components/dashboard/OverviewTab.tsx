@@ -125,7 +125,7 @@ const OverviewTab = () => {
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
               <div className="flex gap-3 overflow-x-auto">
-                <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
+                <button onClick={() => navigate("/dashboard/transfers?new=1")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                      <Send className="w-4 h-4 text-primary" />
                    </div>
