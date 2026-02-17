@@ -85,7 +85,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, card_type")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -102,6 +102,7 @@ const AdminTab = () => {
           registrationDate: new Date(p.created_at).toLocaleDateString("ru-RU"),
           lastLogin: "—",
           blocked: p.is_blocked,
+          card: (p as any).card_type ?? undefined,
           sessions: [],
         }));
 
@@ -218,11 +219,15 @@ const AdminTab = () => {
     setTxDialog(null);
   };
 
-  const handleAssignCard = () => {
+  const handleAssignCard = async () => {
     if (!cardAssign) return;
+    const client = clients[cardAssign.index];
     setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, card: cardAssign.type } : c));
+    if (client.userId) {
+      await supabase.from("profiles").update({ card_type: cardAssign.type } as any).eq("user_id", client.userId);
+    }
     setCardAssign(null);
-    toast({ title: t("Информация"), description: "Карта назначена" });
+    toast({ title: t("Информация"), description: `Карта ${cardAssign.type} назначена — ${client.name}` });
   };
 
   return (

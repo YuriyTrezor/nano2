@@ -1,7 +1,7 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useRef, useEffect, TouchEvent } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
@@ -19,11 +19,11 @@ const paymentServices = [
   { icon: FileText, label: "Налоги и штрафы" },
 ];
 
-const cards = [
-  { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "Chargeback", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted" },
-  { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "Chargeback", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]" },
-  { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "Chargeback", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]" },
-];
+const allCards: Record<string, { name: string; number: string; holder: string; expiry: string; type: string; gradient: string }> = {
+  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted" },
+  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]" },
+  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]" },
+};
 
 interface Transaction {
   id: string;
@@ -37,13 +37,12 @@ const OverviewTab = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cardIndex, setCardIndex] = useState(0);
-  const touchStartX = useRef(0);
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceHidden, setBalanceHidden] = useState(false);
+  const [cardType, setCardType] = useState<string | null>(null);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
@@ -73,11 +72,12 @@ const OverviewTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked")
+        .select("is_blocked, card_type" as any)
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
-        setIsBlocked(profile.is_blocked ?? false);
+        setIsBlocked((profile as any).is_blocked ?? false);
+        setCardType((profile as any).card_type ?? null);
       }
 
       const { data: txData } = await supabase
@@ -100,6 +100,7 @@ const OverviewTab = () => {
       }, (payload) => {
         const updated = payload.new as any;
         setIsBlocked(updated.is_blocked ?? false);
+        setCardType(updated.card_type ?? null);
       })
       .subscribe();
 
@@ -121,16 +122,7 @@ const OverviewTab = () => {
     localStorage.setItem(key, String(next));
   };
 
-  const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e: TouchEvent) => {
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && cardIndex < cards.length - 1) setCardIndex(i => i + 1);
-      if (diff < 0 && cardIndex > 0) setCardIndex(i => i - 1);
-    }
-  };
-
-  const currentCard = cards[cardIndex];
+  const currentCard = cardType && allCards[cardType] ? { ...allCards[cardType], holder: displayName } : null;
 
   const formatAmount = (amount: number) => {
     const prefix = amount >= 0 ? "+" : "";
@@ -223,41 +215,40 @@ const OverviewTab = () => {
             </div>
           </div>
 
-          {/* Swipeable card on mobile */}
-          <div className="lg:hidden">
-            <div className="bg-card border border-border rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-muted-foreground text-xs font-medium tracking-wider">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
-                <div className="flex gap-1">
-                  {cards.map((_, i) => (
-                    <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === cardIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                  ))}
+          {/* Card on mobile */}
+          {currentCard && (
+            <div className="lg:hidden">
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
+                <div className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative select-none`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-8 h-5 bg-yellow-500 rounded" />
+                    <Wifi className="w-4 h-4 text-white/40 rotate-90" />
+                  </div>
+                  <p className="text-white font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-white/50 text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
+                      <p className="text-white text-xs font-medium">{currentCard.holder}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/50 text-[10px]">{t("СРОК")}</p>
+                      <p className="text-white text-xs font-medium">{currentCard.expiry}</p>
+                    </div>
+                    <p className="text-white font-bold text-lg italic">{currentCard.type}</p>
+                  </div>
                 </div>
               </div>
-              <div
-                className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative select-none`}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-              >
-                <div className="flex justify-end mb-6">
-                  <Wifi className="w-5 h-5 text-muted-foreground rotate-90" />
-                </div>
-                <p className="text-foreground font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-muted-foreground text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
-                    <p className="text-foreground text-xs font-medium">{currentCard.holder}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px]">{t("СРОК")}</p>
-                    <p className="text-foreground text-xs font-medium">{currentCard.expiry}</p>
-                  </div>
-                  <p className="text-foreground font-bold text-lg italic">{currentCard.type}</p>
-                </div>
-              </div>
-              <p className="text-muted-foreground text-[10px] text-center mt-2">← свайпните для переключения →</p>
             </div>
-          </div>
+          )}
+          {!currentCard && (
+            <div className="lg:hidden">
+              <div className="bg-card border border-border rounded-2xl p-4 text-center">
+                <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">Карта не назначена</p>
+              </div>
+            </div>
+          )}
 
           {/* Quick actions - mobile */}
           <div className="lg:hidden">
@@ -330,45 +321,34 @@ const OverviewTab = () => {
         {/* Right column - desktop */}
         <div className="hidden lg:block w-80 space-y-6">
           {/* Card preview */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
-              <div className="flex gap-1">
-                <button onClick={() => cardIndex > 0 && setCardIndex(i => i - 1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={cardIndex === 0}>
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button onClick={() => cardIndex < cards.length - 1 && setCardIndex(i => i + 1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={cardIndex === cards.length - 1}>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div
-              className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative cursor-grab select-none`}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
-              <div className="flex justify-end mb-6">
-                <Wifi className="w-5 h-5 text-muted-foreground rotate-90" />
-              </div>
-              <p className="text-foreground font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-muted-foreground text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
-                  <p className="text-foreground text-xs font-medium">{currentCard.holder}</p>
+          {currentCard ? (
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")} — {currentCard.name}</p>
+              <div className={`bg-gradient-to-br ${currentCard.gradient} rounded-xl p-4 relative`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-8 h-5 bg-yellow-500 rounded" />
+                  <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-[10px]">{t("СРОК")}</p>
-                  <p className="text-foreground text-xs font-medium">{currentCard.expiry}</p>
+                <p className="text-white font-mono text-lg tracking-widest mb-4">{currentCard.number}</p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-white/50 text-[10px]">{t("ВЛАДЕЛЕЦ")}</p>
+                    <p className="text-white text-xs font-medium">{currentCard.holder}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-[10px]">{t("СРОК")}</p>
+                    <p className="text-white text-xs font-medium">{currentCard.expiry}</p>
+                  </div>
+                  <p className="text-white font-bold text-lg italic">{currentCard.type}</p>
                 </div>
-                <p className="text-foreground font-bold text-lg italic">{currentCard.type}</p>
               </div>
             </div>
-            <div className="flex justify-center gap-1.5 mt-3">
-              {cards.map((_, i) => (
-                <button key={i} onClick={() => setCardIndex(i)} className={`w-2 h-2 rounded-full transition-colors ${i === cardIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
-              ))}
+          ) : (
+            <div className="bg-card border border-border rounded-2xl p-5 text-center">
+              <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm">Карта не назначена</p>
             </div>
-          </div>
+          )}
 
           {/* Quick actions */}
           <div className="bg-card border border-border rounded-2xl p-5">
