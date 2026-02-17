@@ -102,7 +102,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-background flex">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-48 border-r border-border flex-col fixed h-full bg-background z-10">
-        <div className="p-4 flex items-center gap-2.5">
+        <NavLink to="/" className="p-4 flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
             <Home className="w-5 h-5 text-primary" />
           </div>
@@ -110,7 +110,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="text-foreground font-bold text-sm">NeoBank</div>
             <div className="text-muted-foreground text-[10px]">{t("Онлайн-банкинг")}</div>
           </div>
-        </div>
+        </NavLink>
 
         <nav className="flex-1 px-2 py-2 space-y-0.5">
           {mainLinks.map((link) => (
