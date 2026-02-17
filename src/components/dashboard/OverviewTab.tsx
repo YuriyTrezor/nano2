@@ -1,4 +1,4 @@
-import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, ChevronLeft, ChevronRight, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, TouchEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,16 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+
+const paymentServices = [
+  { icon: Phone, label: "Мобильная связь" },
+  { icon: Flame, label: "ЖКХ" },
+  { icon: WifiIcon, label: "Интернет" },
+  { icon: Tv, label: "Телевидение" },
+  { icon: Zap, label: "Электричество" },
+  { icon: FileText, label: "Налоги и штрафы" },
+];
 
 const transactions = [
   { type: "out", title: "Перевод → 121212121", category: "Перевод", amount: "+103 434 ₽", date: "Вчера, 16:42", positive: true },
@@ -31,6 +41,7 @@ const OverviewTab = () => {
   const [cardIndex, setCardIndex] = useState(0);
   const touchStartX = useRef(0);
   const [topUpAlert, setTopUpAlert] = useState(false);
+  const [payAlert, setPayAlert] = useState(false);
 
   const handleTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: TouchEvent) => {
@@ -60,6 +71,28 @@ const OverviewTab = () => {
           <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Pay services modal */}
+      {payAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPayAlert(false)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-foreground text-lg font-bold">Оплата услуг</h2>
+              <button onClick={() => setPayAlert(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {paymentServices.map((svc, i) => (
+                <button key={i} onClick={() => { setPayAlert(false); toast.info(`Для оплаты «${svc.label}» свяжитесь с менеджером`); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <svc.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-foreground text-xs">{svc.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, Chargeback 👋</h1>
@@ -124,24 +157,30 @@ const OverviewTab = () => {
           <div className="lg:hidden">
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
-              <div className="flex gap-3 overflow-x-auto">
-                <button onClick={() => navigate("/dashboard/transfers?new=1")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
-                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                     <Send className="w-4 h-4 text-primary" />
-                   </div>
-                   <span className="text-foreground text-[11px]">{t("Перевод")}</span>
-                 </button>
-                <button onClick={() => setTopUpAlert(true)} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
+              <div className="grid grid-cols-4 gap-2">
+                <button onClick={() => navigate("/dashboard/transfers?new=1")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Send className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-foreground text-[11px]">{t("Перевод")}</span>
+                </button>
+                <button onClick={() => setTopUpAlert(true)} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <CreditCard className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-foreground text-[11px]">{t("Пополнить")}</span>
                 </button>
-                <button className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors min-w-[72px]">
+                <button onClick={() => setPayAlert(true)} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <Smartphone className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-foreground text-[11px]">{t("Оплатить")}</span>
+                </button>
+                <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <History className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-foreground text-[11px]">{t("История")}</span>
                 </button>
               </div>
             </div>
@@ -223,23 +262,29 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Быстрые действия")}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                   <Send className="w-4 h-4 text-primary" />
-                 </div>
-                 <span className="text-foreground text-xs">{t("Перевод")}</span>
-               </button>
+              <button onClick={() => navigate("/dashboard/transfers?new=1")} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Send className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-foreground text-xs">{t("Перевод")}</span>
+              </button>
               <button onClick={() => setTopUpAlert(true)} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <CreditCard className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-foreground text-xs">{t("Пополнить")}</span>
               </button>
-              <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => setPayAlert(true)} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Smartphone className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-foreground text-xs">{t("Оплатить")}</span>
+              </button>
+              <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <History className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-foreground text-xs">{t("История")}</span>
               </button>
             </div>
           </div>
