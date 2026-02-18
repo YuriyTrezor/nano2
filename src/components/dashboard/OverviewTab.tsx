@@ -50,6 +50,7 @@ const OverviewTab = () => {
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
@@ -87,11 +88,12 @@ const OverviewTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, cards")
+        .select("is_blocked, cards, withdrawal_blocked")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setIsBlocked((profile as any).is_blocked ?? false);
+        setWithdrawalBlocked((profile as any).withdrawal_blocked ?? false);
         setUserCards((profile as any).cards ?? []);
       }
 
@@ -115,6 +117,7 @@ const OverviewTab = () => {
       }, (payload) => {
         const updated = payload.new as any;
         setIsBlocked(updated.is_blocked ?? false);
+        setWithdrawalBlocked(updated.withdrawal_blocked ?? false);
         setUserCards(updated.cards ?? []);
       })
       .subscribe();
@@ -229,19 +232,31 @@ const OverviewTab = () => {
         {/* Left column */}
         <div className="flex-1 space-y-6">
           {/* Balance card */}
-          <div className={`rounded-2xl p-5 md:p-6 relative ${isBlocked ? "bg-destructive/20 border border-destructive" : "bg-gradient-to-r from-primary/80 to-primary"}`}>
+          <div className={`rounded-2xl p-5 md:p-6 relative ${
+            isBlocked 
+              ? "bg-destructive/20 border border-destructive" 
+              : withdrawalBlocked 
+                ? "bg-gradient-to-r from-[hsl(35,90%,45%)] to-[hsl(25,85%,50%)]" 
+                : "bg-gradient-to-r from-primary/80 to-primary"
+          }`}>
             <div className="flex justify-between items-start">
               <div>
                 <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
                 <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
                 </p>
-                {!isBlocked && !balanceHidden && percentChange !== null && (
+                {!isBlocked && !balanceHidden && !withdrawalBlocked && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
                       {percentChange >= 0 ? "↗" : "↘"} {percentChange >= 0 ? "+" : ""}{percentChange.toFixed(1)}%
                     </span>
                     <span className="text-primary-foreground/70 text-xs">{t("за последний месяц")}</span>
+                  </div>
+                )}
+                {withdrawalBlocked && !isBlocked && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <AlertTriangle className="w-4 h-4 text-primary-foreground/80" />
+                    <span className="text-primary-foreground/90 text-xs">Для вывода необходимо приобрести карту. Свяжитесь с Вашим менеджером или напишите в чат (внизу справа).</span>
                   </div>
                 )}
               </div>
