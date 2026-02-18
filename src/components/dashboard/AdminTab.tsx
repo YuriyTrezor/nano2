@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +33,16 @@ interface Client {
   blocked: boolean;
   cards: string[];
   sessions: { ip: string; device: string; time: string }[];
+  withdrawalBlocked: boolean;
+  cardPrices: Record<string, string> | null;
 }
+
+const DEFAULT_CARD_PRICES: Record<string, string> = {
+  Standard: "14 999 ₽",
+  Gold: "24 999 ₽",
+  Platinum: "49 999 ₽",
+  Diamond: "99 999 ₽",
+};
 
 const AdminTab = () => {
   const { t } = useLanguage();
@@ -47,6 +56,7 @@ const AdminTab = () => {
   const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
+  const [priceDialog, setPriceDialog] = useState<{ index: number; prices: Record<string, string> } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
@@ -86,7 +96,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, last_sign_in_at, last_sign_in_ip")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -108,6 +118,8 @@ const AdminTab = () => {
           blocked: p.is_blocked,
           cards: p.cards ?? [],
           sessions: [],
+          withdrawalBlocked: p.withdrawal_blocked ?? false,
+          cardPrices: p.card_prices ?? null,
         }));
 
         for (const client of dbClients) {
@@ -150,6 +162,18 @@ const AdminTab = () => {
     }
   };
 
+  const handleToggleWithdrawal = async (index: number) => {
+    const client = clients[index];
+    const newVal = !client.withdrawalBlocked;
+    setClients(prev => prev.map((c, i) =>
+      i === index ? { ...c, withdrawalBlocked: newVal } : c
+    ));
+    if (client.userId) {
+      await supabase.from("profiles").update({ withdrawal_blocked: newVal } as any).eq("user_id", client.userId);
+    }
+    toast({ title: "Успешно", description: newVal ? "Вывод заблокирован" : "Вывод разблокирован" });
+  };
+
   const handleSaveName = async () => {
     if (!editingName) return;
     const client = clients[editingName.index];
@@ -167,8 +191,7 @@ const AdminTab = () => {
       userId: "", email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
       registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", lastIp: "—", blocked: false,
-      cards: [],
-      sessions: [],
+      cards: [], sessions: [], withdrawalBlocked: false, cardPrices: null,
     };
     setClients(prev => [...prev, client]);
     setNewUser({ email: "", name: "", password: "" });
@@ -235,6 +258,17 @@ const AdminTab = () => {
     }
     setCardAssign(null);
     toast({ title: t("Информация"), description: `Карта ${cardAssign.type} добавлена — ${client.name}` });
+  };
+
+  const handleSavePrices = async () => {
+    if (!priceDialog) return;
+    const client = clients[priceDialog.index];
+    setClients(prev => prev.map((c, i) => i === priceDialog.index ? { ...c, cardPrices: priceDialog.prices } : c));
+    if (client.userId) {
+      await supabase.from("profiles").update({ card_prices: priceDialog.prices } as any).eq("user_id", client.userId);
+    }
+    setPriceDialog(null);
+    toast({ title: "Успешно", description: `Цены карт обновлены — ${client.name}` });
   };
 
   return (
@@ -328,9 +362,10 @@ const AdminTab = () => {
           <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
             <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Standard">Standard — 14 999 ₽</SelectItem>
-              <SelectItem value="Gold">Gold — 24 999 ₽</SelectItem>
-              <SelectItem value="Platinum">Platinum — 49 999 ₽</SelectItem>
+              <SelectItem value="Standard">Standard</SelectItem>
+              <SelectItem value="Gold">Gold</SelectItem>
+              <SelectItem value="Platinum">Platinum</SelectItem>
+              <SelectItem value="Diamond">Diamond</SelectItem>
             </SelectContent>
           </Select>
           {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
@@ -338,7 +373,7 @@ const AdminTab = () => {
               <p className="text-xs text-muted-foreground mb-1.5">Текущие карты:</p>
               <div className="flex flex-wrap gap-1.5">
                 {clients[cardAssign.index].cards.map(c => (
-                  <span key={c} className={`text-xs px-2 py-1 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                  <span key={c} className={`text-xs px-2 py-1 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
                 ))}
               </div>
             </div>
@@ -346,6 +381,29 @@ const AdminTab = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCardAssign(null)}>{t("Отмена")}</Button>
             <Button onClick={handleAssignCard}>{t("Добавить")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card prices dialog */}
+      <Dialog open={!!priceDialog} onOpenChange={open => !open && setPriceDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Цены карт — {priceDialog !== null ? clients[priceDialog.index]?.name : ""}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {["Standard", "Gold", "Platinum", "Diamond"].map(cardType => (
+              <div key={cardType}>
+                <Label className="text-xs text-muted-foreground mb-1 block">{cardType}</Label>
+                <Input
+                  value={priceDialog?.prices[cardType] ?? DEFAULT_CARD_PRICES[cardType]}
+                  onChange={e => setPriceDialog(prev => prev ? { ...prev, prices: { ...prev.prices, [cardType]: e.target.value } } : null)}
+                  placeholder={DEFAULT_CARD_PRICES[cardType]}
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPriceDialog(null)}>{t("Отмена")}</Button>
+            <Button onClick={handleSavePrices}>{t("Сохранить")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -400,8 +458,9 @@ const AdminTab = () => {
                   <td className="py-3 text-foreground text-xs">{client.email}</td>
                   <td className="py-3 text-muted-foreground text-xs">{client.phone}</td>
                   <td className="py-3 text-foreground">
-                    <button onClick={() => setEditingName({ index: originalIndex, name: client.name })} className="hover:text-primary hover:underline transition-colors">
+                    <button onClick={() => setEditingName({ index: originalIndex, name: client.name })} className="hover:text-primary hover:underline transition-colors flex items-center gap-1">
                       {client.name}
+                      <Edit className="w-3 h-3 text-muted-foreground" />
                     </button>
                   </td>
                   <td className="py-3 text-foreground font-medium">{client.balance}</td>
@@ -419,7 +478,7 @@ const AdminTab = () => {
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
                       {client.cards.map(c => (
-                        <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                        <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
                       ))}
                       {client.cards.length === 0 && <span className="text-muted-foreground text-[10px]">—</span>}
                     </div>
@@ -435,6 +494,23 @@ const AdminTab = () => {
                       </button>
                       <button onClick={() => setCardAssign({ index: originalIndex, type: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <CreditCard className="w-3 h-3" /> Карта
+                      </button>
+                      <button
+                        onClick={() => {
+                          const currentPrices = client.cardPrices ?? { ...DEFAULT_CARD_PRICES };
+                          setPriceDialog({ index: originalIndex, prices: currentPrices });
+                        }}
+                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
+                        title="Цены карт"
+                      >
+                        <DollarSign className="w-3 h-3" /> Цены
+                      </button>
+                      <button
+                        onClick={() => handleToggleWithdrawal(originalIndex)}
+                        className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.withdrawalBlocked ? 'bg-orange-600/20 text-orange-400' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                        title={client.withdrawalBlocked ? "Разрешить вывод" : "Запретить вывод"}
+                      >
+                        <Ban className="w-3 h-3" /> {client.withdrawalBlocked ? "Вывод ⛔" : "Вывод ✓"}
                       </button>
                       <button
                         onClick={() => handleBlock(originalIndex)}

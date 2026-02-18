@@ -22,7 +22,7 @@ import { toast } from "sonner";
 const cardCatalog = [
   {
     name: "Standard",
-    price: "14 999 ₽",
+    defaultPrice: "14 999 ₽",
     limit: "2 500 000 ₽/мес",
     features: ["Кэшбэк 1%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT"],
@@ -36,7 +36,7 @@ const cardCatalog = [
   },
   {
     name: "Gold",
-    price: "24 999 ₽",
+    defaultPrice: "24 999 ₽",
     limit: "5 000 000 ₽/мес",
     features: ["Кэшбэк 3%", "Бесконтактная оплата", "Apple Pay / Google Pay", "Бесплатные переводы"],
     extras: ["Доступны переводы SWIFT"],
@@ -50,7 +50,7 @@ const cardCatalog = [
   },
   {
     name: "Platinum",
-    price: "49 999 ₽",
+    defaultPrice: "49 999 ₽",
     limit: "10 000 000 ₽/мес",
     features: ["Кэшбэк 5%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
@@ -61,6 +61,20 @@ const cardCatalog = [
     number: "4 •••• •••• •••• 1205",
     exp: "11/31",
     cvv: "365",
+  },
+  {
+    name: "Diamond",
+    defaultPrice: "99 999 ₽",
+    limit: "25 000 000 ₽/мес",
+    features: ["Кэшбэк 7%", "Оплата в USDT", "Персональный консьерж 24/7", "Мультивалютный счёт"],
+    extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты", "Без риска блокировки при выводе"],
+    gradient: "from-[hsl(195,80%,40%)] to-[hsl(210,90%,30%)]",
+    type: "visa" as const,
+    label: "Diamond Card",
+    last4: "5580",
+    number: "4 •••• •••• •••• 5580",
+    exp: "06/32",
+    cvv: "941",
   },
 ];
 
@@ -99,6 +113,7 @@ const CardsTab = () => {
   const [loading, setLoading] = useState(true);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
   const [balance, setBalance] = useState(0);
+  const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
@@ -109,10 +124,13 @@ const CardsTab = () => {
     const fetchCards = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("cards")
+        .select("cards, card_prices")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) setUserCards((data as any).cards ?? []);
+      if (data) {
+        setUserCards((data as any).cards ?? []);
+        setCardPrices((data as any).card_prices ?? null);
+      }
 
       const { data: txData } = await supabase
         .from("transactions")
@@ -263,7 +281,7 @@ const CardsTab = () => {
             )}
             <MiniCatalogCard gradient={card.gradient} label={card.label} type={card.type} />
             <h3 className="text-xl font-bold text-foreground mt-6">{card.name}</h3>
-            <p className="text-3xl font-extrabold text-foreground mt-2">{card.price}</p>
+            <p className="text-3xl font-extrabold text-foreground mt-2">{cardPrices?.[card.name] ?? card.defaultPrice}</p>
             <p className="text-muted-foreground text-sm mt-1">Лимит: {card.limit}</p>
             <ul className="mt-6 space-y-2 flex-1">
               {card.features.map((f) => (
@@ -283,7 +301,7 @@ const CardsTab = () => {
               className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
             >
-              Купить — {card.price}
+              Купить — {cardPrices?.[card.name] ?? card.defaultPrice}
             </Button>
           </div>
         ))}
