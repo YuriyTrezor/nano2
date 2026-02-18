@@ -44,6 +44,8 @@ const TransfersTab = () => {
   const [bankName, setBankName] = useState("");
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedAlert, setBlockedAlert] = useState(false);
+  const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
+  const [withdrawalAlert, setWithdrawalAlert] = useState(false);
 
   // Compute balance from transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -54,10 +56,13 @@ const TransfersTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked")
+        .select("is_blocked, withdrawal_blocked")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (profile) setIsBlocked((profile as any).is_blocked ?? false);
+      if (profile) {
+        setIsBlocked((profile as any).is_blocked ?? false);
+        setWithdrawalBlocked((profile as any).withdrawal_blocked ?? false);
+      }
 
       const { data } = await supabase
         .from("transactions")
@@ -81,6 +86,10 @@ const TransfersTab = () => {
     if (!user) return;
     if (isBlocked) {
       setBlockedAlert(true);
+      return;
+    }
+    if (withdrawalBlocked) {
+      setWithdrawalAlert(true);
       return;
     }
     const sum = parseFloat(amount.replace(/\s/g, ""));
@@ -167,6 +176,10 @@ const TransfersTab = () => {
             setBlockedAlert(true);
             return;
           }
+          if (withdrawalBlocked) {
+            setWithdrawalAlert(true);
+            return;
+          }
           setShowForm(true);
         }} className="gap-2">
           <CreditCard className="w-4 h-4" /> Новый перевод
@@ -188,6 +201,23 @@ const TransfersTab = () => {
           <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Withdrawal blocked alert */}
+      <AlertDialog open={withdrawalAlert} onOpenChange={setWithdrawalAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Вывод недоступен
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для вывода необходимо приобрести карту
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Transfer form modal */}
       {showForm && (

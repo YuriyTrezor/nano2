@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          card_prices: Json | null
           cards: string[]
           created_at: string
           display_name: string | null
@@ -27,8 +28,10 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          withdrawal_blocked: boolean
         }
         Insert: {
+          card_prices?: Json | null
           cards?: string[]
           created_at?: string
           display_name?: string | null
@@ -40,8 +43,10 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          withdrawal_blocked?: boolean
         }
         Update: {
+          card_prices?: Json | null
           cards?: string[]
           created_at?: string
           display_name?: string | null
@@ -53,6 +58,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          withdrawal_blocked?: boolean
         }
         Relationships: []
       }

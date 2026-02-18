@@ -32,6 +32,7 @@ const allCards: Record<string, { name: string; number: string; holder: string; e
   Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
   Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
   Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]", cvv: "365" },
+  Diamond: { name: "Diamond", number: "4 •••• •••• •••• 5580", holder: "", expiry: "06/32", type: "VISA", gradient: "from-[hsl(195,80%,30%)] to-[hsl(210,70%,20%)]", cvv: "941" },
 };
 
 interface Transaction {
