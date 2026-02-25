@@ -1,4 +1,5 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon, Lock } from "lucide-react";
+import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
@@ -55,6 +56,7 @@ const OverviewTab = () => {
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
+  const [blockedCards, setBlockedCards] = useState<string[]>([]);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
@@ -88,13 +90,14 @@ const OverviewTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, cards, withdrawal_blocked")
+        .select("is_blocked, cards, withdrawal_blocked, blocked_cards")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setIsBlocked((profile as any).is_blocked ?? false);
         setWithdrawalBlocked((profile as any).withdrawal_blocked ?? false);
         setUserCards((profile as any).cards ?? []);
+        setBlockedCards((profile as any).blocked_cards ?? []);
       }
 
       const { data: txData } = await supabase
@@ -119,6 +122,7 @@ const OverviewTab = () => {
         setIsBlocked(updated.is_blocked ?? false);
         setWithdrawalBlocked(updated.withdrawal_blocked ?? false);
         setUserCards(updated.cards ?? []);
+        setBlockedCards(updated.blocked_cards ?? []);
       })
       .subscribe();
 

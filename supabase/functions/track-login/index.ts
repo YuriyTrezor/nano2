@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
       req.headers.get("x-real-ip") ||
       "unknown";
 
+    const userAgent = req.headers.get("user-agent") || "unknown";
+
     await supabase
       .from("profiles")
       .update({
@@ -49,6 +51,15 @@ Deno.serve(async (req) => {
         last_sign_in_ip: ip,
       })
       .eq("user_id", user.id);
+
+    // Log session
+    await supabase
+      .from("login_sessions")
+      .insert({
+        user_id: user.id,
+        ip_address: ip,
+        user_agent: userAgent,
+      });
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

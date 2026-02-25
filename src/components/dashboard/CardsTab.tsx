@@ -1,4 +1,5 @@
 import { CreditCard, Wifi, Lock, Check, RotateCcw, CreditCard as CardIcon, ShieldOff } from "lucide-react";
+import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -110,6 +111,7 @@ const CardsTab = () => {
   const { user } = useAuth();
   const [blockedAlert, setBlockedAlert] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
+  const [blockedCards, setBlockedCards] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
   const [balance, setBalance] = useState(0);
@@ -124,12 +126,13 @@ const CardsTab = () => {
     const fetchCards = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("cards, card_prices")
+        .select("cards, card_prices, blocked_cards")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setUserCards((data as any).cards ?? []);
         setCardPrices((data as any).card_prices ?? null);
+        setBlockedCards((data as any).blocked_cards ?? []);
       }
 
       const { data: txData } = await supabase
@@ -152,6 +155,7 @@ const CardsTab = () => {
       }, (payload) => {
         const updated = payload.new as any;
         setUserCards(updated.cards ?? []);
+        setBlockedCards(updated.blocked_cards ?? []);
       })
       .subscribe();
 
@@ -192,20 +196,35 @@ const CardsTab = () => {
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeCards.map(card => (
+            {activeCards.map(card => {
+              const isCardBlocked = blockedCards.includes(card.name);
+              return (
               <Popover key={card.name}>
                 <PopoverTrigger asChild>
-                  <div className="bg-card border border-border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-colors">
+                  <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-colors ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center">
-                          <span className="text-muted-foreground text-[10px]">◇</span>
-                        </div>
+                        {card.name === "Diamond" ? (
+                          <DiamondIcon3D className="w-6 h-6" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center">
+                            <span className="text-muted-foreground text-[10px]">◇</span>
+                          </div>
+                        )}
                         <span className="text-foreground text-sm">NeoBank</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Wifi className="w-3 h-3 text-primary rotate-90" />
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/20 text-primary">Активна</span>
+                        {isCardBlocked ? (
+                          <>
+                            <Lock className="w-3 h-3 text-destructive" />
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-destructive/20 text-destructive">Заблокирована</span>
+                          </>
+                        ) : (
+                          <>
+                            <Wifi className="w-3 h-3 text-primary rotate-90" />
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/20 text-primary">Активна</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 mt-3`}>
@@ -256,7 +275,7 @@ const CardsTab = () => {
                   </button>
                 </PopoverContent>
               </Popover>
-            ))}
+            ); })}
           </div>
         </div>
       ) : !loading ? (

@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +32,7 @@ interface Client {
   lastIp: string;
   blocked: boolean;
   cards: string[];
+  blockedCards: string[];
   sessions: { ip: string; device: string; time: string }[];
   withdrawalBlocked: boolean;
   cardPrices: Record<string, string> | null;
@@ -44,6 +45,15 @@ const DEFAULT_CARD_PRICES: Record<string, string> = {
   Diamond: "99 999 ₽",
 };
 
+interface Transaction {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  card_name: string;
+  created_at: string;
+}
+
 const AdminTab = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -53,10 +63,12 @@ const AdminTab = () => {
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
   const [createOpen, setCreateOpen] = useState(false);
   const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
-  const [sessionsView, setSessionsView] = useState<{ index: number } | null>(null);
+  const [sessionsView, setSessionsView] = useState<{ index: number; sessions: { ip: string; device: string; time: string }[] } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [priceDialog, setPriceDialog] = useState<{ index: number; prices: Record<string, string> } | null>(null);
+  const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
+  const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
@@ -64,6 +76,7 @@ const AdminTab = () => {
     amount: string;
     comment: string;
     sender: string;
+    cardName: string;
   } | null>(null);
 
   const handleSort = (field: string) => {
@@ -96,7 +109,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -117,6 +130,7 @@ const AdminTab = () => {
           lastIp: p.last_sign_in_ip ?? "—",
           blocked: p.is_blocked,
           cards: p.cards ?? [],
+          blockedCards: p.blocked_cards ?? [],
           sessions: [],
           withdrawalBlocked: p.withdrawal_blocked ?? false,
           cardPrices: p.card_prices ?? null,
@@ -174,6 +188,20 @@ const AdminTab = () => {
     toast({ title: "Успешно", description: newVal ? "Вывод заблокирован" : "Вывод разблокирован" });
   };
 
+  const handleToggleCardBlock = async (index: number, cardName: string) => {
+    const client = clients[index];
+    const isBlocked = client.blockedCards.includes(cardName);
+    const newBlockedCards = isBlocked
+      ? client.blockedCards.filter(c => c !== cardName)
+      : [...client.blockedCards, cardName];
+
+    setClients(prev => prev.map((c, i) => i === index ? { ...c, blockedCards: newBlockedCards } : c));
+    if (client.userId) {
+      await supabase.from("profiles").update({ blocked_cards: newBlockedCards } as any).eq("user_id", client.userId);
+    }
+    toast({ title: "Успешно", description: isBlocked ? `Карта ${cardName} разблокирована` : `Карта ${cardName} заблокирована` });
+  };
+
   const handleSaveName = async () => {
     if (!editingName) return;
     const client = clients[editingName.index];
@@ -191,7 +219,7 @@ const AdminTab = () => {
       userId: "", email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
       registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", lastIp: "—", blocked: false,
-      cards: [], sessions: [], withdrawalBlocked: false, cardPrices: null,
+      cards: [], blockedCards: [], sessions: [], withdrawalBlocked: false, cardPrices: null,
     };
     setClients(prev => [...prev, client]);
     setNewUser({ email: "", name: "", password: "" });
@@ -224,6 +252,7 @@ const AdminTab = () => {
       title,
       category,
       amount: finalAmount,
+      card_name: txDialog.cardName || "",
     });
 
     if (error) {
@@ -240,7 +269,7 @@ const AdminTab = () => {
 
     toast({
       title: "Успешно",
-      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${amount.toLocaleString("ru-RU")} ₽ — ${client.name}`,
+      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${amount.toLocaleString("ru-RU")} ₽ — ${client.name}${txDialog.cardName ? ` (${txDialog.cardName})` : ""}`,
     });
     setTxDialog(null);
   };
@@ -269,6 +298,88 @@ const AdminTab = () => {
     }
     setPriceDialog(null);
     toast({ title: "Успешно", description: `Цены карт обновлены — ${client.name}` });
+  };
+
+  const handleViewSessions = async (index: number) => {
+    const client = clients[index];
+    if (!client.userId) return;
+
+    const { data } = await supabase
+      .from("login_sessions")
+      .select("ip_address, user_agent, created_at")
+      .eq("user_id", client.userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    const sessions = (data ?? []).map((s: any) => {
+      const ua = s.user_agent || "";
+      let device = "Неизвестно";
+      if (/iPhone/i.test(ua)) device = "iPhone";
+      else if (/Android/i.test(ua)) device = "Android";
+      else if (/Windows/i.test(ua)) device = "Windows PC";
+      else if (/Mac/i.test(ua)) device = "MacOS";
+      else if (/Linux/i.test(ua)) device = "Linux";
+
+      return {
+        ip: s.ip_address ?? "—",
+        device,
+        time: new Date(s.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      };
+    });
+
+    setSessionsView({ index, sessions });
+  };
+
+  const handleViewTransactions = async (index: number) => {
+    const client = clients[index];
+    if (!client.userId) return;
+
+    const { data } = await supabase
+      .from("transactions")
+      .select("id, title, category, amount, card_name, created_at")
+      .eq("user_id", client.userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    setTxViewDialog({ index, transactions: (data as any) ?? [] });
+  };
+
+  const handleUpdateTransaction = async () => {
+    if (!editTx) return;
+    const amount = parseFloat(editTx.amount.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(amount)) {
+      toast({ title: "Ошибка", description: "Некорректная сумма", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("transactions")
+      .update({ title: editTx.title, amount } as any)
+      .eq("id", editTx.txId);
+
+    if (error) {
+      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (txViewDialog) {
+      setTxViewDialog({
+        ...txViewDialog,
+        transactions: txViewDialog.transactions.map(tx =>
+          tx.id === editTx.txId ? { ...tx, title: editTx.title, amount } : tx
+        ),
+      });
+    }
+
+    setEditTx(null);
+    toast({ title: "Успешно", description: "Операция обновлена" });
+    fetchRegistrations(); // refresh balances
+  };
+
+  const parseDevice = (ua: string) => {
+    if (/iPhone/i.test(ua)) return "iPhone";
+    if (/Android/i.test(ua)) return "Android";
+    return "Desktop";
   };
 
   return (
@@ -323,6 +434,20 @@ const AdminTab = () => {
               <Button variant={txDialog?.mode === "add" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "add" } : null)}>Зачислить</Button>
               <Button variant={txDialog?.mode === "sub" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}>Списать</Button>
             </div>
+            {txDialog && clients[txDialog.index]?.cards.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">На карту</Label>
+                <Select value={txDialog.cardName} onValueChange={val => setTxDialog(prev => prev ? { ...prev, cardName: val } : null)}>
+                  <SelectTrigger><SelectValue placeholder="Общий баланс" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Общий баланс</SelectItem>
+                    {clients[txDialog.index].cards.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
               <Input placeholder="10 000" value={txDialog?.amount ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)} type="number" />
@@ -355,32 +480,48 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Card assign dialog */}
+      {/* Card assign dialog with per-card blocking */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Добавить карту</DialogTitle></DialogHeader>
-          <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
-            <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Standard">Standard</SelectItem>
-              <SelectItem value="Gold">Gold</SelectItem>
-              <SelectItem value="Platinum">Platinum</SelectItem>
-              <SelectItem value="Diamond">Diamond</SelectItem>
-            </SelectContent>
-          </Select>
-          {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-muted-foreground mb-1.5">Текущие карты:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {clients[cardAssign.index].cards.map(c => (
-                  <span key={c} className={`text-xs px-2 py-1 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
-                ))}
-              </div>
+          <DialogHeader><DialogTitle>Управление картами</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Добавить карту</Label>
+              <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
+                <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Standard">Standard</SelectItem>
+                  <SelectItem value="Gold">Gold</SelectItem>
+                  <SelectItem value="Platinum">Platinum</SelectItem>
+                  <SelectItem value="Diamond">Diamond</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+            {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
+                <div className="space-y-2">
+                  {clients[cardAssign.index].cards.map(c => {
+                    const isCardBlocked = clients[cardAssign.index].blockedCards.includes(c);
+                    return (
+                      <div key={c} className="flex items-center justify-between p-2 bg-secondary rounded-lg">
+                        <span className={`text-sm font-medium ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Platinum" ? "text-[hsl(270,60%,50%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
+                        <button
+                          onClick={() => handleToggleCardBlock(cardAssign.index, c)}
+                          className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
+                        >
+                          {isCardBlocked ? <><Lock className="w-3 h-3" /> Заблокирована</> : <><Unlock className="w-3 h-3" /> Активна</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCardAssign(null)}>{t("Отмена")}</Button>
-            <Button onClick={handleAssignCard}>{t("Добавить")}</Button>
+            <Button onClick={handleAssignCard} disabled={!cardAssign?.type}>{t("Добавить")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -410,12 +551,12 @@ const AdminTab = () => {
 
       {/* Sessions dialog */}
       <Dialog open={!!sessionsView} onOpenChange={open => !open && setSessionsView(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{t("Сессии")} — {sessionsView !== null ? clients[sessionsView.index]?.name : ""}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            {sessionsView !== null && clients[sessionsView.index]?.sessions.map((s, idx) => (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {sessionsView?.sessions.map((s, idx) => (
               <div key={idx} className="flex items-start gap-3 p-3 bg-secondary rounded-lg">
-                {s.device.includes("iPhone") || s.device.includes("Android") ? <Smartphone className="w-4 h-4 text-muted-foreground mt-0.5" /> : <Monitor className="w-4 h-4 text-muted-foreground mt-0.5" />}
+                {s.device === "iPhone" || s.device === "Android" ? <Smartphone className="w-4 h-4 text-muted-foreground mt-0.5" /> : <Monitor className="w-4 h-4 text-muted-foreground mt-0.5" />}
                 <div className="text-sm">
                   <p className="text-foreground font-medium">{s.device}</p>
                   <p className="text-muted-foreground text-xs">IP: {s.ip}</p>
@@ -423,10 +564,67 @@ const AdminTab = () => {
                 </div>
               </div>
             ))}
-            {sessionsView !== null && clients[sessionsView.index]?.sessions.length === 0 && (
+            {sessionsView?.sessions.length === 0 && (
               <p className="text-muted-foreground text-sm text-center py-4">Нет активных сессий</p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View transactions dialog */}
+      <Dialog open={!!txViewDialog} onOpenChange={open => !open && setTxViewDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Операции — {txViewDialog !== null ? clients[txViewDialog.index]?.name : ""}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {txViewDialog?.transactions.length === 0 && (
+              <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
+            )}
+            {txViewDialog?.transactions.map(tx => (
+              <div key={tx.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-foreground text-sm font-medium truncate">{tx.title}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{tx.category}</span>
+                    {tx.card_name && <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px]">{tx.card_name}</span>}
+                    <span>{new Date(tx.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                </div>
+                <p className={`text-sm font-medium shrink-0 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
+                  {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
+                </p>
+                <button
+                  onClick={() => setEditTx({ txId: tx.id, title: tx.title, amount: String(tx.amount) })}
+                  className="p-1.5 text-muted-foreground hover:text-foreground"
+                  title="Редактировать"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit transaction dialog */}
+      <Dialog open={!!editTx} onOpenChange={open => !open && setEditTx(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Редактировать операцию</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Название</Label>
+              <Input value={editTx?.title ?? ""} onChange={e => setEditTx(prev => prev ? { ...prev, title: e.target.value } : null)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Сумма</Label>
+              <Input type="number" value={editTx?.amount ?? ""} onChange={e => setEditTx(prev => prev ? { ...prev, amount: e.target.value } : null)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTx(null)}>{t("Отмена")}</Button>
+            <Button onClick={handleUpdateTransaction}>{t("Сохранить")}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -477,20 +675,30 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
-                      {client.cards.map(c => (
-                        <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
-                      ))}
+                      {client.cards.map(c => {
+                        const isCardBlocked = client.blockedCards.includes(c);
+                        return (
+                          <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isCardBlocked ? "bg-destructive/20 text-destructive line-through" : c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                        );
+                      })}
                       {client.cards.length === 0 && <span className="text-muted-foreground text-[10px]">—</span>}
                     </div>
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
                       <button
-                        onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "" })}
+                        onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "" })}
                         className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
                         title="Добавить / Списать средства"
                       >
                         <Send className="w-3 h-3" /> Операция
+                      </button>
+                      <button
+                        onClick={() => handleViewTransactions(originalIndex)}
+                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
+                        title="Просмотр операций"
+                      >
+                        <Eye className="w-3 h-3" /> Операции
                       </button>
                       <button onClick={() => setCardAssign({ index: originalIndex, type: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <CreditCard className="w-3 h-3" /> Карта
@@ -518,7 +726,7 @@ const AdminTab = () => {
                       >
                         {client.blocked ? t("Разбл.") : t("Блок.")}
                       </button>
-                      <button onClick={() => setSessionsView({ index: originalIndex })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+                      <button onClick={() => handleViewSessions(originalIndex)} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <Monitor className="w-3 h-3" /> {t("Сессии")}
                       </button>
                       <AlertDialog>

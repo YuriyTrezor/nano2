@@ -14,8 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      login_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          blocked_cards: string[]
           card_prices: Json | null
           cards: string[]
           created_at: string
@@ -31,6 +56,7 @@ export type Database = {
           withdrawal_blocked: boolean
         }
         Insert: {
+          blocked_cards?: string[]
           card_prices?: Json | null
           cards?: string[]
           created_at?: string
@@ -46,6 +72,7 @@ export type Database = {
           withdrawal_blocked?: boolean
         }
         Update: {
+          blocked_cards?: string[]
           card_prices?: Json | null
           cards?: string[]
           created_at?: string
@@ -130,6 +157,7 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          card_name: string
           category: string
           created_at: string
           id: string
@@ -138,6 +166,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          card_name?: string
           category?: string
           created_at?: string
           id?: string
@@ -146,6 +175,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          card_name?: string
           category?: string
           created_at?: string
           id?: string

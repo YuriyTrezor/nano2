@@ -1,4 +1,5 @@
-import { Check, LogIn, Diamond as DiamondIcon } from "lucide-react";
+import { Check, LogIn } from "lucide-react";
+import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -119,8 +120,8 @@ const CardsSection = () => {
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left: card visual */}
               <div className="md:w-72 shrink-0">
-                <div className="relative mb-4">
-                  <DiamondIcon className="w-10 h-10 text-[hsl(195,80%,60%)] mx-auto md:mx-0 mb-3" />
+                <div className="relative mb-4 flex justify-center md:justify-start">
+                  <DiamondIcon3D className="w-14 h-14" />
                 </div>
                 <div className={`bg-gradient-to-br ${diamondCard.gradient} rounded-xl p-4 h-40 flex flex-col justify-between relative overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-24 h-24 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
@@ -144,7 +145,7 @@ const CardsSection = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-2xl font-bold text-foreground">Diamond</h3>
-                  <DiamondIcon className="w-5 h-5 text-[hsl(195,80%,60%)]" />
+                  <DiamondIcon3D className="w-6 h-6" />
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)] uppercase tracking-wider">Premium</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-4">Лимит: {diamondCard.limit}</p>
