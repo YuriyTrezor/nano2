@@ -33,6 +33,9 @@ const translations: Record<string, Record<Lang, string>> = {
   "Оплатить": { ru: "Оплатить", en: "Pay" },
   "Мои счета": { ru: "Мои счета", en: "My Accounts" },
   "Основной счёт": { ru: "Основной счёт", en: "Main Account" },
+  "Мои карты": { ru: "Мои карты", en: "My Cards" },
+  "Управление банковскими картами": { ru: "Управление банковскими картами", en: "Manage your bank cards" },
+  "История": { ru: "История", en: "History" },
 
   // Admin
   "Панель администратора": { ru: "Панель администратора", en: "Admin Panel" },
@@ -54,6 +57,10 @@ const translations: Record<string, Record<Lang, string>> = {
   "Сессии": { ru: "Сессии", en: "Sessions" },
   "Операции": { ru: "Операции", en: "Operations" },
   "Удалить": { ru: "Удалить", en: "Delete" },
+  "Обновить": { ru: "Обновить", en: "Refresh" },
+  "Телефон": { ru: "Телефон", en: "Phone" },
+  "Регистрация": { ru: "Регистрация", en: "Registered" },
+  "Посл. вход": { ru: "Посл. вход", en: "Last Login" },
 
   // Support
   "Обращения клиентов": { ru: "Обращения клиентов", en: "Customer Support" },
@@ -77,6 +84,17 @@ const translations: Record<string, Record<Lang, string>> = {
   "Пароль": { ru: "Пароль", en: "Password" },
   "Создать": { ru: "Создать", en: "Create" },
   "Информация": { ru: "Информация", en: "Information" },
+  "Добавить": { ru: "Добавить", en: "Add" },
+
+  // Landing page
+  "Войти в личный кабинет": { ru: "Войти в личный кабинет", en: "Sign In" },
+  "Отзывы клиентов": { ru: "Отзывы", en: "Reviews" },
+  "Зарубежные банковские карты Visa и Mastercard": { ru: "Зарубежные банковские карты Visa и Mastercard", en: "International Visa and Mastercard Bank Cards" },
+  "Откройте карту удалённо": { ru: "Откройте карту удалённо для операций в евро и долларах — без загранпаспорта и доверенности", en: "Open a card remotely for EUR and USD transactions — no passport or power of attorney required" },
+  "Готовая карта за 1 день": { ru: "Готовая карта за 1 день", en: "Card ready in 1 day" },
+  "Доставка в любую точку мира": { ru: "Доставка в любую точку мира", en: "Worldwide delivery" },
+  "Переводы SWIFT без ограничений": { ru: "Переводы SWIFT без ограничений", en: "Unlimited SWIFT transfers" },
+  "Условия": { ru: "Условия", en: "Terms" },
 };
 
 interface LanguageContextType {

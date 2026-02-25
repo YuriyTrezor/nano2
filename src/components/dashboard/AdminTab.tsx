@@ -480,49 +480,95 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Card assign dialog with per-card blocking */}
+      {/* Card management dialog with fund/deduct, blocking, and transactions */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Управление картами</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Управление картами — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
+          <div className="space-y-5">
+            {/* Add card */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Добавить карту</Label>
-              <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
-                <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Standard">Standard</SelectItem>
-                  <SelectItem value="Gold">Gold</SelectItem>
-                  <SelectItem value="Platinum">Platinum</SelectItem>
-                  <SelectItem value="Diamond">Diamond</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
+                  <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Standard">Standard</SelectItem>
+                    <SelectItem value="Gold">Gold</SelectItem>
+                    <SelectItem value="Platinum">Platinum</SelectItem>
+                    <SelectItem value="Diamond">Diamond</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleAssignCard} disabled={!cardAssign?.type} size="sm">{t("Добавить")}</Button>
+              </div>
             </div>
+
+            {/* Current cards with balance, block toggle, and fund/deduct */}
             {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {clients[cardAssign.index].cards.map(c => {
                     const isCardBlocked = clients[cardAssign.index].blockedCards.includes(c);
                     return (
-                      <div key={c} className="flex items-center justify-between p-2 bg-secondary rounded-lg">
-                        <span className={`text-sm font-medium ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Platinum" ? "text-[hsl(270,60%,50%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
-                        <button
-                          onClick={() => handleToggleCardBlock(cardAssign.index, c)}
-                          className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
-                        >
-                          {isCardBlocked ? <><Lock className="w-3 h-3" /> Заблокирована</> : <><Unlock className="w-3 h-3" /> Активна</>}
-                        </button>
+                      <div key={c} className="p-3 bg-secondary rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm font-bold ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Platinum" ? "text-[hsl(270,60%,50%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleCardBlock(cardAssign.index, c)}
+                              className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
+                            >
+                              {isCardBlocked ? <><Lock className="w-3 h-3" /> Заблокирована</> : <><Unlock className="w-3 h-3" /> Активна</>}
+                            </button>
+                          </div>
+                        </div>
+                        {/* Fund / Deduct for this card */}
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 flex-1"
+                            onClick={() => {
+                              setCardAssign(null);
+                              setTxDialog({ index: cardAssign.index, mode: "add", amount: "", comment: "", sender: "", cardName: c });
+                            }}
+                          >
+                            <Send className="w-3 h-3 mr-1" /> Зачислить
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 flex-1"
+                            onClick={() => {
+                              setCardAssign(null);
+                              setTxDialog({ index: cardAssign.index, mode: "sub", amount: "", comment: "", sender: "", cardName: c });
+                            }}
+                          >
+                            <Send className="w-3 h-3 mr-1" /> Списать
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+
+            {/* Quick view transactions button */}
+            {cardAssign && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const idx = cardAssign.index;
+                  setCardAssign(null);
+                  handleViewTransactions(idx);
+                }}
+              >
+                <Eye className="w-4 h-4 mr-2" /> Просмотр операций
+              </Button>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCardAssign(null)}>{t("Отмена")}</Button>
-            <Button onClick={handleAssignCard} disabled={!cardAssign?.type}>{t("Добавить")}</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -686,20 +732,6 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
-                      <button
-                        onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "" })}
-                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
-                        title="Добавить / Списать средства"
-                      >
-                        <Send className="w-3 h-3" /> Операция
-                      </button>
-                      <button
-                        onClick={() => handleViewTransactions(originalIndex)}
-                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
-                        title="Просмотр операций"
-                      >
-                        <Eye className="w-3 h-3" /> Операции
-                      </button>
                       <button onClick={() => setCardAssign({ index: originalIndex, type: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <CreditCard className="w-3 h-3" /> Карта
                       </button>

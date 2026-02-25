@@ -114,7 +114,7 @@ const CardsTab = () => {
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
-  const [balance, setBalance] = useState(0);
+  const [cardBalances, setCardBalances] = useState<Record<string, number>>({});
   const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
 
   const toggleCvv = (cardName: string) => {
@@ -137,9 +137,16 @@ const CardsTab = () => {
 
       const { data: txData } = await supabase
         .from("transactions")
-        .select("amount")
+        .select("amount, card_name")
         .eq("user_id", user.id);
-      if (txData) setBalance(txData.reduce((sum, tx) => sum + Number(tx.amount), 0));
+      if (txData) {
+        const balances: Record<string, number> = {};
+        txData.forEach(tx => {
+          const cn = tx.card_name || "";
+          balances[cn] = (balances[cn] || 0) + Number(tx.amount);
+        });
+        setCardBalances(balances);
+      }
 
       setLoading(false);
     };
@@ -233,7 +240,7 @@ const CardsTab = () => {
                         <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                       </div>
                       <p className="text-white/60 font-mono text-[9px] mb-0.5">BALANCE</p>
-                      <p className="text-white font-bold text-base mb-1">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                      <p className="text-white font-bold text-base mb-1">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
                       <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                       <div className="flex justify-between items-end">
                         <div>

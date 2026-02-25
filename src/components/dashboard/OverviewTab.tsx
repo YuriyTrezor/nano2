@@ -41,6 +41,7 @@ interface Transaction {
   title: string;
   category: string;
   amount: number;
+  card_name: string;
   created_at: string;
 }
 
@@ -64,9 +65,16 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Compute balance from transactions
+  // Compute total balance from all transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
+
+  // Compute per-card balance
+  const cardBalance = (cardName: string) => {
+    return transactions
+      .filter(tx => tx.card_name === cardName)
+      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  };
 
   // Compute real % change: compare last 30 days vs previous 30 days
   const computePercentChange = () => {
@@ -102,11 +110,11 @@ const OverviewTab = () => {
 
       const { data: txData } = await supabase
         .from("transactions")
-        .select("id, title, category, amount, created_at")
+        .select("id, title, category, amount, card_name, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
-      if (txData) setTransactions(txData);
+        .limit(500);
+      if (txData) setTransactions(txData as Transaction[]);
     };
     fetchData();
 
@@ -285,8 +293,8 @@ const OverviewTab = () => {
                               <div className="w-8 h-5 bg-yellow-500 rounded" />
                               <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                             </div>
-                            <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
-                            <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}</p>
+                          <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
+                          <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                             <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                             <div className="flex justify-between items-end">
                               <div>
@@ -427,7 +435,7 @@ const OverviewTab = () => {
                             <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                           </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}</p>
+                          <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                           <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
                           <div className="flex justify-between items-end">
                             <div>
