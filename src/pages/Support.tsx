@@ -1,4 +1,4 @@
-import { HelpCircle, MessageCircle, Phone, Mail, Send } from "lucide-react";
+import { HelpCircle, MessageCircle, Phone, Mail, Send as SendIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,7 +138,7 @@ const Support = () => {
                     disabled={sending}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                   >
-                    <Send className="w-4 h-4" />
+                    <SendIcon className="w-4 h-4" />
                     {sending ? "Отправка..." : "Отправить"}
                   </Button>
                 </div>
@@ -160,6 +160,10 @@ const Support = () => {
                     <MessageCircle className="w-4 h-4 text-primary" />
                     Чат 24/7 в приложении
                   </div>
+                  <a href="https://t.me/Neobank_manager" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    <SendIcon className="w-4 h-4 text-primary" />
+                    Telegram: @Neobank_manager
+                  </a>
                 </div>
               </div>
             </div>

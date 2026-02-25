@@ -1,5 +1,6 @@
 import { ArrowRight, Zap, Globe, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const BankCard = ({
   variant,
@@ -57,30 +58,32 @@ const BankCard = ({
 };
 
 const HeroSection = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="min-h-screen pt-32 pb-20 px-6 flex items-center">
       <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
         <div>
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold leading-tight text-foreground mb-6">
-            Зарубежные банковские карты Visa и Mastercard
+            {t("Зарубежные банковские карты Visa и Mastercard")}
           </h1>
           <p className="text-muted-foreground text-lg mb-8 max-w-lg">
-            Откройте карту удалённо для операций в евро и долларах — без загранпаспорта и доверенности
+            {t("Откройте карту удалённо")}
           </p>
           <div className="flex flex-wrap gap-3 mb-8">
             <div className="flex items-center gap-2 border border-border rounded-full px-4 py-2 text-sm text-muted-foreground">
-              <Zap className="w-4 h-4 text-primary" /> Готовая карта за 1 день
+              <Zap className="w-4 h-4 text-primary" /> {t("Готовая карта за 1 день")}
             </div>
             <div className="flex items-center gap-2 border border-border rounded-full px-4 py-2 text-sm text-muted-foreground">
-              <Globe className="w-4 h-4 text-primary" /> Доставка в любую точку мира
+              <Globe className="w-4 h-4 text-primary" /> {t("Доставка в любую точку мира")}
             </div>
             <div className="flex items-center gap-2 border border-border rounded-full px-4 py-2 text-sm text-muted-foreground">
-              <Circle className="w-4 h-4 text-primary" /> Переводы SWIFT без ограничений
+              <Circle className="w-4 h-4 text-primary" /> {t("Переводы SWIFT без ограничений")}
             </div>
           </div>
           <a href="/auth">
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-8">
-              Войти в личный кабинет <ArrowRight className="w-5 h-5" />
+              {t("Войти в личный кабинет")} <ArrowRight className="w-5 h-5" />
             </Button>
           </a>
         </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Navbar = () => {
-  const { lang, toggleLang } = useLanguage();
+  const { lang, toggleLang, t } = useLanguage();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -16,10 +16,11 @@ const Navbar = () => {
             <span className="text-foreground font-semibold text-lg">NeoBank</span>
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">О картах</a>
-            <a href="#reviews" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Отзывы</a>
-            <a href="#contacts" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Контакты</a>
-            <a href="/support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Поддержка</a>
+            <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("О картах")}</a>
+            <a href="#reviews" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Отзывы клиентов")}</a>
+            <a href="#contacts" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Контакты")}</a>
+            <a href="/swift" className="text-muted-foreground hover:text-foreground transition-colors text-sm">SWIFT</a>
+            <a href="/support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Поддержка")}</a>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -39,7 +40,7 @@ const Navbar = () => {
           </div>
           <a href="/auth">
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
-              Войти в личный кабинет <ArrowRight className="w-4 h-4" />
+              {t("Войти в личный кабинет")} <ArrowRight className="w-4 h-4" />
             </Button>
           </a>
         </div>
