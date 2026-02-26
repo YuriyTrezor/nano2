@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href="/" className="flex items-center">
-            <img src={neobankLogo} alt="NeoBank" className="h-9" />
+            <img src={neobankLogo} alt="NeoBank" className="h-9 rounded-md opacity-90 brightness-90" />
           </a>
           <div className="hidden md:flex items-center gap-6">
             <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("О картах")}</a>

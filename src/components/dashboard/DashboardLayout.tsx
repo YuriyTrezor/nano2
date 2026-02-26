@@ -160,7 +160,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-48 border-r border-border flex-col fixed h-full bg-background z-10">
         <NavLink to="/" className="p-4 flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <img src={neobankLogo} alt="NeoBank" className="h-8" />
+          <img src={neobankLogo} alt="NeoBank" className="h-8 rounded-md opacity-90 brightness-90" />
         </NavLink>
 
         <nav className="flex-1 px-2 py-2 space-y-0.5">
