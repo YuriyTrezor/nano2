@@ -32,6 +32,7 @@ const cardCatalog = [
     label: "Standard Card",
     last4: "3891",
     number: "4 •••• •••• •••• 3891",
+    fullNumber: "4118 2735 6491 3891",
     exp: "02/30",
     cvv: "482",
   },
@@ -46,6 +47,7 @@ const cardCatalog = [
     label: "Gold Card",
     last4: "7742",
     number: "5 •••• •••• •••• 7742",
+    fullNumber: "5263 4810 9357 7742",
     exp: "08/29",
     cvv: "719",
   },
@@ -60,6 +62,7 @@ const cardCatalog = [
     label: "Platinum Card",
     last4: "1205",
     number: "4 •••• •••• •••• 1205",
+    fullNumber: "4729 6183 0542 1205",
     exp: "11/31",
     cvv: "365",
   },
@@ -74,6 +77,7 @@ const cardCatalog = [
     label: "Diamond Card",
     last4: "5580",
     number: "4 •••• •••• •••• 5580",
+    fullNumber: "4391 7024 8165 5580",
     exp: "06/32",
     cvv: "941",
   },
@@ -114,11 +118,16 @@ const CardsTab = () => {
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
+  const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [cardBalances, setCardBalances] = useState<Record<string, number>>({});
   const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
+  };
+
+  const toggleNumber = (cardName: string) => {
+    setNumberVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
   };
 
   useEffect(() => {
@@ -241,7 +250,9 @@ const CardsTab = () => {
                       </div>
                       <p className="text-white/60 font-mono text-[9px] mb-0.5">BALANCE</p>
                       <p className="text-white font-bold text-base mb-1">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
-                      <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
+                      <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
+                        <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                      </button>
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-white/50 text-[9px]">CARDHOLDER</p>

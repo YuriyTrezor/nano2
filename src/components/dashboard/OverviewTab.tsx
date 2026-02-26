@@ -29,11 +29,11 @@ const paymentServices = [
   { icon: FileText, label: "Налоги и штрафы" },
 ];
 
-const allCards: Record<string, { name: string; number: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
-  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
-  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
-  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]", cvv: "365" },
-  Diamond: { name: "Diamond", number: "4 •••• •••• •••• 5580", holder: "", expiry: "06/32", type: "VISA", gradient: "from-[hsl(195,80%,30%)] to-[hsl(210,70%,20%)]", cvv: "941" },
+const allCards: Record<string, { name: string; number: string; fullNumber: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
+  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
+  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", fullNumber: "5263 4810 9357 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
+  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", fullNumber: "4729 6183 0542 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]", cvv: "365" },
+  Diamond: { name: "Diamond", number: "4 •••• •••• •••• 5580", fullNumber: "4391 7024 8165 5580", holder: "", expiry: "06/32", type: "VISA", gradient: "from-[hsl(195,80%,30%)] to-[hsl(210,70%,20%)]", cvv: "941" },
 };
 
 interface Transaction {
@@ -57,10 +57,15 @@ const OverviewTab = () => {
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
+  const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
+  };
+
+  const toggleNumber = (cardName: string) => {
+    setNumberVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
   };
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
@@ -296,7 +301,9 @@ const OverviewTab = () => {
                             </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
                           <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
-                            <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
+                            <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
+                              <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                            </button>
                             <div className="flex justify-between items-end">
                               <div>
                                 <p className="text-white/50 text-[10px]">CARDHOLDER</p>
@@ -437,7 +444,9 @@ const OverviewTab = () => {
                           </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
                           <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
-                          <p className="text-white font-mono text-sm tracking-widest mb-3">{card.number}</p>
+                          <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
+                            <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                          </button>
                           <div className="flex justify-between items-end">
                             <div>
                               <p className="text-white/50 text-[10px]">CARDHOLDER</p>
