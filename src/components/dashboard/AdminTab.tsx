@@ -391,6 +391,11 @@ const AdminTab = () => {
             <h1 className="text-2xl font-bold text-foreground">{t("Панель администратора")}</h1>
           </div>
           <p className="text-muted-foreground text-sm">{t("Полное управление клиентами и финансами")}</p>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-xs text-muted-foreground bg-secondary px-3 py-1 rounded-full flex items-center gap-1.5">
+              <UserPlus className="w-3 h-3" /> Всего регистраций: <span className="text-foreground font-semibold">{clients.length}</span>
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -434,20 +439,6 @@ const AdminTab = () => {
               <Button variant={txDialog?.mode === "add" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "add" } : null)}>Зачислить</Button>
               <Button variant={txDialog?.mode === "sub" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}>Списать</Button>
             </div>
-            {txDialog && clients[txDialog.index]?.cards.length > 0 && (
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1.5 block">На карту</Label>
-                <Select value={txDialog.cardName} onValueChange={val => setTxDialog(prev => prev ? { ...prev, cardName: val } : null)}>
-                  <SelectTrigger><SelectValue placeholder="Общий баланс" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Общий баланс</SelectItem>
-                    {clients[txDialog.index].cards.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
               <Input placeholder="10 000" value={txDialog?.amount ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)} type="number" />
@@ -502,7 +493,7 @@ const AdminTab = () => {
               </div>
             </div>
 
-            {/* Current cards with balance, block toggle, and fund/deduct */}
+            {/* Current cards with block toggle */}
             {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
@@ -510,42 +501,15 @@ const AdminTab = () => {
                   {clients[cardAssign.index].cards.map(c => {
                     const isCardBlocked = clients[cardAssign.index].blockedCards.includes(c);
                     return (
-                      <div key={c} className="p-3 bg-secondary rounded-lg space-y-2">
+                      <div key={c} className="p-3 bg-secondary rounded-lg">
                         <div className="flex items-center justify-between">
                           <span className={`text-sm font-bold ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Platinum" ? "text-[hsl(270,60%,50%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleToggleCardBlock(cardAssign.index, c)}
-                              className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
-                            >
-                              {isCardBlocked ? <><Lock className="w-3 h-3" /> Заблокирована</> : <><Unlock className="w-3 h-3" /> Активна</>}
-                            </button>
-                          </div>
-                        </div>
-                        {/* Fund / Deduct for this card */}
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-7 flex-1"
-                            onClick={() => {
-                              setCardAssign(null);
-                              setTxDialog({ index: cardAssign.index, mode: "add", amount: "", comment: "", sender: "", cardName: c });
-                            }}
+                          <button
+                            onClick={() => handleToggleCardBlock(cardAssign.index, c)}
+                            className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
                           >
-                            <Send className="w-3 h-3 mr-1" /> Зачислить
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-7 flex-1"
-                            onClick={() => {
-                              setCardAssign(null);
-                              setTxDialog({ index: cardAssign.index, mode: "sub", amount: "", comment: "", sender: "", cardName: c });
-                            }}
-                          >
-                            <Send className="w-3 h-3 mr-1" /> Списать
-                          </Button>
+                            {isCardBlocked ? <><Lock className="w-3 h-3" /> Заблокирована</> : <><Unlock className="w-3 h-3" /> Активна</>}
+                          </button>
                         </div>
                       </div>
                     );
@@ -554,20 +518,6 @@ const AdminTab = () => {
               </div>
             )}
 
-            {/* Quick view transactions button */}
-            {cardAssign && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  const idx = cardAssign.index;
-                  setCardAssign(null);
-                  handleViewTransactions(idx);
-                }}
-              >
-                <Eye className="w-4 h-4 mr-2" /> Просмотр операций
-              </Button>
-            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -732,6 +682,12 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
+                      <button onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
+                        <DollarSign className="w-3 h-3" /> Операции
+                      </button>
+                      <button onClick={() => handleViewTransactions(originalIndex)} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
+                        <Eye className="w-3 h-3" /> История
+                      </button>
                       <button onClick={() => setCardAssign({ index: originalIndex, type: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <CreditCard className="w-3 h-3" /> Карта
                       </button>

@@ -235,6 +235,21 @@ const OverviewTab = () => {
         </div>
       )}
 
+      {blockedCards.length > 0 && !isBlocked && (
+        <div className="mb-4 p-4 rounded-2xl border border-orange-500/50 bg-orange-500/10 flex items-start gap-3">
+          <Lock className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="text-orange-500 font-medium mb-1">Заблокированные карты:</p>
+            <div className="flex flex-wrap gap-2">
+              {blockedCards.map(card => (
+                <span key={card} className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400 font-medium">{card}</span>
+              ))}
+            </div>
+            <p className="text-orange-400/80 text-xs mt-1">Свяжитесь с менеджером для разблокировки.</p>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, {displayName} 👋</h1>
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
