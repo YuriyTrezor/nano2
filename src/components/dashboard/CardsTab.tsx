@@ -127,6 +127,14 @@ const CardsTab = () => {
   };
 
   const toggleNumber = (cardName: string) => {
+    const isVisible = numberVisible[cardName];
+    if (isVisible) {
+      const card = cardCatalog.find(c => c.name === cardName);
+      if (card) {
+        navigator.clipboard.writeText(card.fullNumber.replace(/\s/g, ""));
+        toast.success("Скопировано");
+      }
+    }
     setNumberVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
   };
 
