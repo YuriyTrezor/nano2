@@ -4,6 +4,7 @@ import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck
 } from "lucide-react";
+import neobankLogo from "@/assets/neobank-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
@@ -159,13 +160,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-48 border-r border-border flex-col fixed h-full bg-background z-10">
         <NavLink to="/" className="p-4 flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Home className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <div className="text-foreground font-bold text-sm">NeoBank</div>
-            <div className="text-muted-foreground text-[10px]">{t("Онлайн-банкинг")}</div>
-          </div>
+          <img src={neobankLogo} alt="NeoBank" className="h-8" />
         </NavLink>
 
         <nav className="flex-1 px-2 py-2 space-y-0.5">
