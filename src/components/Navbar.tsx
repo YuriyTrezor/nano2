@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import neobankLogo from "@/assets/neobank-logo.png";
 
 const Navbar = () => {
   const { lang, toggleLang, t } = useLanguage();
@@ -9,12 +10,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-              N
-            </div>
-            <span className="text-foreground font-semibold text-lg">NeoBank</span>
-          </div>
+          <a href="/" className="flex items-center">
+            <img src={neobankLogo} alt="NeoBank" className="h-9" />
+          </a>
           <div className="hidden md:flex items-center gap-6">
             <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("О картах")}</a>
             <a href="#reviews" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Отзывы клиентов")}</a>
