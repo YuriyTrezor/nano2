@@ -315,7 +315,7 @@ const CardsTab = () => {
       {/* Card catalog */}
       <h2 className="text-foreground font-semibold text-lg mb-2">{t("О картах")}</h2>
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {cardCatalog.map((card) => (
           <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${userCards.includes(card.name) ? "border-primary" : "border-border"}`}>
             {userCards.includes(card.name) && (

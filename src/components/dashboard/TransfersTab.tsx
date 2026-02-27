@@ -162,11 +162,11 @@ const TransfersTab = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <ArrowLeftRight className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Переводы</h1>
+            <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Переводы</h1>
           </div>
           <p className="text-muted-foreground text-sm">
             Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
@@ -182,7 +182,7 @@ const TransfersTab = () => {
             return;
           }
           setShowForm(true);
-        }} className="gap-2">
+        }} className="gap-2 w-full sm:w-auto">
           <CreditCard className="w-4 h-4" /> Новый перевод
         </Button>
       </div>
@@ -232,12 +232,12 @@ const TransfersTab = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-6">
               {tabs.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                     activeTab === tab.key
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -321,10 +321,10 @@ const TransfersTab = () => {
       )}
 
       {/* Transaction history */}
-      <div className="bg-card border border-border rounded-2xl p-5">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
           <h3 className="text-foreground font-semibold">История операций</h3>
-          <div className="relative w-48">
+          <div className="relative w-full sm:w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Поиск..."

@@ -270,7 +270,7 @@ const OverviewTab = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
+                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
                 </p>
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && percentChange !== null && (
@@ -372,7 +372,7 @@ const OverviewTab = () => {
           <div className="lg:hidden">
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button onClick={() => navigate("/dashboard/transfers?new=1")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <Send className="w-4 h-4 text-primary" />
