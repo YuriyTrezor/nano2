@@ -5,7 +5,7 @@ const ContactsSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section id="contacts" className="py-24 px-6 border-t border-border">
+    <section id="contacts" className="py-16 sm:py-24 px-4 sm:px-6 border-t border-border">
       <div className="max-w-7xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">{t("Контакты")}</h2>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8">

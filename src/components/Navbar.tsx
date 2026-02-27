@@ -8,7 +8,7 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href="/" className="flex items-center">
             <img src={neobankLogo} alt="NeoBank" className="h-9 rounded-md opacity-90 brightness-90" />
@@ -37,8 +37,10 @@ const Navbar = () => {
             </button>
           </div>
           <a href="/auth">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
-              {t("Войти в личный кабинет")} <ArrowRight className="w-4 h-4" />
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 text-xs sm:text-sm">
+              <span className="hidden sm:inline">{t("Войти в личный кабинет")}</span>
+              <span className="sm:hidden">{t("Войти в личный кабинет").split(" ")[0]}</span>
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </a>
         </div>

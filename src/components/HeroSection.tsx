@@ -22,7 +22,7 @@ const BankCard = ({
     : "bg-gradient-to-br from-[hsl(217,90%,55%)] to-[hsl(230,80%,45%)]";
 
   return (
-    <div className={`${bg} rounded-2xl p-6 w-[340px] h-[210px] flex flex-col justify-between relative overflow-hidden ${className}`}>
+    <div className={`${bg} rounded-2xl p-5 sm:p-6 w-full max-w-[340px] h-[190px] sm:h-[210px] flex flex-col justify-between relative overflow-hidden ${className}`}>
       <div className="absolute top-0 right-0 w-32 h-32 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
       <div className="flex justify-between items-start">
         <div>
@@ -61,13 +61,13 @@ const HeroSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="min-h-screen pt-32 pb-20 px-6 flex items-center">
+    <section className="min-h-screen pt-24 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 flex items-center">
       <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold leading-tight text-foreground mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-[3.5rem] font-extrabold leading-tight text-foreground mb-4 sm:mb-6">
             {t("Зарубежные банковские карты Visa и Mastercard")}
           </h1>
-          <p className="text-muted-foreground text-lg mb-8 max-w-lg">
+          <p className="text-muted-foreground text-base sm:text-lg mb-6 sm:mb-8 max-w-lg">
             {t("Откройте карту удалённо")}
           </p>
           <div className="flex flex-wrap gap-3 mb-8">
@@ -87,7 +87,7 @@ const HeroSection = () => {
             </Button>
           </a>
         </div>
-        <div className="relative flex justify-center lg:justify-end">
+        <div className="relative flex justify-center lg:justify-end mt-8 lg:mt-0">
           <BankCard
             variant="dark"
             number="4111  ••••  ••••  1111"
@@ -102,7 +102,7 @@ const HeroSection = () => {
             holder="ALEX IVANOV"
             expiry="09/28"
             type="mastercard"
-            className="absolute top-20 left-10 lg:left-0 z-20"
+            className="absolute top-16 sm:top-20 left-4 sm:left-10 lg:left-0 z-20"
           />
         </div>
       </div>

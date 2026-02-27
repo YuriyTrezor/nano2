@@ -86,7 +86,7 @@ const CardsSection = () => {
   const isEn = lang === "en";
 
   return (
-    <section id="cards" className="py-24 px-6">
+    <section id="cards" className="py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-2">{t("О картах")}</h2>
         <p className="text-muted-foreground text-center mb-16">{t("Условия")}</p>

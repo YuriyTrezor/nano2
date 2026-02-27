@@ -150,9 +150,9 @@ const FloatingChat = () => {
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50">
       {open && (
-        <div className="mb-3 w-80 bg-card border border-border rounded-2xl shadow-lg flex flex-col overflow-hidden" style={{ height: 400 }}>
+        <div className="mb-3 w-[calc(100vw-2rem)] sm:w-80 bg-card border border-border rounded-2xl shadow-lg flex flex-col overflow-hidden" style={{ height: 400 }}>
           <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">
             <span className="text-foreground font-semibold text-sm">Чат поддержки</span>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
