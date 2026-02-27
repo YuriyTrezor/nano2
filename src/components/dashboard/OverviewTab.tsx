@@ -402,9 +402,9 @@ const OverviewTab = () => {
           </div>
 
           {/* Transactions */}
-          <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-5 overflow-hidden">
             <h3 className="text-foreground font-semibold mb-4">{t("Последние операции")}</h3>
-            <div className="space-y-0">
+            <div className="space-y-0 overflow-x-hidden">
               {transactions.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
               )}
