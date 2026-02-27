@@ -12,12 +12,20 @@ const SettingsTab = () => {
   const { t, lang, toggleLang } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
-  const [displayName, setDisplayName] = useState("Chargeback");
-  const [phone, setPhone] = useState("+7 (900) 000-00-00");
+  const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || "");
+  const [lastName, setLastName] = useState(user?.user_metadata?.last_name || "");
+  const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleSaveProfile = () => {
-    toast({ title: t("Информация"), description: "Профиль сохранён" });
+  const handleSaveProfile = async () => {
+    const { error } = await supabase.auth.updateUser({
+      data: { display_name: displayName, last_name: lastName, phone: phone || null },
+    });
+    if (error) {
+      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("Информация"), description: "Профиль сохранён" });
+    }
   };
 
   const handleChangePassword = async (e?: React.FormEvent) => {
@@ -67,8 +75,12 @@ const SettingsTab = () => {
               <Input value={user?.email ?? ""} disabled className="bg-secondary border-border text-muted-foreground" />
             </div>
             <div>
-              <label className="text-muted-foreground text-xs mb-1 block">Полное имя</label>
+              <label className="text-muted-foreground text-xs mb-1 block">Имя</label>
               <Input value={displayName} onChange={e => setDisplayName(e.target.value)} className="bg-secondary border-border text-foreground" />
+            </div>
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">Фамилия</label>
+              <Input value={lastName} onChange={e => setLastName(e.target.value)} className="bg-secondary border-border text-foreground" />
             </div>
             <div>
               <label className="text-muted-foreground text-xs mb-1 block">Телефон</label>
