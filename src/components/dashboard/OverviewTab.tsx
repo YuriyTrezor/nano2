@@ -411,21 +411,19 @@ const OverviewTab = () => {
               {transactions.slice(0, 20).map((tx) => {
                 const positive = tx.amount >= 0;
                 return (
-                  <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                        {positive ? (
-                          <ArrowDownLeft className="w-4 h-4 text-primary" />
-                        ) : (
-                          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-foreground text-sm font-medium truncate">{tx.title}</p>
-                        <p className="text-muted-foreground text-xs">{tx.category}</p>
-                      </div>
+                  <div key={tx.id} className="flex items-center py-3 border-b border-border last:border-0 gap-3 overflow-hidden">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                      {positive ? (
+                        <ArrowDownLeft className="w-4 h-4 text-primary" />
+                      ) : (
+                        <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                      )}
                     </div>
-                    <div className="text-right shrink-0 ml-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-medium truncate">{tx.title}</p>
+                      <p className="text-muted-foreground text-xs truncate">{tx.category}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-2 whitespace-nowrap">
                       <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
                       <p className="text-muted-foreground text-xs">{formatDate(tx.created_at)}</p>
                     </div>
