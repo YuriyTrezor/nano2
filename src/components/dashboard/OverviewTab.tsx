@@ -165,7 +165,9 @@ const OverviewTab = () => {
     localStorage.setItem(key, String(next));
   };
 
-  const holderName = transliterate(displayName);
+  const lastName = user?.user_metadata?.last_name || "";
+  const fullName = lastName ? `${displayName} ${lastName}` : displayName;
+  const holderName = transliterate(fullName);
   const activeCards = userCards
     .filter(name => allCards[name])
     .map(name => ({ ...allCards[name], holder: holderName }));

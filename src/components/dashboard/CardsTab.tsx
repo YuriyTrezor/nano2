@@ -264,7 +264,7 @@ const CardsTab = () => {
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-white/50 text-[9px]">CARDHOLDER</p>
-                          <p className="text-white text-xs">{transliterate(user?.user_metadata?.display_name || user?.email?.split("@")[0] || "")}</p>
+                          <p className="text-white text-xs">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
                         </div>
                         <div>
                           <p className="text-white/50 text-[9px]">EXPIRES</p>
