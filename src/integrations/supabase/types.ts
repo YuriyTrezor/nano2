@@ -45,6 +45,7 @@ export type Database = {
           cards: string[]
           created_at: string
           display_name: string | null
+          document_requested: boolean
           email: string | null
           id: string
           is_blocked: boolean
@@ -61,6 +62,7 @@ export type Database = {
           cards?: string[]
           created_at?: string
           display_name?: string | null
+          document_requested?: boolean
           email?: string | null
           id?: string
           is_blocked?: boolean
@@ -77,6 +79,7 @@ export type Database = {
           cards?: string[]
           created_at?: string
           display_name?: string | null
+          document_requested?: boolean
           email?: string | null
           id?: string
           is_blocked?: boolean

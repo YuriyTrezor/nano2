@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN document_requested BOOLEAN NOT NULL DEFAULT false;
