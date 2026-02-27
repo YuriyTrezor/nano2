@@ -256,9 +256,9 @@ const OverviewTab = () => {
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col xl:flex-row gap-6">
         {/* Left column */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6">
           {/* Balance card */}
           <div className={`rounded-2xl p-5 md:p-6 relative ${
             isBlocked 
@@ -296,7 +296,7 @@ const OverviewTab = () => {
 
           {/* Card on mobile */}
           {activeCards.length > 0 ? (
-            <div className="lg:hidden">
+            <div className="xl:hidden">
               <div className="bg-card border border-border rounded-2xl p-4">
                 <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")}</p>
                 <div className="relative">
@@ -360,7 +360,7 @@ const OverviewTab = () => {
               </div>
             </div>
           ) : (
-            <div className="lg:hidden">
+            <div className="xl:hidden">
               <div className="bg-card border border-border rounded-2xl p-4 text-center">
                 <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground text-sm">Карта не назначена</p>
@@ -369,7 +369,7 @@ const OverviewTab = () => {
           )}
 
           {/* Quick actions - mobile */}
-          <div className="lg:hidden">
+          <div className="xl:hidden">
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -435,7 +435,7 @@ const OverviewTab = () => {
         </div>
 
         {/* Right column - desktop */}
-        <div className="hidden lg:block w-80 space-y-6">
+        <div className="hidden xl:block w-80 shrink-0 space-y-6">
           {/* Card preview */}
           {activeCards.length > 0 ? (
             <div className="bg-card border border-border rounded-2xl p-5">
