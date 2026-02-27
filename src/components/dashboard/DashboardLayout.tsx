@@ -238,7 +238,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-48 pb-24 md:pb-6">
+      <main className="flex-1 md:ml-48 pb-24 md:pb-6 overflow-x-hidden">
         {/* Top header bar */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-end gap-3">
           {/* Search */}
