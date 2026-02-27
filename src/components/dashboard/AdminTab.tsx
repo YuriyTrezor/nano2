@@ -234,6 +234,10 @@ const AdminTab = () => {
       toast({ title: "Ошибка", description: "Введите корректную сумму", variant: "destructive" });
       return;
     }
+    if (!txDialog.cardName) {
+      toast({ title: "Ошибка", description: "Выберите карту", variant: "destructive" });
+      return;
+    }
 
     const client = clients[txDialog.index];
     const finalAmount = txDialog.mode === "add" ? amount : -amount;
@@ -446,6 +450,17 @@ const AdminTab = () => {
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">От кого / Кому</Label>
               <Input placeholder="Например: ООО Ромашка" value={txDialog?.sender ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, sender: e.target.value } : null)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Карта</Label>
+              <Select value={txDialog?.cardName ?? ""} onValueChange={val => setTxDialog(prev => prev ? { ...prev, cardName: val } : null)}>
+                <SelectTrigger><SelectValue placeholder="Выберите карту" /></SelectTrigger>
+                <SelectContent>
+                  {txDialog && clients[txDialog.index]?.cards.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Комментарий</Label>
