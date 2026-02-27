@@ -37,6 +37,7 @@ const TransfersTab = () => {
   const [amount, setAmount] = useState("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
 
   // Bank transfer fields
   const [bankBik, setBankBik] = useState("");
@@ -339,18 +340,19 @@ const TransfersTab = () => {
           )}
           {filtered.map((tx) => {
             const positive = tx.amount >= 0;
+            const isExpanded = expandedTxId === tx.id;
             return (
-              <div key={tx.id} className="flex items-center justify-between py-4 border-b border-border last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
+              <div key={tx.id} className="flex items-start justify-between py-4 border-b border-border last:border-0 cursor-pointer" onClick={() => setExpandedTxId(isExpanded ? null : tx.id)}>
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${positive ? 'bg-primary/20' : 'bg-secondary'}`}>
                     {positive ? <ArrowDownLeft className="w-4 h-4 text-primary" /> : <ArrowUpRight className="w-4 h-4 text-muted-foreground" />}
                   </div>
-                  <div>
-                    <p className="text-foreground text-sm font-medium">{tx.title}</p>
+                  <div className="min-w-0">
+                    <p className={`text-foreground text-sm font-medium ${isExpanded ? 'whitespace-normal break-words' : 'truncate'}`}>{tx.title}</p>
                     <p className="text-muted-foreground text-xs">{tx.category} · {formatDate(tx.created_at)}</p>
                   </div>
                 </div>
-                <p className={`text-sm font-semibold ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
+                <p className={`text-sm font-semibold shrink-0 ml-2 ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
               </div>
             );
           })}
