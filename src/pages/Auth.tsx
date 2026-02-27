@@ -10,6 +10,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } else {
-      const { error } = await signUp(email, password, displayName, phone);
+      const { error } = await signUp(email, password, displayName, phone, lastName);
       if (error) {
         toast({ title: "Ошибка регистрации", description: error.message, variant: "destructive" });
       } else {
@@ -61,6 +62,14 @@ const Auth = () => {
                 placeholder="Имя"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
+                required
+              />
+              <Input
+                type="text"
+                placeholder="Фамилия"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
                 required
               />
