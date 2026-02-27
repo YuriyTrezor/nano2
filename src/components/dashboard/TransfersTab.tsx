@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, ArrowRightLeft, Building2, X, Lock } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, ArrowRightLeft, Building2, X, Lock, FileWarning } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -47,6 +47,8 @@ const TransfersTab = () => {
   const [blockedAlert, setBlockedAlert] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [withdrawalAlert, setWithdrawalAlert] = useState(false);
+  const [documentRequested, setDocumentRequested] = useState(false);
+  const [docAlert, setDocAlert] = useState(false);
 
   // Compute balance from transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -57,12 +59,13 @@ const TransfersTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, withdrawal_blocked")
+        .select("is_blocked, withdrawal_blocked, document_requested")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setIsBlocked((profile as any).is_blocked ?? false);
         setWithdrawalBlocked((profile as any).withdrawal_blocked ?? false);
+        setDocumentRequested((profile as any).document_requested ?? false);
       }
 
       const { data } = await supabase
@@ -85,6 +88,10 @@ const TransfersTab = () => {
 
   const handleSubmit = async () => {
     if (!user) return;
+    if (documentRequested) {
+      setDocAlert(true);
+      return;
+    }
     if (isBlocked) {
       setBlockedAlert(true);
       return;
@@ -173,6 +180,10 @@ const TransfersTab = () => {
           </p>
         </div>
         <Button onClick={() => {
+          if (documentRequested) {
+            setDocAlert(true);
+            return;
+          }
           if (isBlocked) {
             setBlockedAlert(true);
             return;
@@ -219,8 +230,22 @@ const TransfersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Document request alert */}
+      <AlertDialog open={docAlert} onOpenChange={setDocAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <FileWarning className="w-5 h-5 text-[hsl(210,80%,60%)]" />
+              Запрос документов
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Просим Вас предоставить подтверждающие документы о происхождении денежных средств.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Transfer form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 relative animate-in zoom-in-95 fade-in duration-200" onClick={e => e.stopPropagation()}>

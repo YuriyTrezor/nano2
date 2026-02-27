@@ -95,7 +95,7 @@ const MiniCatalogCard = ({ gradient, label, type }: { gradient: string; label: s
     </div>
     <div className="flex justify-between items-end">
       <div>
-        <p className="text-white/40 font-mono text-xs">4••• •••• •••• ••••</p>
+        <p className="text-white/40 font-mono text-xs">{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
         <p className="text-white/60 text-[10px] mt-1">{label}</p>
       </div>
       <p className="text-white/80 font-bold text-sm">
@@ -316,7 +316,7 @@ const CardsTab = () => {
       <h2 className="text-foreground font-semibold text-lg mb-2">{t("О картах")}</h2>
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {cardCatalog.map((card) => (
+        {cardCatalog.filter(c => c.name !== "Diamond").map((card) => (
           <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${userCards.includes(card.name) ? "border-primary" : "border-border"}`}>
             {userCards.includes(card.name) && (
               <div className="flex items-center gap-1.5 mb-3">
@@ -351,6 +351,89 @@ const CardsTab = () => {
           </div>
         ))}
       </div>
+
+      {/* Diamond Card - full width below, matching landing page */}
+      {(() => {
+        const diamond = cardCatalog.find(c => c.name === "Diamond")!;
+        return (
+          <div className="mt-8">
+            <div className="bg-gradient-to-br from-[hsl(210,30%,8%)] to-[hsl(200,25%,12%)] border border-[hsl(195,60%,30%)]/30 rounded-2xl p-6 md:p-8 max-w-3xl mx-auto relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(195,80%,60%)]/5 to-transparent animate-[diamond-shine_3s_ease-in-out_infinite]" />
+              
+              {userCards.includes("Diamond") && (
+                <div className="flex items-center gap-1.5 mb-4 relative z-10">
+                  <Check className="w-4 h-4 text-[hsl(195,80%,60%)]" />
+                  <span className="text-[hsl(195,80%,60%)] text-xs font-semibold">Ваша карта</span>
+                </div>
+              )}
+
+              <div className="flex flex-col md:flex-row gap-8 relative z-10">
+                <div className="md:w-72 shrink-0">
+                  <div className="relative mb-4 flex justify-center md:justify-start">
+                    <DiamondIcon3D className="w-16 h-16" />
+                  </div>
+                  <div className={`bg-gradient-to-br ${diamond.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden shadow-[0_0_30px_hsl(195,80%,50%,0.15)]`}>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
+                    <div className="absolute top-0 right-0 w-28 h-28 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
+                    <div className="flex justify-between items-start relative z-10">
+                      <div>
+                        <span className="text-white/80 text-xs font-medium tracking-wider">NeoBank</span>
+                        <div className="w-7 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1.5" />
+                      </div>
+                      <DiamondIcon3D className="w-8 h-8" />
+                    </div>
+                    <div className="flex justify-between items-end relative z-10">
+                      <div>
+                        <p className="text-white/50 font-mono text-xs">4••• •••• •••• ••••</p>
+                        <p className="text-[hsl(195,80%,70%)] text-xs mt-1 font-semibold tracking-wider">DIAMOND</p>
+                      </div>
+                      <p className="text-white/90 font-bold text-sm">VISA</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-2xl font-bold text-foreground">Diamond</h3>
+                    <DiamondIcon3D className="w-6 h-6" />
+                    <span className="text-[10px] px-3 py-1 rounded-full font-bold bg-gradient-to-r from-[hsl(195,80%,60%)]/20 to-[hsl(210,80%,50%)]/20 text-[hsl(195,80%,60%)] uppercase tracking-wider border border-[hsl(195,60%,50%)]/30">Premium</span>
+                  </div>
+                  <p className="text-3xl font-extrabold text-foreground mt-2">{cardPrices?.["Diamond"] ?? diamond.defaultPrice}</p>
+                  <p className="text-muted-foreground text-sm mt-1">Лимит: {diamond.limit}</p>
+
+                  <div className="bg-[hsl(195,40%,15%)] rounded-xl p-4 mt-4 mb-4 border border-[hsl(195,60%,30%)]/20">
+                    <p className="text-foreground font-semibold text-sm mb-1">Вывод без блокировок на карты МИР</p>
+                    <p className="text-muted-foreground text-xs">Автоматическое определение моста для безопасного вывода. Никаких блокировок и задержек.</p>
+                  </div>
+
+                  <ul className="space-y-2 mb-4">
+                    {diamond.features.map((f) => (
+                      <li key={f} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Check className="w-4 h-4 text-[hsl(195,80%,60%)] shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="space-y-1.5 mb-6">
+                    {diamond.extras.map((e) => (
+                      <p key={e} className="text-sm text-[hsl(195,80%,60%)] flex items-center gap-2">
+                        <Check className="w-4 h-4" /> {e}
+                      </p>
+                    ))}
+                  </div>
+
+                  <Button
+                    className="w-full bg-gradient-to-r from-[hsl(195,80%,40%)] to-[hsl(210,90%,30%)] hover:opacity-90 text-white gap-2 shadow-[0_0_20px_hsl(195,80%,50%,0.2)]"
+                    onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
+                  >
+                    Купить — {cardPrices?.["Diamond"] ?? diamond.defaultPrice}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

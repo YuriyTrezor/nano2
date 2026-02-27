@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +36,7 @@ interface Client {
   sessions: { ip: string; device: string; time: string }[];
   withdrawalBlocked: boolean;
   cardPrices: Record<string, string> | null;
+  documentRequested: boolean;
 }
 
 const DEFAULT_CARD_PRICES: Record<string, string> = {
@@ -109,7 +110,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices, document_requested")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -134,6 +135,7 @@ const AdminTab = () => {
           sessions: [],
           withdrawalBlocked: p.withdrawal_blocked ?? false,
           cardPrices: p.card_prices ?? null,
+          documentRequested: p.document_requested ?? false,
         }));
 
         for (const client of dbClients) {
@@ -188,6 +190,18 @@ const AdminTab = () => {
     toast({ title: "Успешно", description: newVal ? "Вывод заблокирован" : "Вывод разблокирован" });
   };
 
+  const handleToggleDocRequest = async (index: number) => {
+    const client = clients[index];
+    const newVal = !client.documentRequested;
+    setClients(prev => prev.map((c, i) =>
+      i === index ? { ...c, documentRequested: newVal } : c
+    ));
+    if (client.userId) {
+      await supabase.from("profiles").update({ document_requested: newVal } as any).eq("user_id", client.userId);
+    }
+    toast({ title: "Успешно", description: newVal ? "Запрос документов включён" : "Запрос документов отключён" });
+  };
+
   const handleToggleCardBlock = async (index: number, cardName: string) => {
     const client = clients[index];
     const isBlocked = client.blockedCards.includes(cardName);
@@ -219,7 +233,7 @@ const AdminTab = () => {
       userId: "", email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
       status: "Активен", statusColor: "text-primary",
       registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", lastIp: "—", blocked: false,
-      cards: [], blockedCards: [], sessions: [], withdrawalBlocked: false, cardPrices: null,
+      cards: [], blockedCards: [], sessions: [], withdrawalBlocked: false, cardPrices: null, documentRequested: false,
     };
     setClients(prev => [...prev, client]);
     setNewUser({ email: "", name: "", password: "" });
@@ -722,6 +736,13 @@ const AdminTab = () => {
                         title={client.withdrawalBlocked ? "Разрешить вывод" : "Запретить вывод"}
                       >
                         <Ban className="w-3 h-3" /> {client.withdrawalBlocked ? "Вывод ⛔" : "Вывод ✓"}
+                      </button>
+                      <button
+                        onClick={() => handleToggleDocRequest(originalIndex)}
+                        className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.documentRequested ? 'bg-[hsl(210,80%,50%)]/20 text-[hsl(210,80%,60%)]' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                        title={client.documentRequested ? "Отменить запрос док." : "Запросить док."}
+                      >
+                        <FileWarning className="w-3 h-3" /> {client.documentRequested ? "Док. ⚠" : "Док. ✓"}
                       </button>
                       <button
                         onClick={() => handleBlock(originalIndex)}

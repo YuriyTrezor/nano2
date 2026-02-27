@@ -65,7 +65,7 @@ const MiniCard = ({ gradient, label, type }: { gradient: string; label: string; 
     </div>
     <div className="flex justify-between items-end">
       <div>
-        <p className="text-white/40 font-mono text-xs">4••• •••• •••• ••••</p>
+        <p className="text-white/40 font-mono text-xs">{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
         <p className="text-white/60 text-[10px] mt-1">{label}</p>
       </div>
       <p className="text-white/80 font-bold text-sm">

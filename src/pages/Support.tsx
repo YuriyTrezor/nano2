@@ -158,12 +158,18 @@ const Support = () => {
                   </a>
                   <div className="flex items-center gap-3 text-muted-foreground text-sm">
                     <MessageCircle className="w-4 h-4 text-primary" />
-                    Чат 24/7 в приложении
+                    Чат в приложении
                   </div>
                   <a href="https://t.me/Neobank_manager" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors text-sm">
                     <SendIcon className="w-4 h-4 text-primary" />
                     Telegram: @Neobank_manager
                   </a>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-muted-foreground text-xs font-medium mb-1">Время работы:</p>
+                  <p className="text-foreground text-sm">Пн — Пт: 10:00 — 22:00 (МСК)</p>
+                  <p className="text-muted-foreground text-sm">Сб, Вс — выходной</p>
                 </div>
               </div>
             </div>
