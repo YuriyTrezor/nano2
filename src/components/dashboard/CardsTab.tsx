@@ -369,8 +369,8 @@ const CardsTab = () => {
 
               <div className="flex flex-col md:flex-row gap-8 relative z-10">
                 <div className="md:w-72 shrink-0">
-                  <div className="relative mb-4 flex justify-center md:justify-start">
-                    <DiamondIcon3D className="w-16 h-16" />
+                  <div className="relative mb-4 flex justify-center">
+                    <DiamondIcon3D className="w-20 h-20" />
                   </div>
                   <div className={`bg-gradient-to-br ${diamond.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden shadow-[0_0_30px_hsl(195,80%,50%,0.15)]`}>
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
