@@ -5,6 +5,7 @@ import neobankLogo from "@/assets/neobank-logo.png";
 
 const Navbar = () => {
   const { lang, toggleLang, t } = useLanguage();
+  const isEn = lang === "en";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -17,6 +18,7 @@ const Navbar = () => {
             <a href="#cards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("О картах")}</a>
             <a href="#reviews" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Отзывы клиентов")}</a>
             <a href="#contacts" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Контакты")}</a>
+            <a href="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{isEn ? "About" : "О банке"}</a>
             <a href="/swift" className="text-muted-foreground hover:text-foreground transition-colors text-sm">SWIFT</a>
             <a href="/support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Поддержка")}</a>
           </div>

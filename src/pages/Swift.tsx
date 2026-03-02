@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Globe, ShieldCheck, Clock, Building, FileText } from "lucide-react";
+import { ArrowLeftRight, Globe, ShieldCheck, Clock, AlertTriangle, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FloatingChat from "@/components/FloatingChat";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -15,7 +15,7 @@ const Swift = () => {
           <div className="flex items-center gap-3 mb-2">
             <ArrowLeftRight className="w-7 h-7 text-primary" />
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {isEn ? "SWIFT Details" : "SWIFT реквизиты"}
+              {isEn ? "SWIFT Transfers" : "Переводы SWIFT"}
             </h1>
           </div>
           <p className="text-muted-foreground mb-10">
@@ -34,41 +34,54 @@ const Swift = () => {
             </div>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {isEn
-                ? "SWIFT (Society for Worldwide Interbank Financial Telecommunication) is a global messaging network used by banks and financial institutions to securely transmit information and instructions through a standardized system of codes. It enables international money transfers between banks in different countries."
+                ? "SWIFT (Society for Worldwide Interbank Financial Telecommunication) is a global messaging network used by over 11,000 banks and financial institutions in 200+ countries. It enables secure international money transfers between banks by transmitting standardized payment instructions."
                 : "SWIFT (Society for Worldwide Interbank Financial Telecommunication) — это глобальная межбанковская система передачи информации и совершения платежей. Она объединяет более 11 000 финансовых организаций в 200+ странах мира и обеспечивает безопасную передачу платёжных поручений между банками."}
             </p>
             <p className="text-muted-foreground leading-relaxed">
               {isEn
-                ? "NeoBank provides full SWIFT transfer capabilities, allowing you to send and receive funds internationally with competitive rates and reliable processing times."
-                : "NeoBank предоставляет полный функционал SWIFT-переводов, позволяя отправлять и получать средства по всему миру с конкурентными курсами и надёжными сроками обработки."}
+                ? "SWIFT itself does not transfer money — it transmits secure messages between banks with instructions on how to move funds. Each bank in the network has a unique SWIFT/BIC code that identifies it during transactions."
+                : "SWIFT сама по себе не переводит деньги — она передаёт защищённые сообщения между банками с инструкциями о перемещении средств. Каждый банк в сети имеет уникальный SWIFT/BIC код, который идентифицирует его при проведении операций."}
             </p>
           </div>
 
-          {/* Bank details */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Building className="w-6 h-6 text-primary" />
+          {/* Sanctions context */}
+          <div className="bg-gradient-to-br from-[hsl(35,80%,50%)]/10 to-[hsl(25,90%,40%)]/5 border border-[hsl(35,80%,50%)]/30 rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-[hsl(35,80%,50%)]" />
               <h2 className="text-xl font-bold text-foreground">
-                {isEn ? "Bank Details" : "Банковские реквизиты"}
+                {isEn ? "SWIFT and Russian Sanctions" : "SWIFT и санкции против РФ"}
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: isEn ? "Bank Name" : "Наименование банка", value: "NeoBank International Ltd." },
-                { label: "SWIFT/BIC", value: "NEOBGE22XXX" },
-                { label: isEn ? "Correspondent Bank" : "Банк-корреспондент", value: "Deutsche Bank AG, Frankfurt" },
-                { label: isEn ? "Correspondent SWIFT" : "SWIFT корреспондента", value: "DEUTDEFF" },
-                { label: "IBAN", value: "GE29NB0000000012345678" },
-                { label: isEn ? "Registration Country" : "Страна регистрации", value: isEn ? "Georgia" : "Грузия" },
-                { label: isEn ? "Address" : "Адрес", value: "26 Chavchavadze Ave, Tbilisi 0179, Georgia" },
-                { label: isEn ? "Currency" : "Валюта", value: "USD, EUR, GBP, CHF, RUB" },
-              ].map(item => (
-                <div key={item.label} className="p-4 bg-secondary rounded-xl">
-                  <p className="text-muted-foreground text-xs mb-1">{item.label}</p>
-                  <p className="text-foreground font-medium text-sm font-mono">{item.value}</p>
-                </div>
-              ))}
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {isEn
+                ? "Since 2022, a number of major Russian banks have been disconnected from the SWIFT network as part of international sanctions imposed by the EU, USA, and their allies. This has significantly limited the ability of Russian residents and businesses to make international transfers through traditional channels."
+                : "С 2022 года ряд крупнейших российских банков был отключён от сети SWIFT в рамках международных санкций, введённых ЕС, США и их союзниками. Это существенно ограничило возможности российских резидентов и бизнеса совершать международные переводы через традиционные каналы."}
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {isEn
+                ? "Disconnected banks cannot send or receive international transfers via SWIFT, which affects both personal and corporate payments — from paying for goods abroad to receiving salaries from foreign companies."
+                : "Отключённые банки не могут отправлять и получать международные переводы через SWIFT, что затрагивает как личные, так и корпоративные платежи — от оплаты товаров за рубежом до получения зарплат от иностранных компаний."}
+            </p>
+          </div>
+
+          {/* NeoBank solution */}
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Building2 className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "NeoBank — Your Access to SWIFT" : "NeoBank — Ваш доступ к SWIFT"}
+              </h2>
             </div>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {isEn
+                ? "NeoBank provides full SWIFT transfer capabilities for its clients. As a bank registered outside the jurisdiction of sanctions, NeoBank maintains uninterrupted access to the SWIFT network and offers international transfers in USD, EUR, GBP, CHF and other currencies."
+                : "NeoBank предоставляет своим клиентам полноценный доступ к SWIFT-переводам. Будучи банком, зарегистрированным вне юрисдикции санкций, NeoBank сохраняет бесперебойный доступ к сети SWIFT и предлагает международные переводы в USD, EUR, GBP, CHF и других валютах."}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {isEn
+                ? "We issue international Visa and Mastercard cards with full SWIFT support — allowing you to send and receive funds worldwide without restrictions, blocks, or delays."
+                : "Мы выпускаем международные карты Visa и Mastercard с полной поддержкой SWIFT — позволяя вам отправлять и получать средства по всему миру без ограничений, блокировок и задержек."}
+            </p>
           </div>
 
           {/* Features */}
@@ -96,14 +109,14 @@ const Swift = () => {
               </p>
             </div>
             <div className="bg-card border border-border rounded-2xl p-6 text-center">
-              <FileText className="w-8 h-8 text-primary mx-auto mb-3" />
+              <Globe className="w-8 h-8 text-primary mx-auto mb-3" />
               <h3 className="text-foreground font-semibold mb-2">
-                {isEn ? "No Hidden Fees" : "Без скрытых комиссий"}
+                {isEn ? "No Restrictions" : "Без ограничений"}
               </h3>
               <p className="text-muted-foreground text-sm">
                 {isEn
-                  ? "Transparent fee structure with competitive exchange rates"
-                  : "Прозрачная структура комиссий с конкурентными обменными курсами"}
+                  ? "Full access to international transfers regardless of sanctions"
+                  : "Полный доступ к международным переводам вне зависимости от санкций"}
               </p>
             </div>
           </div>

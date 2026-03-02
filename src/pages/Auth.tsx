@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import neobankLogo from "@/assets/neobank-logo.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -43,10 +44,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <a href="/" className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-          N
-        </div>
-        <span className="text-foreground font-semibold text-2xl">NeoBank</span>
+        <img src={neobankLogo} alt="NeoBank" className="h-10 rounded-md opacity-90 brightness-90" />
       </a>
 
       <div className="w-full max-w-md bg-card rounded-2xl p-8 border border-border">

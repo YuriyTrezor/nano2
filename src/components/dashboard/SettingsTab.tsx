@@ -15,6 +15,7 @@ const SettingsTab = () => {
   const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || "");
   const [lastName, setLastName] = useState(user?.user_metadata?.last_name || "");
   const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const handleSaveProfile = async () => {
@@ -30,20 +31,37 @@ const SettingsTab = () => {
 
   const handleChangePassword = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (!oldPassword.trim()) {
+      toast({ title: lang === "ru" ? "Ошибка" : "Error", description: lang === "ru" ? "Введите старый пароль" : "Enter old password", variant: "destructive" });
+      return;
+    }
     if (!newPassword.trim()) {
-      toast({ title: "Ошибка", description: "Введите новый пароль", variant: "destructive" });
+      toast({ title: lang === "ru" ? "Ошибка" : "Error", description: lang === "ru" ? "Введите новый пароль" : "Enter new password", variant: "destructive" });
       return;
     }
     try {
+      // Re-authenticate with old password first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email ?? "",
+        password: oldPassword,
+      });
+      if (signInError) {
+        toast({ title: lang === "ru" ? "Ошибка" : "Error", description: lang === "ru" ? "Неверный старый пароль" : "Incorrect old password", variant: "destructive" });
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+        const msg = error.message === "New password should be different from the old password."
+          ? (lang === "ru" ? "Новый пароль должен отличаться от старого." : error.message)
+          : error.message;
+        toast({ title: lang === "ru" ? "Ошибка" : "Error", description: msg, variant: "destructive" });
       } else {
-        toast({ title: t("Информация"), description: "Пароль успешно изменён" });
+        toast({ title: t("Информация"), description: lang === "ru" ? "Пароль успешно изменён" : "Password changed successfully" });
+        setOldPassword("");
         setNewPassword("");
       }
     } catch (err) {
-      toast({ title: "Ошибка", description: "Не удалось изменить пароль", variant: "destructive" });
+      toast({ title: lang === "ru" ? "Ошибка" : "Error", description: lang === "ru" ? "Не удалось изменить пароль" : "Failed to change password", variant: "destructive" });
     }
   };
 
@@ -100,11 +118,15 @@ const SettingsTab = () => {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-muted-foreground text-xs mb-1 block">Новый пароль</label>
+              <label className="text-muted-foreground text-xs mb-1 block">{lang === "ru" ? "Старый пароль" : "Old password"}</label>
+              <Input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="bg-secondary border-border text-foreground" placeholder="••••••" />
+            </div>
+            <div>
+              <label className="text-muted-foreground text-xs mb-1 block">{lang === "ru" ? "Новый пароль" : "New password"}</label>
               <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-secondary border-border text-foreground" placeholder="••••••" />
             </div>
             <Button type="button" onClick={handleChangePassword} variant="outline" className="w-full cursor-pointer">
-              Изменить пароль
+              {lang === "ru" ? "Изменить пароль" : "Change password"}
             </Button>
           </div>
         </div>
