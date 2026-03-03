@@ -1,10 +1,11 @@
-import { MessageCircle, Send, X } from "lucide-react";
+import { MessageCircle, Send, X, Paperclip, FileText, Download } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { playNotificationSound } from "@/utils/notificationSound";
+import { toast } from "@/hooks/use-toast";
 
 interface ChatMessage {
   id: string;
@@ -20,14 +21,13 @@ const FloatingChat = () => {
   const [text, setText] = useState("");
   const [ticketId, setTicketId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Find or ignore ticket on mount
   useEffect(() => {
     if (!user) return;
-    
     const loadTicket = async () => {
-      // Find existing open ticket
       const { data: existingTickets } = await supabase
         .from("support_tickets")
         .select("id")
@@ -43,7 +43,6 @@ const FloatingChat = () => {
         loadUnread(tid);
       }
     };
-
     loadTicket();
   }, [user]);
 
@@ -66,10 +65,8 @@ const FloatingChat = () => {
     setUnreadCount(data?.length || 0);
   };
 
-  // Realtime
   useEffect(() => {
     if (!user) return;
-    
     const channel = supabase
       .channel("client-support")
       .on("postgres_changes", {
@@ -83,13 +80,11 @@ const FloatingChat = () => {
             if (prev.find(m => m.id === msg.id)) return prev;
             return [...prev, { id: msg.id, text: msg.text, sender_role: msg.sender_role, created_at: msg.created_at }];
           });
-          
           if (msg.sender_role === "support") {
             playNotificationSound();
             if (!open) {
               setUnreadCount(prev => prev + 1);
             } else {
-              // Mark as read
               supabase.from("support_messages").update({ is_read: true }).eq("id", msg.id).then();
             }
           }
@@ -100,12 +95,10 @@ const FloatingChat = () => {
     return () => { supabase.removeChannel(channel); };
   }, [ticketId, open, user]);
 
-  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Mark as read when opening
   useEffect(() => {
     if (open && ticketId) {
       supabase
@@ -119,23 +112,23 @@ const FloatingChat = () => {
     }
   }, [open, ticketId]);
 
+  const ensureTicket = async (): Promise<string | null> => {
+    if (ticketId) return ticketId;
+    if (!user) return null;
+    const { data: newTicket } = await supabase
+      .from("support_tickets")
+      .insert({ user_id: user.id, subject: "Новое обращение" })
+      .select("id")
+      .single();
+    if (!newTicket) return null;
+    setTicketId(newTicket.id);
+    return newTicket.id;
+  };
+
   const handleSend = async () => {
     if (!text.trim() || !user) return;
-
-    let tid = ticketId;
-
-    // Create ticket if none exists
-    if (!tid) {
-      const { data: newTicket } = await supabase
-        .from("support_tickets")
-        .insert({ user_id: user.id, subject: "Новое обращение" })
-        .select("id")
-        .single();
-      
-      if (!newTicket) return;
-      tid = newTicket.id;
-      setTicketId(tid);
-    }
+    const tid = await ensureTicket();
+    if (!tid) return;
 
     await supabase.from("support_messages").insert({
       ticket_id: tid,
@@ -143,8 +136,60 @@ const FloatingChat = () => {
       sender_role: "user",
       text: text.trim(),
     });
-
     setText("");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Файл слишком большой (макс. 5 МБ)", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    const tid = await ensureTicket();
+    if (!tid) { setUploading(false); return; }
+
+    const filePath = `${tid}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("support-attachments")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast({ title: "Ошибка загрузки файла", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("support-attachments")
+      .getPublicUrl(filePath);
+
+    await supabase.from("support_messages").insert({
+      ticket_id: tid,
+      sender_id: user.id,
+      sender_role: "user",
+      text: `📎 [${file.name}](${urlData.publicUrl})`,
+    });
+
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const renderMessageText = (msgText: string) => {
+    const linkMatch = msgText.match(/^📎 \[(.+?)\]\((.+?)\)$/);
+    if (linkMatch) {
+      return (
+        <a href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 underline text-xs">
+          <FileText className="w-3 h-3" />
+          {linkMatch[1]}
+          <Download className="w-2.5 h-2.5" />
+        </a>
+      );
+    }
+    return <p className="text-xs">{msgText}</p>;
   };
 
   if (!user) return null;
@@ -168,7 +213,7 @@ const FloatingChat = () => {
                 <div className={`max-w-[80%] rounded-xl px-3 py-2 ${
                   msg.sender_role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
                 }`}>
-                  <p className="text-xs">{msg.text}</p>
+                  {renderMessageText(msg.text)}
                   <p className="text-[9px] opacity-60 mt-0.5">
                     {new Date(msg.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
                   </p>
@@ -178,6 +223,22 @@ const FloatingChat = () => {
             <div ref={messagesEndRef} />
           </div>
           <div className="p-3 border-t border-border flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Paperclip className={`w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}`} />
+            </Button>
             <Input
               placeholder="Введите сообщение..."
               value={text}
