@@ -1,4 +1,4 @@
-import { MessageSquare, Send, RefreshCw } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { playNotificationSound } from "@/utils/notificationSound";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Ticket {
   id: string;
@@ -36,8 +47,10 @@ const SupportTab = () => {
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesCount = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -173,6 +186,73 @@ const SupportTab = () => {
     setMessageText("");
   };
 
+  const handleDeleteMessage = async (msgId: string) => {
+    await supabase.from("support_messages").delete().eq("id", msgId);
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+    toast({ title: "Сообщение удалено" });
+  };
+
+  const handleDeleteConversation = async (ticketId: string) => {
+    await supabase.from("support_messages").delete().eq("ticket_id", ticketId);
+    await supabase.from("support_tickets").delete().eq("id", ticketId);
+    setTickets(prev => prev.filter(t => t.id !== ticketId));
+    if (selectedTicket === ticketId) {
+      setSelectedTicket(null);
+      setMessages([]);
+    }
+    toast({ title: "Переписка удалена" });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedTicket || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Файл слишком большой (макс. 5 МБ)", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    const filePath = `${selectedTicket}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("support-attachments")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast({ title: "Ошибка загрузки файла", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("support-attachments")
+      .getPublicUrl(filePath);
+
+    await supabase.from("support_messages").insert({
+      ticket_id: selectedTicket,
+      sender_id: user.id,
+      sender_role: "support",
+      text: `📎 [${file.name}](${urlData.publicUrl})`,
+    });
+
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const renderMessageText = (text: string) => {
+    const linkMatch = text.match(/^📎 \[(.+?)\]\((.+?)\)$/);
+    if (linkMatch) {
+      return (
+        <a href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 underline text-sm">
+          <FileText className="w-4 h-4" />
+          {linkMatch[1]}
+          <Download className="w-3 h-3" />
+        </a>
+      );
+    }
+    return <p className="text-sm">{text}</p>;
+  };
+
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
   const currentTicket = tickets.find(t => t.id === selectedTicket);
 
@@ -203,24 +283,46 @@ const SupportTab = () => {
               <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
             )}
             {tickets.map((ticket) => (
-              <button
-                key={ticket.id}
-                onClick={() => setSelectedTicket(ticket.id)}
-                className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                  selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                }`}
-              >
-                <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                <p className="text-muted-foreground text-[10px] mt-1">
-                  {new Date(ticket.created_at).toLocaleString("ru-RU")}
-                </p>
-                {(unreadCounts[ticket.id] || 0) > 0 && (
-                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                    {unreadCounts[ticket.id]}
-                  </span>
-                )}
-              </button>
+              <div key={ticket.id} className="relative group">
+                <button
+                  onClick={() => setSelectedTicket(ticket.id)}
+                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
+                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
+                  }`}
+                >
+                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
+                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
+                  <p className="text-muted-foreground text-[10px] mt-1">
+                    {new Date(ticket.created_at).toLocaleString("ru-RU")}
+                  </p>
+                  {(unreadCounts[ticket.id] || 0) > 0 && (
+                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                      {unreadCounts[ticket.id]}
+                    </span>
+                  )}
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Удалить переписку?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Все сообщения в этом диалоге будут удалены безвозвратно.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Отмена</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteConversation(ticket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Удалить
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             ))}
           </div>
         </div>
@@ -229,26 +331,71 @@ const SupportTab = () => {
         <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col">
           {currentTicket ? (
             <>
-              <div className="p-4 border-b border-border">
-                <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
-                <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div>
+                  <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
+                  <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Удалить всю переписку?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Диалог и все сообщения будут удалены безвозвратно.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Отмена</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteConversation(currentTicket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Удалить
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
                 {messages.map(msg => (
-                  <div key={msg.id} className={`flex ${msg.sender_role !== "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[70%] rounded-xl px-4 py-2 ${
+                  <div key={msg.id} className={`flex ${msg.sender_role !== "user" ? "justify-end" : "justify-start"} group`}>
+                    <div className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
                       msg.sender_role !== "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
                     }`}>
-                      <p className="text-sm">{msg.text}</p>
+                      {renderMessageText(msg.text)}
                       <p className="text-[10px] opacity-70 mt-1">
                         {new Date(msg.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
                       </p>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
               </div>
               <div className="p-4 border-t border-border flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="shrink-0"
+                >
+                  <Paperclip className={`w-4 h-4 ${uploading ? "animate-spin" : ""}`} />
+                </Button>
                 <Input
                   placeholder={t("Введите ответ...")}
                   value={messageText}

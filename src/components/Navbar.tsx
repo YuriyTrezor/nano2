@@ -1,11 +1,33 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState, useEffect } from "react";
 import neobankLogo from "@/assets/neobank-logo.png";
 
 const Navbar = () => {
   const { lang, toggleLang, t } = useLanguage();
   const isEn = lang === "en";
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      setShowInstall(false);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -24,6 +46,13 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleInstall}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title={isEn ? "Install App" : "Установить приложение"}
+          >
+            <Download className="w-5 h-5" />
+          </button>
           <div className="hidden sm:flex items-center rounded-full border border-border overflow-hidden">
             <button
               onClick={() => lang !== "ru" && toggleLang()}
