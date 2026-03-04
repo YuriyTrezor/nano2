@@ -1,8 +1,10 @@
-import { ShieldCheck, Upload, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Upload, CheckCircle2, Clock, AlertTriangle, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const steps = [
   { label: "Личные данные", description: "ФИО и дата рождения" },
@@ -11,22 +13,133 @@ const steps = [
 ];
 
 const VerificationTab = () => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [docNumber, setDocNumber] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSubmit = () => {
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const selfieInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchExisting = async () => {
+      const { data } = await supabase
+        .from("verification_requests" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (data && (data as any[]).length > 0) {
+        setExistingRequest((data as any[])[0]);
+      }
+      setLoading(false);
+    };
+    fetchExisting();
+  }, [user]);
+
+  const handleFileSelect = (type: "doc" | "selfie") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Файл слишком большой. Максимум 10 МБ");
+      return;
+    }
+    if (type === "doc") {
+      setDocFile(file);
+      if (currentStep < 2) setCurrentStep(2);
+    } else {
+      setSelfieFile(file);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user) {
+      toast.error("Необходимо авторизоваться");
+      return;
+    }
     if (!fullName.trim() || !birthDate.trim() || !docNumber.trim()) {
       toast.error("Заполните все поля");
       return;
     }
-    setSubmitted(true);
-    toast.success("Заявка на верификацию отправлена. Ожидайте проверки.");
+    if (!docFile) {
+      toast.error("Загрузите фото документа");
+      return;
+    }
+    if (!selfieFile) {
+      toast.error("Загрузите селфи с документом");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Upload document photo
+      const docExt = docFile.name.split(".").pop();
+      const docPath = `${user.id}/document_${Date.now()}.${docExt}`;
+      const { error: docErr } = await supabase.storage
+        .from("verification-documents")
+        .upload(docPath, docFile);
+      if (docErr) throw docErr;
+
+      // Upload selfie
+      const selfieExt = selfieFile.name.split(".").pop();
+      const selfiePath = `${user.id}/selfie_${Date.now()}.${selfieExt}`;
+      const { error: selfieErr } = await supabase.storage
+        .from("verification-documents")
+        .upload(selfiePath, selfieFile);
+      if (selfieErr) throw selfieErr;
+
+      // Save to DB
+      const { error: dbErr } = await supabase
+        .from("verification_requests" as any)
+        .insert({
+          user_id: user.id,
+          full_name: fullName.trim(),
+          birth_date: birthDate.trim(),
+          doc_number: docNumber.trim(),
+          doc_file_url: docPath,
+          selfie_file_url: selfiePath,
+          status: "pending",
+        } as any);
+      if (dbErr) throw dbErr;
+
+      setExistingRequest({
+        full_name: fullName,
+        status: "pending",
+        created_at: new Date().toISOString(),
+      });
+      toast.success("Заявка на верификацию отправлена. Ожидайте проверки.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Ошибка при отправке: " + (err.message || "Попробуйте позже"));
+    } finally {
+      setUploading(false);
+    }
   };
 
-  if (submitted) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (existingRequest) {
+    const statusMap: Record<string, { icon: any; label: string; color: string }> = {
+      pending: { icon: Clock, label: "На проверке", color: "text-primary" },
+      approved: { icon: CheckCircle2, label: "Подтверждено", color: "text-green-500" },
+      rejected: { icon: AlertTriangle, label: "Отклонено", color: "text-destructive" },
+    };
+    const st = statusMap[existingRequest.status] || statusMap.pending;
+    const StatusIcon = st.icon;
+
     return (
       <div>
         <div className="flex items-center gap-3 mb-6">
@@ -34,16 +147,18 @@ const VerificationTab = () => {
           <h1 className="text-2xl font-bold text-foreground">Верификация</h1>
         </div>
         <div className="bg-card border border-border rounded-2xl p-8 text-center max-w-md mx-auto">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-            <Clock className="w-8 h-8 text-primary" />
+          <div className={`w-16 h-16 rounded-full ${st.color === "text-green-500" ? "bg-green-500/20" : st.color === "text-destructive" ? "bg-destructive/20" : "bg-primary/20"} flex items-center justify-center mx-auto mb-4`}>
+            <StatusIcon className={`w-8 h-8 ${st.color}`} />
           </div>
-          <h2 className="text-foreground font-bold text-xl mb-2">Заявка отправлена</h2>
+          <h2 className="text-foreground font-bold text-xl mb-2">{st.label}</h2>
           <p className="text-muted-foreground text-sm mb-4">
-            Ваши данные находятся на проверке. Это может занять до 24 часов. Мы уведомим вас о результате.
+            {existingRequest.status === "pending" && "Ваши данные находятся на проверке. Это может занять до 24 часов. Мы уведомим вас о результате."}
+            {existingRequest.status === "approved" && "Ваша личность подтверждена. Все функции доступны."}
+            {existingRequest.status === "rejected" && "Ваша заявка была отклонена. Пожалуйста, обратитесь в поддержку."}
           </p>
           <div className="flex items-center gap-2 justify-center text-muted-foreground text-xs">
             <Clock className="w-3.5 h-3.5" />
-            <span>Среднее время проверки: 2-4 часа</span>
+            <span>Подано: {new Date(existingRequest.created_at).toLocaleString("ru-RU")}</span>
           </div>
         </div>
       </div>
@@ -114,10 +229,32 @@ const VerificationTab = () => {
                 className="bg-secondary border-border"
               />
             </div>
-            <div className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors">
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">Загрузите фото документа</p>
-              <p className="text-muted-foreground text-xs mt-1">JPG, PNG до 10 МБ</p>
+            <input
+              ref={docInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={handleFileSelect("doc")}
+            />
+            <div
+              onClick={() => docInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              {docFile ? (
+                <div className="flex items-center justify-center gap-2">
+                  <FileText className="w-6 h-6 text-primary" />
+                  <span className="text-foreground text-sm font-medium">{docFile.name}</span>
+                  <button onClick={(e) => { e.stopPropagation(); setDocFile(null); }} className="p-1 hover:bg-secondary rounded">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground text-sm">Загрузите фото документа</p>
+                  <p className="text-muted-foreground text-xs mt-1">JPG, PNG, PDF до 10 МБ</p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -128,10 +265,32 @@ const VerificationTab = () => {
             <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold ${currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>3</span>
             Селфи с документом
           </h3>
-          <div className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors">
-            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">Загрузите селфи с раскрытым документом</p>
-            <p className="text-muted-foreground text-xs mt-1">Лицо и данные документа должны быть чётко видны</p>
+          <input
+            ref={selfieInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelect("selfie")}
+          />
+          <div
+            onClick={() => selfieInputRef.current?.click()}
+            className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+          >
+            {selfieFile ? (
+              <div className="flex items-center justify-center gap-2">
+                <FileText className="w-6 h-6 text-primary" />
+                <span className="text-foreground text-sm font-medium">{selfieFile.name}</span>
+                <button onClick={(e) => { e.stopPropagation(); setSelfieFile(null); }} className="p-1 hover:bg-secondary rounded">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">Загрузите селфи с раскрытым документом</p>
+                <p className="text-muted-foreground text-xs mt-1">Лицо и данные документа должны быть чётко видны</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -142,8 +301,8 @@ const VerificationTab = () => {
           </p>
         </div>
 
-        <Button onClick={handleSubmit} className="w-full h-12 text-base font-semibold">
-          Отправить на проверку
+        <Button onClick={handleSubmit} disabled={uploading} className="w-full h-12 text-base font-semibold">
+          {uploading ? "Отправка..." : "Отправить на проверку"}
         </Button>
       </div>
     </div>

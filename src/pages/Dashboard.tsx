@@ -9,6 +9,7 @@ import AdminTab from "@/components/dashboard/AdminTab";
 import SupportTab from "@/components/dashboard/SupportTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 import VerificationTab from "@/components/dashboard/VerificationTab";
+import AdminVerificationsTab from "@/components/dashboard/AdminVerificationsTab";
 import FloatingChat from "@/components/FloatingChat";
 
 const Dashboard = () => {
@@ -24,6 +25,7 @@ const Dashboard = () => {
         <Route path="support" element={<SupportTab />} />
         <Route path="settings" element={<SettingsTab />} />
         <Route path="verification" element={<VerificationTab />} />
+        <Route path="verifications" element={<AdminVerificationsTab />} />
       </Routes>
       <FloatingChat />
     </DashboardLayout>
