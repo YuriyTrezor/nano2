@@ -205,6 +205,45 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_requests: {
+        Row: {
+          birth_date: string
+          created_at: string
+          doc_file_url: string | null
+          doc_number: string
+          full_name: string
+          id: string
+          selfie_file_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          created_at?: string
+          doc_file_url?: string | null
+          doc_number: string
+          full_name: string
+          id?: string
+          selfie_file_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          created_at?: string
+          doc_file_url?: string | null
+          doc_number?: string
+          full_name?: string
+          id?: string
+          selfie_file_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -23,6 +23,7 @@ const mainLinks = [
 const adminLinks = [
   { to: "/dashboard/admin", icon: Shield, label: "Админ-панель", highlight: true },
   { to: "/dashboard/support", icon: MessageSquare, label: "Обращения", highlight: true },
+  { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации", highlight: true },
 ];
 
 const bottomLinks = [
