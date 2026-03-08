@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -116,16 +116,19 @@ const cardCatalog = [
 const PriceDisplay = ({ price, salePrice, accentColor }: { price: string; salePrice?: string; accentColor?: string }) => {
   if (salePrice) {
     return (
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <span className="text-lg text-muted-foreground/70">{price}</span>
-          <div className="absolute top-1/2 -left-1 -right-1 h-[2px] -rotate-12 rounded-full bg-destructive" />
-        </div>
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-2xl font-extrabold text-foreground">{salePrice}</span>
-        <span className="relative text-[9px] px-3 py-1 rounded-md font-bold uppercase tracking-widest text-white overflow-hidden"
-          style={{ background: accentColor || 'hsl(0,70%,50%)' }}>
-          <span className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/10" />
-          Акция
+        <div className="relative">
+          <span className="text-base text-muted-foreground/50 font-medium">{price}</span>
+          <div className="absolute top-1/2 -left-1 -right-1 h-[2px] -rotate-6 rounded-full bg-destructive/80" />
+        </div>
+        <span className="relative text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-[0.15em] overflow-hidden animate-pulse"
+          style={{
+            background: `linear-gradient(135deg, hsl(0,80%,55%), hsl(25,90%,50%))`,
+            color: 'white',
+            boxShadow: '0 2px 12px hsl(0,80%,50%,0.3)',
+          }}>
+          🔥 SALE
         </span>
       </div>
     );
@@ -243,14 +246,8 @@ const CardsTab = () => {
 
       {/* Active cards */}
       {loading ? (
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => (
-            <div key={i} className="bg-card border border-border rounded-2xl p-5">
-              <Skeleton className="h-4 w-24 mb-3" />
-              <Skeleton className="h-36 w-full rounded-xl mb-3" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          ))}
+        <div className="mb-8 p-6 bg-card border border-border rounded-2xl text-center">
+          <p className="text-muted-foreground text-sm">Загрузка карт...</p>
         </div>
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
