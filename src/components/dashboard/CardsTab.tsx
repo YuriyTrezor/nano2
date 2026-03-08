@@ -83,6 +83,19 @@ const cardCatalog = [
   },
 ];
 
+const PriceDisplay = ({ price, salePrice }: { price: string; salePrice?: string }) => {
+  if (salePrice) {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-xl text-muted-foreground line-through decoration-destructive decoration-2">{price}</span>
+        <span className="text-3xl font-extrabold text-primary">{salePrice}</span>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold uppercase tracking-wider animate-pulse">Акция</span>
+      </div>
+    );
+  }
+  return <p className="text-3xl font-extrabold text-foreground">{price}</p>;
+};
+
 const MiniCatalogCard = ({ gradient, label, type }: { gradient: string; label: string; type: "visa" | "mastercard" }) => (
   <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
     <div className="absolute top-0 right-0 w-20 h-20 rounded-full border border-white/10 -translate-y-6 translate-x-6" />
@@ -192,6 +205,9 @@ const CardsTab = () => {
     toast.info("Для выполнения данной операции свяжитесь с Вашим менеджером или напишите в чат поддержки.");
   };
 
+  const getPrice = (name: string) => cardPrices?.[name] ?? cardCatalog.find(c => c.name === name)?.defaultPrice ?? "";
+  const getSalePrice = (name: string) => cardPrices?.[`${name}_sale`] || undefined;
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
@@ -215,7 +231,7 @@ const CardsTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Active cards */}
+      {/* Active cards - 3D style */}
       {!loading && activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
@@ -225,7 +241,7 @@ const CardsTab = () => {
               return (
               <Popover key={card.name}>
                 <PopoverTrigger asChild>
-                  <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-colors ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
+                  <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
                         {card.name === "Diamond" ? (
@@ -251,37 +267,46 @@ const CardsTab = () => {
                         )}
                       </div>
                     </div>
-                    <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 mt-3`}>
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="w-8 h-5 bg-yellow-500 rounded" />
-                        <Wifi className="w-4 h-4 text-white/40 rotate-90" />
-                      </div>
-                      <p className="text-white/60 font-mono text-[9px] mb-0.5">BALANCE</p>
-                      <p className="text-white font-bold text-base mb-1">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
-                      <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
-                        <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
-                      </button>
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <p className="text-white/50 text-[9px]">CARDHOLDER</p>
-                          <p className="text-white text-xs">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
+                    {/* 3D Card with perspective */}
+                    <div className="perspective-[800px] mt-3">
+                      <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative overflow-hidden transition-transform duration-500 group-hover:[transform:rotateY(-5deg)_rotateX(3deg)] shadow-[0_8px_30px_rgba(0,0,0,0.4),0_0_15px_rgba(0,0,0,0.2)]`}
+                        style={{ transformStyle: 'preserve-3d' }}
+                      >
+                        {/* Shine overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                          <div className="w-10 h-6 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded shadow-sm" />
+                          <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                         </div>
-                        <div>
-                          <p className="text-white/50 text-[9px]">EXPIRES</p>
-                          <p className="text-white text-xs">{card.exp}</p>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                          <p className="text-white/50 text-[9px]">CVV</p>
-                          <p className="text-white text-xs">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                        <p className="text-white/60 font-mono text-[10px] mb-0.5 relative z-10">BALANCE</p>
+                        <p className="text-white font-bold text-base mb-1 relative z-10">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                        <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
+                          <p className="text-white font-mono text-base tracking-[0.2em] mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                         </button>
-                        {card.type === "visa" ? (
-                          <p className="text-white font-bold italic">VISA</p>
-                        ) : (
-                          <span className="flex items-center">
-                            <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
-                            <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
-                          </span>
-                        )}
+                        <div className="flex justify-between items-end relative z-10">
+                          <div>
+                            <p className="text-white/50 text-[9px]">CARDHOLDER</p>
+                            <p className="text-white text-xs">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/50 text-[9px]">EXPIRES</p>
+                            <p className="text-white text-xs">{card.exp}</p>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
+                            <p className="text-white/50 text-[9px]">CVV</p>
+                            <p className="text-white text-xs">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                          </button>
+                          {card.type === "visa" ? (
+                            <p className="text-white font-bold italic text-lg">VISA</p>
+                          ) : (
+                            <span className="flex items-center">
+                              <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                              <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
@@ -316,7 +341,11 @@ const CardsTab = () => {
       <h2 className="text-foreground font-semibold text-lg mb-2">{t("О картах")}</h2>
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {cardCatalog.filter(c => c.name !== "Diamond").map((card) => (
+        {cardCatalog.filter(c => c.name !== "Diamond").map((card) => {
+          const price = getPrice(card.name);
+          const salePrice = getSalePrice(card.name);
+          const buyLabel = salePrice || price;
+          return (
           <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${userCards.includes(card.name) ? "border-primary" : "border-border"}`}>
             {userCards.includes(card.name) && (
               <div className="flex items-center gap-1.5 mb-3">
@@ -326,7 +355,9 @@ const CardsTab = () => {
             )}
             <MiniCatalogCard gradient={card.gradient} label={card.label} type={card.type} />
             <h3 className="text-xl font-bold text-foreground mt-6">{card.name}</h3>
-            <p className="text-3xl font-extrabold text-foreground mt-2">{cardPrices?.[card.name] ?? card.defaultPrice}</p>
+            <div className="mt-2">
+              <PriceDisplay price={price} salePrice={salePrice} />
+            </div>
             <p className="text-muted-foreground text-sm mt-1">Лимит: {card.limit}</p>
             <ul className="mt-6 space-y-2 flex-1">
               {card.features.map((f) => (
@@ -346,15 +377,18 @@ const CardsTab = () => {
               className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
             >
-              Купить — {cardPrices?.[card.name] ?? card.defaultPrice}
+              Купить — {buyLabel}
             </Button>
           </div>
-        ))}
+        ); })}
       </div>
 
-      {/* Diamond Card - full width below, matching landing page */}
+      {/* Diamond Card */}
       {(() => {
         const diamond = cardCatalog.find(c => c.name === "Diamond")!;
+        const price = getPrice("Diamond");
+        const salePrice = getSalePrice("Diamond");
+        const buyLabel = salePrice || price;
         return (
           <div className="mt-8">
             <div className="bg-gradient-to-br from-[hsl(210,30%,8%)] to-[hsl(200,25%,12%)] border border-[hsl(195,60%,30%)]/30 rounded-2xl p-6 md:p-8 max-w-3xl mx-auto relative overflow-hidden">
@@ -372,22 +406,26 @@ const CardsTab = () => {
                   <div className="relative mb-4 flex justify-center">
                     <DiamondIcon3D className="w-20 h-20" />
                   </div>
-                  <div className={`bg-gradient-to-br ${diamond.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden shadow-[0_0_30px_hsl(195,80%,50%,0.15)]`}>
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
-                    <div className="absolute top-0 right-0 w-28 h-28 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
-                    <div className="flex justify-between items-start relative z-10">
-                      <div>
-                        <span className="text-white/80 text-xs font-medium tracking-wider">NeoBank</span>
-                        <div className="w-7 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1.5" />
+                  <div className="perspective-[800px]">
+                    <div className={`bg-gradient-to-br ${diamond.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden shadow-[0_10px_40px_hsl(195,80%,50%,0.2),0_0_30px_hsl(195,80%,50%,0.1)] hover:[transform:rotateY(-5deg)_rotateX(3deg)] transition-transform duration-500`}
+                      style={{ transformStyle: 'preserve-3d' }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
+                      <div className="absolute top-0 right-0 w-28 h-28 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
+                      <div className="flex justify-between items-start relative z-10">
+                        <div>
+                          <span className="text-white/80 text-xs font-medium tracking-wider">NeoBank</span>
+                          <div className="w-7 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1.5" />
+                        </div>
+                        <DiamondIcon3D className="w-8 h-8" />
                       </div>
-                      <DiamondIcon3D className="w-8 h-8" />
-                    </div>
-                    <div className="flex justify-between items-end relative z-10">
-                      <div>
-                        <p className="text-white/50 font-mono text-xs">4••• •••• •••• ••••</p>
-                        <p className="text-[hsl(195,80%,70%)] text-xs mt-1 font-semibold tracking-wider">DIAMOND</p>
+                      <div className="flex justify-between items-end relative z-10">
+                        <div>
+                          <p className="text-white/50 font-mono text-xs">4••• •••• •••• ••••</p>
+                          <p className="text-[hsl(195,80%,70%)] text-xs mt-1 font-semibold tracking-wider">DIAMOND</p>
+                        </div>
+                        <p className="text-white/90 font-bold text-sm">VISA</p>
                       </div>
-                      <p className="text-white/90 font-bold text-sm">VISA</p>
                     </div>
                   </div>
                 </div>
@@ -398,7 +436,9 @@ const CardsTab = () => {
                     <DiamondIcon3D className="w-6 h-6" />
                     <span className="text-[10px] px-3 py-1 rounded-full font-bold bg-gradient-to-r from-[hsl(195,80%,60%)]/20 to-[hsl(210,80%,50%)]/20 text-[hsl(195,80%,60%)] uppercase tracking-wider border border-[hsl(195,60%,50%)]/30">Premium</span>
                   </div>
-                  <p className="text-3xl font-extrabold text-foreground mt-2">{cardPrices?.["Diamond"] ?? diamond.defaultPrice}</p>
+                  <div className="mt-2">
+                    <PriceDisplay price={price} salePrice={salePrice} />
+                  </div>
                   <p className="text-muted-foreground text-sm mt-1">Лимит: {diamond.limit}</p>
 
                   <div className="bg-[hsl(195,40%,15%)] rounded-xl p-4 mt-4 mb-4 border border-[hsl(195,60%,30%)]/20">
@@ -426,7 +466,7 @@ const CardsTab = () => {
                     className="w-full bg-gradient-to-r from-[hsl(195,80%,40%)] to-[hsl(210,90%,30%)] hover:opacity-90 text-white gap-2 shadow-[0_0_20px_hsl(195,80%,50%,0.2)]"
                     onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
                   >
-                    Купить — {cardPrices?.["Diamond"] ?? diamond.defaultPrice}
+                    Купить — {buyLabel}
                   </Button>
                 </div>
               </div>

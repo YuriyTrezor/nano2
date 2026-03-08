@@ -80,18 +80,15 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Compute total balance from all transactions
   const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
-  // Compute per-card balance
   const cardBalance = (cardName: string) => {
     return transactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
   };
 
-  // Compute real % change: compare last 30 days vs previous 30 days
   const computePercentChange = () => {
     const now = Date.now();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
@@ -154,7 +151,6 @@ const OverviewTab = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // Load balance hidden preference
   useEffect(() => {
     if (!user) return;
     const key = `balance_hidden_${user.id}`;
@@ -176,7 +172,6 @@ const OverviewTab = () => {
     .filter(name => allCards[name])
     .map(name => ({ ...allCards[name], holder: holderName }));
 
-  // Embla carousel
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -203,6 +198,10 @@ const OverviewTab = () => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + ", " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   };
+
+  // Card type label for the card section
+  const cardTypeLabel = activeCards.length > 0 ? activeCards[selectedIndex]?.name || "" : "";
+  const cardTypeColor = cardTypeLabel === "Gold" ? "text-[hsl(35,80%,50%)]" : cardTypeLabel === "Platinum" ? "text-[hsl(270,60%,60%)]" : cardTypeLabel === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-muted-foreground";
 
   return (
     <div>
@@ -238,7 +237,7 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Pay services modal — MIR gateway message */}
+      {/* Pay services modal */}
       {payAlert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPayAlert(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
@@ -326,7 +325,10 @@ const OverviewTab = () => {
           {activeCards.length > 0 ? (
             <div className="xl:hidden">
               <div className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-muted-foreground text-xs font-medium tracking-wider">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+                  <span className={`text-xs font-semibold ${cardTypeColor}`}>{cardTypeLabel}</span>
+                </div>
                 <div className="relative">
                   <div ref={emblaRef} className="overflow-hidden rounded-xl">
                     <div className="flex">
@@ -340,7 +342,7 @@ const OverviewTab = () => {
                           <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
                           <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                             <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
-                              <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                              <p className="text-white font-mono text-base tracking-[0.2em] mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                             </button>
                             <div className="flex justify-between items-end">
                               <div>
@@ -467,7 +469,10 @@ const OverviewTab = () => {
           {/* Card preview */}
           {activeCards.length > 0 ? (
             <div className="bg-card border border-border rounded-2xl p-5">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider mb-3">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-muted-foreground text-xs font-medium tracking-wider">{t("ДЕБЕТОВАЯ КАРТА")}</p>
+                <span className={`text-xs font-semibold ${cardTypeColor}`}>{cardTypeLabel}</span>
+              </div>
               <div className="relative">
                 <div ref={emblaRef} className="overflow-hidden rounded-xl">
                   <div className="flex">
@@ -481,7 +486,7 @@ const OverviewTab = () => {
                           <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
                           <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
-                            <p className="text-white font-mono text-sm tracking-widest mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                            <p className="text-white font-mono text-base tracking-[0.2em] mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
                           <div className="flex justify-between items-end">
                             <div>
