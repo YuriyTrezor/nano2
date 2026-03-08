@@ -588,6 +588,7 @@ const OverviewTab = () => {
                 {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
               </p>
             </div>
+          </div>
           {/* Currency Rates */}
           <CurrencyRatesWidget />
         </div>
