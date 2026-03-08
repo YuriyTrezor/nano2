@@ -82,7 +82,7 @@ const CurrencyRatesWidget = ({ compact = false }: { compact?: boolean }) => {
           ))}
         </div>
       )}
-      {lastUpdate && (
+      {lastUpdate && !compact && (
         <p className="text-muted-foreground text-[10px] mt-3 text-right">Обновлено в {lastUpdate}</p>
       )}
     </div>
