@@ -5,6 +5,7 @@ import {
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
+import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
@@ -211,6 +212,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           )}
         </nav>
+
+        {/* Currency rates in sidebar */}
+        <div className="px-2 pb-3">
+          <CurrencyRatesWidget compact />
+        </div>
 
         <div className="px-2 pb-4 space-y-0.5">
           {bottomLinks.map((link) => (

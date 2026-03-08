@@ -9,7 +9,7 @@ interface Rate {
   change: number;
 }
 
-const CurrencyRatesWidget = () => {
+const CurrencyRatesWidget = ({ compact = false }: { compact?: boolean }) => {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState("");
@@ -47,11 +47,11 @@ const CurrencyRatesWidget = () => {
   useEffect(() => { fetchRates(); }, []);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-foreground font-semibold text-sm">Курсы валют ЦБ РФ</h3>
+    <div className={`bg-card border border-border rounded-2xl ${compact ? "p-2.5" : "p-4 md:p-5"}`}>
+      <div className={`flex items-center justify-between ${compact ? "mb-2" : "mb-3"}`}>
+        <h3 className={`text-foreground font-semibold ${compact ? "text-[11px]" : "text-sm"}`}>{compact ? "Курсы ЦБ" : "Курсы валют ЦБ РФ"}</h3>
         <button onClick={fetchRates} className="text-muted-foreground hover:text-foreground transition-colors" title="Обновить">
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`${compact ? "w-3 h-3" : "w-3.5 h-3.5"} ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
       {loading ? (
@@ -64,17 +64,17 @@ const CurrencyRatesWidget = () => {
           ))}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className={compact ? "space-y-1.5" : "space-y-2.5"}>
           {rates.map(r => (
             <div key={r.code} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-foreground">{r.symbol}</span>
-                <span className="text-foreground text-sm font-medium">{r.code}/RUB</span>
+              <div className="flex items-center gap-1.5">
+                {!compact && <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-foreground">{r.symbol}</span>}
+                <span className={`text-foreground font-medium ${compact ? "text-[11px]" : "text-sm"}`}>{compact ? r.code : `${r.code}/RUB`}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-foreground text-sm font-semibold">{r.value.toFixed(2)} ₽</span>
-                <span className={`flex items-center gap-0.5 text-[11px] font-medium ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {r.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <div className="flex items-center gap-1.5">
+                <span className={`text-foreground font-semibold ${compact ? "text-[11px]" : "text-sm"}`}>{r.value.toFixed(2)}</span>
+                <span className={`flex items-center gap-0.5 font-medium ${compact ? "text-[9px]" : "text-[11px]"} ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {r.change >= 0 ? <TrendingUp className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} /> : <TrendingDown className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />}
                   {r.change >= 0 ? "+" : ""}{r.change.toFixed(2)}
                 </span>
               </div>
@@ -82,7 +82,7 @@ const CurrencyRatesWidget = () => {
           ))}
         </div>
       )}
-      {lastUpdate && (
+      {lastUpdate && !compact && (
         <p className="text-muted-foreground text-[10px] mt-3 text-right">Обновлено в {lastUpdate}</p>
       )}
     </div>

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 const transliterate = (text: string): string => {
@@ -212,11 +212,7 @@ const CardsTab = () => {
   const getSalePrice = (name: string) => cardPrices?.[`${name}_sale`] || undefined;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div>
       <div className="flex items-center gap-3 mb-2">
         <CreditCard className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">{t("Мои карты")}</h1>
@@ -256,11 +252,8 @@ const CardsTab = () => {
             {activeCards.map((card, idx) => {
               const isCardBlocked = blockedCards.includes(card.name);
               return (
-              <motion.div
+              <div
                 key={card.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1, duration: 0.3 }}
               >
               <Popover>
                 <PopoverTrigger asChild>
@@ -343,7 +336,7 @@ const CardsTab = () => {
                   </button>
                 </PopoverContent>
               </Popover>
-              </motion.div>
+              </div>
             ); })}
           </div>
         </div>
@@ -367,12 +360,8 @@ const CardsTab = () => {
           const isDiamond = card.name === "Diamond";
           
           return (
-            <motion.div
+            <div
               key={card.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: idx * 0.1, duration: 0.4 }}
             >
               <div 
                 className="bg-gradient-to-br rounded-2xl p-6 md:p-8 max-w-3xl mx-auto relative overflow-hidden"
@@ -492,11 +481,11 @@ const CardsTab = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

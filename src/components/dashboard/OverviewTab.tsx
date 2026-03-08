@@ -3,7 +3,7 @@ import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+
 import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -207,7 +207,7 @@ const OverviewTab = () => {
   const cardTypeColor = cardTypeLabel === "Gold" ? "text-[hsl(35,80%,50%)]" : cardTypeLabel === "Platinum" ? "text-[hsl(270,60%,60%)]" : cardTypeLabel === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-muted-foreground";
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+    <div>
       {/* Top up alert dialog */}
       <AlertDialog open={topUpAlert} onOpenChange={setTopUpAlert}>
         <AlertDialogContent>
@@ -593,7 +593,7 @@ const OverviewTab = () => {
           <CurrencyRatesWidget />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
