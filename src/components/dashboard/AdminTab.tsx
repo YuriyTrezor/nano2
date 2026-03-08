@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +63,7 @@ const AdminTab = () => {
   const [editingName, setEditingName] = useState<{ index: number; name: string } | null>(null);
   const [newUser, setNewUser] = useState({ email: "", name: "", password: "" });
   const [createOpen, setCreateOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const [cardAssign, setCardAssign] = useState<{ index: number; type: string } | null>(null);
   const [sessionsView, setSessionsView] = useState<{ index: number; sessions: { ip: string; device: string; time: string }[] } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
@@ -70,6 +71,7 @@ const AdminTab = () => {
   const [priceDialog, setPriceDialog] = useState<{ index: number; prices: Record<string, string> } | null>(null);
   const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
   const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string } | null>(null);
+  const [passwordDialog, setPasswordDialog] = useState<{ index: number; password: string } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
@@ -162,9 +164,19 @@ const AdminTab = () => {
     fetchRegistrations();
   }, []);
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
+    const client = clients[index];
+    if (client.userId) {
+      const { data, error } = await supabase.functions.invoke("admin-user-management", {
+        body: { action: "delete_user", user_id: client.userId },
+      });
+      if (error || data?.error) {
+        toast({ title: "Ошибка", description: data?.error || error?.message || "Не удалось удалить", variant: "destructive" });
+        return;
+      }
+    }
     setClients(prev => prev.filter((_, i) => i !== index));
-    toast({ title: t("Информация"), description: "Клиент удалён" });
+    toast({ title: t("Информация"), description: "Клиент и учётная запись полностью удалены" });
   };
 
   const handleBlock = async (index: number) => {
@@ -227,18 +239,56 @@ const AdminTab = () => {
     toast({ title: t("Информация"), description: "Имя обновлено" });
   };
 
-  const handleCreateUser = () => {
-    if (!newUser.email || !newUser.name) return;
-    const client: Client = {
-      userId: "", email: newUser.email, phone: "—", name: newUser.name, balance: "₽ 0,00",
-      status: "Активен", statusColor: "text-primary",
-      registrationDate: new Date().toLocaleDateString("ru-RU"), lastLogin: "—", lastIp: "—", blocked: false,
-      cards: [], blockedCards: [], sessions: [], withdrawalBlocked: false, cardPrices: null, documentRequested: false,
-    };
-    setClients(prev => [...prev, client]);
-    setNewUser({ email: "", name: "", password: "" });
-    setCreateOpen(false);
-    toast({ title: t("Информация"), description: "Пользователь создан" });
+  const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.name || !newUser.password) {
+      toast({ title: "Ошибка", description: "Заполните все поля (имя, email, пароль)", variant: "destructive" });
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-user-management", {
+        body: {
+          action: "create_user",
+          email: newUser.email,
+          password: newUser.password,
+          display_name: newUser.name,
+        },
+      });
+
+      if (error || data?.error) {
+        toast({ title: "Ошибка", description: data?.error || error?.message || "Не удалось создать пользователя", variant: "destructive" });
+        return;
+      }
+
+      setNewUser({ email: "", name: "", password: "" });
+      setCreateOpen(false);
+      toast({ title: "Успешно", description: "Пользователь создан" });
+      fetchRegistrations();
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordDialog || !passwordDialog.password) return;
+    const client = clients[passwordDialog.index];
+    if (!client.userId) return;
+
+    const { data, error } = await supabase.functions.invoke("admin-user-management", {
+      body: {
+        action: "change_password",
+        user_id: client.userId,
+        new_password: passwordDialog.password,
+      },
+    });
+
+    if (error || data?.error) {
+      toast({ title: "Ошибка", description: data?.error || error?.message || "Не удалось сменить пароль", variant: "destructive" });
+      return;
+    }
+
+    setPasswordDialog(null);
+    toast({ title: "Успешно", description: `Пароль изменён — ${client.name}` });
   };
 
   const handleTransaction = async () => {
@@ -391,13 +441,7 @@ const AdminTab = () => {
 
     setEditTx(null);
     toast({ title: "Успешно", description: "Операция обновлена" });
-    fetchRegistrations(); // refresh balances
-  };
-
-  const parseDevice = (ua: string) => {
-    if (/iPhone/i.test(ua)) return "iPhone";
-    if (/Android/i.test(ua)) return "Android";
-    return "Desktop";
+    fetchRegistrations();
   };
 
   return (
@@ -432,7 +476,7 @@ const AdminTab = () => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setCreateOpen(false)}>{t("Отмена")}</Button>
-                <Button onClick={handleCreateUser}>{t("Создать")}</Button>
+                <Button onClick={handleCreateUser} disabled={createLoading}>{createLoading ? "Создание..." : t("Создать")}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -500,12 +544,26 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Card management dialog with fund/deduct, blocking, and transactions */}
+      {/* Password change dialog */}
+      <Dialog open={!!passwordDialog} onOpenChange={open => !open && setPasswordDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Сменить пароль — {passwordDialog !== null ? clients[passwordDialog.index]?.name : ""}</DialogTitle></DialogHeader>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Новый пароль</Label>
+            <Input type="password" placeholder="Минимум 6 символов" value={passwordDialog?.password ?? ""} onChange={e => setPasswordDialog(prev => prev ? { ...prev, password: e.target.value } : null)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialog(null)}>{t("Отмена")}</Button>
+            <Button onClick={handleChangePassword} disabled={!passwordDialog?.password || (passwordDialog?.password?.length ?? 0) < 6}>Сменить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card management dialog */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Управление картами — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
           <div className="space-y-5">
-            {/* Add card */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Добавить карту</Label>
               <div className="flex gap-2">
@@ -522,7 +580,6 @@ const AdminTab = () => {
               </div>
             </div>
 
-            {/* Current cards with block toggle */}
             {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
@@ -546,24 +603,43 @@ const AdminTab = () => {
                 </div>
               </div>
             )}
-
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Card prices dialog */}
+      {/* Card prices dialog with sale prices */}
       <Dialog open={!!priceDialog} onOpenChange={open => !open && setPriceDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Цены карт — {priceDialog !== null ? clients[priceDialog.index]?.name : ""}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {["Standard", "Gold", "Platinum", "Diamond"].map(cardType => (
-              <div key={cardType}>
-                <Label className="text-xs text-muted-foreground mb-1 block">{cardType}</Label>
-                <Input
-                  value={priceDialog?.prices[cardType] ?? DEFAULT_CARD_PRICES[cardType]}
-                  onChange={e => setPriceDialog(prev => prev ? { ...prev, prices: { ...prev.prices, [cardType]: e.target.value } } : null)}
-                  placeholder={DEFAULT_CARD_PRICES[cardType]}
-                />
+              <div key={cardType} className="p-3 bg-secondary rounded-lg space-y-2">
+                <p className="text-foreground font-medium text-sm">{cardType}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Цена</Label>
+                    <Input
+                      value={priceDialog?.prices[cardType] ?? DEFAULT_CARD_PRICES[cardType]}
+                      onChange={e => setPriceDialog(prev => prev ? { ...prev, prices: { ...prev.prices, [cardType]: e.target.value } } : null)}
+                      placeholder={DEFAULT_CARD_PRICES[cardType]}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Акция (перечёркнутая)</Label>
+                    <Input
+                      value={priceDialog?.prices[`${cardType}_sale`] ?? ""}
+                      onChange={e => setPriceDialog(prev => prev ? { ...prev, prices: { ...prev.prices, [`${cardType}_sale`]: e.target.value } } : null)}
+                      placeholder="Не установлена"
+                    />
+                  </div>
+                </div>
+                {priceDialog?.prices[`${cardType}_sale`] && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">Превью:</span>
+                    <span className="line-through text-muted-foreground">{priceDialog?.prices[cardType] ?? DEFAULT_CARD_PRICES[cardType]}</span>
+                    <span className="text-primary font-bold">{priceDialog?.prices[`${cardType}_sale`]}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -668,7 +744,6 @@ const AdminTab = () => {
                     </button>
                   </th>
                 ))}
-                <th className="text-left pb-3 font-medium text-xs uppercase">IP</th>
                 <th className="text-left pb-3 font-medium text-xs uppercase">Карты</th>
                 <th className="text-right pb-3 font-medium">{t("Действия")}</th>
               </tr>
@@ -692,12 +767,6 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3 text-muted-foreground text-xs">{client.registrationDate}</td>
                   <td className="py-3 text-muted-foreground text-xs">{client.lastLogin}</td>
-                  <td className="py-3 text-muted-foreground text-xs">
-                    <span className="flex items-center gap-1">
-                      <Globe className="w-3 h-3" />
-                      {client.lastIp}
-                    </span>
-                  </td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
                       {client.cards.map(c => {
@@ -731,6 +800,13 @@ const AdminTab = () => {
                         <DollarSign className="w-3 h-3" /> Цены
                       </button>
                       <button
+                        onClick={() => setPasswordDialog({ index: originalIndex, password: "" })}
+                        className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1"
+                        title="Сменить пароль"
+                      >
+                        <KeyRound className="w-3 h-3" /> Пароль
+                      </button>
+                      <button
                         onClick={() => handleToggleWithdrawal(originalIndex)}
                         className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.withdrawalBlocked ? 'bg-orange-600/20 text-orange-400' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
                         title={client.withdrawalBlocked ? "Разрешить вывод" : "Запретить вывод"}
@@ -761,12 +837,12 @@ const AdminTab = () => {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>{t("Подтвердите удаление")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("Вы уверены, что хотите удалить этого клиента?")}</AlertDialogDescription>
+                            <AlertDialogTitle>{t("Полное удаление аккаунта")}</AlertDialogTitle>
+                            <AlertDialogDescription>Будут удалены: учётная запись, профиль, все транзакции, обращения и файлы. Это действие необратимо.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t("Отмена")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(originalIndex)}>{t("Удалить")}</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleDelete(originalIndex)}>{t("Удалить полностью")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
