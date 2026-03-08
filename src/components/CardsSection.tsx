@@ -28,7 +28,7 @@ const cardData = [
     features: ["Кэшбэк 3%", "Бесконтактная оплата", "Apple Pay / Google Pay", "Бесплатные переводы"],
     featuresEn: ["3% Cashback", "Contactless payment", "Apple Pay / Google Pay", "Free transfers"],
     extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
-    extrasEn: ["SWIFT transfers available"],
+    extrasEn: ["SWIFT transfers available", "Physical card available"],
     gradient: "from-[hsl(35,80%,50%)] to-[hsl(25,90%,40%)]",
     borderColor: "hsl(35,60%,30%)",
     accentColor: "hsl(35,80%,55%)",
