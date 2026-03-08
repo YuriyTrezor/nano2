@@ -1,10 +1,12 @@
-import { CreditCard, Wifi, Lock, Check, RotateCcw, CreditCard as CardIcon, ShieldOff } from "lucide-react";
+import { CreditCard, Wifi, Lock, Check, RotateCcw, CreditCard as CardIcon, ShieldOff, Star, Crown, Gem } from "lucide-react";
 import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -28,8 +30,15 @@ const cardCatalog = [
     features: ["Кэшбэк 1%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT"],
     gradient: "from-[hsl(220,15%,25%)] to-[hsl(220,20%,15%)]",
+    bgSection: "from-[hsl(220,20%,8%)] to-[hsl(220,15%,12%)]",
+    borderColor: "hsl(220,15%,30%)",
+    accentColor: "hsl(220,15%,60%)",
+    accentTw: "text-[hsl(220,15%,60%)]",
+    shadowColor: "hsl(220,15%,40%,0.2)",
+    icon: CreditCard,
     type: "visa" as const,
     label: "Standard Card",
+    badge: null,
     last4: "3891",
     number: "4 •••• •••• •••• 3891",
     fullNumber: "4118 2735 6491 3891",
@@ -43,8 +52,15 @@ const cardCatalog = [
     features: ["Кэшбэк 3%", "Бесконтактная оплата", "Apple Pay / Google Pay", "Бесплатные переводы"],
     extras: ["Доступны переводы SWIFT"],
     gradient: "from-[hsl(35,80%,50%)] to-[hsl(25,90%,40%)]",
+    bgSection: "from-[hsl(35,30%,8%)] to-[hsl(25,25%,12%)]",
+    borderColor: "hsl(35,60%,30%)",
+    accentColor: "hsl(35,80%,55%)",
+    accentTw: "text-[hsl(35,80%,55%)]",
+    shadowColor: "hsl(35,80%,50%,0.2)",
+    icon: Crown,
     type: "mastercard" as const,
     label: "Gold Card",
+    badge: "Popular",
     last4: "7742",
     number: "5 •••• •••• •••• 7742",
     fullNumber: "5263 4810 9357 7742",
@@ -58,8 +74,15 @@ const cardCatalog = [
     features: ["Кэшбэк 5%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
     gradient: "from-[hsl(270,60%,50%)] to-[hsl(280,70%,35%)]",
+    bgSection: "from-[hsl(270,30%,8%)] to-[hsl(280,25%,12%)]",
+    borderColor: "hsl(270,40%,35%)",
+    accentColor: "hsl(270,60%,65%)",
+    accentTw: "text-[hsl(270,60%,65%)]",
+    shadowColor: "hsl(270,60%,50%,0.2)",
+    icon: Gem,
     type: "visa" as const,
     label: "Platinum Card",
+    badge: "Elite",
     last4: "1205",
     number: "4 •••• •••• •••• 1205",
     fullNumber: "4729 6183 0542 1205",
@@ -73,8 +96,15 @@ const cardCatalog = [
     features: ["Кэшбэк 7%", "Оплата в USDT", "Персональный консьерж 24/7", "Мультивалютный счёт"],
     extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты", "Без риска блокировки при выводе"],
     gradient: "from-[hsl(195,80%,40%)] to-[hsl(210,90%,30%)]",
+    bgSection: "from-[hsl(210,30%,8%)] to-[hsl(200,25%,12%)]",
+    borderColor: "hsl(195,60%,30%)",
+    accentColor: "hsl(195,80%,60%)",
+    accentTw: "text-[hsl(195,80%,60%)]",
+    shadowColor: "hsl(195,80%,50%,0.2)",
+    icon: Star,
     type: "visa" as const,
     label: "Diamond Card",
+    badge: "Premium",
     last4: "5580",
     number: "4 •••• •••• •••• 5580",
     fullNumber: "4391 7024 8165 5580",
@@ -95,33 +125,6 @@ const PriceDisplay = ({ price, salePrice }: { price: string; salePrice?: string 
   }
   return <p className="text-3xl font-extrabold text-foreground">{price}</p>;
 };
-
-const MiniCatalogCard = ({ gradient, label, type }: { gradient: string; label: string; type: "visa" | "mastercard" }) => (
-  <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
-    <div className="absolute top-0 right-0 w-20 h-20 rounded-full border border-white/10 -translate-y-6 translate-x-6" />
-    <div className="flex justify-between items-start">
-      <div>
-        <span className="text-white/70 text-[10px]">NeoBank</span>
-        <div className="w-6 h-4 bg-yellow-500 rounded mt-1" />
-      </div>
-      <div className="w-5 h-5 rounded-full border border-white/20" />
-    </div>
-    <div className="flex justify-between items-end">
-      <div>
-        <p className="text-white/40 font-mono text-xs">{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
-        <p className="text-white/60 text-[10px] mt-1">{label}</p>
-      </div>
-      <p className="text-white/80 font-bold text-sm">
-        {type === "visa" ? "VISA" : (
-          <span className="flex">
-            <span className="w-4 h-4 rounded-full bg-red-500 -mr-1.5" />
-            <span className="w-4 h-4 rounded-full bg-orange-400" />
-          </span>
-        )}
-      </p>
-    </div>
-  </div>
-);
 
 const CardsTab = () => {
   const { t } = useLanguage();
@@ -209,7 +212,11 @@ const CardsTab = () => {
   const getSalePrice = (name: string) => cardPrices?.[`${name}_sale`] || undefined;
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex items-center gap-3 mb-2">
         <CreditCard className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">{t("Мои карты")}</h1>
@@ -231,15 +238,31 @@ const CardsTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Active cards - 3D style */}
-      {!loading && activeCards.length > 0 ? (
+      {/* Active cards */}
+      {loading ? (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-card border border-border rounded-2xl p-5">
+              <Skeleton className="h-4 w-24 mb-3" />
+              <Skeleton className="h-36 w-full rounded-xl mb-3" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          ))}
+        </div>
+      ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeCards.map(card => {
+            {activeCards.map((card, idx) => {
               const isCardBlocked = blockedCards.includes(card.name);
               return (
-              <Popover key={card.name}>
+              <motion.div
+                key={card.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1, duration: 0.3 }}
+              >
+              <Popover>
                 <PopoverTrigger asChild>
                   <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
                     <div className="flex justify-between items-start mb-2">
@@ -247,9 +270,7 @@ const CardsTab = () => {
                         {card.name === "Diamond" ? (
                           <DiamondIcon3D className="w-6 h-6" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center">
-                            <span className="text-muted-foreground text-[10px]">◇</span>
-                          </div>
+                          <card.icon className={`w-5 h-5 ${card.accentTw}`} />
                         )}
                         <span className="text-foreground text-sm">NeoBank</span>
                       </div>
@@ -267,14 +288,10 @@ const CardsTab = () => {
                         )}
                       </div>
                     </div>
-                    {/* 3D Card with perspective */}
-                    <div className="perspective-[800px] mt-3">
-                      <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative overflow-hidden transition-transform duration-500 group-hover:[transform:rotateY(-5deg)_rotateX(3deg)] shadow-[0_8px_30px_rgba(0,0,0,0.4),0_0_15px_rgba(0,0,0,0.2)]`}
-                        style={{ transformStyle: 'preserve-3d' }}
-                      >
-                        {/* Shine overlay */}
+                    {/* Card visual */}
+                    <div className="mt-3">
+                      <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02]`}>
                         <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         
                         <div className="flex justify-between items-start mb-4 relative z-10">
                           <div className="w-10 h-6 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded shadow-sm" />
@@ -326,89 +343,71 @@ const CardsTab = () => {
                   </button>
                 </PopoverContent>
               </Popover>
+              </motion.div>
             ); })}
           </div>
         </div>
-      ) : !loading ? (
+      ) : (
         <div className="mb-8 p-6 bg-card border border-border rounded-2xl text-center">
           <CreditCard className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-foreground font-medium mb-1">У вас нет активных карт</p>
           <p className="text-muted-foreground text-sm">Свяжитесь с менеджером или напишите в чат поддержки для оформления карты.</p>
         </div>
-      ) : null}
+      )}
 
-      {/* Card catalog */}
+      {/* Card catalog - premium sections */}
       <h2 className="text-foreground font-semibold text-lg mb-2">{t("О картах")}</h2>
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {cardCatalog.filter(c => c.name !== "Diamond").map((card) => {
+      
+      <div className="space-y-8">
+        {cardCatalog.map((card, idx) => {
           const price = getPrice(card.name);
           const salePrice = getSalePrice(card.name);
           const buyLabel = salePrice || price;
+          const isDiamond = card.name === "Diamond";
+          
           return (
-          <div key={card.name} className={`bg-card border rounded-2xl p-6 flex flex-col ${userCards.includes(card.name) ? "border-primary" : "border-border"}`}>
-            {userCards.includes(card.name) && (
-              <div className="flex items-center gap-1.5 mb-3">
-                <Check className="w-4 h-4 text-primary" />
-                <span className="text-primary text-xs font-semibold">Ваша карта</span>
-              </div>
-            )}
-            <MiniCatalogCard gradient={card.gradient} label={card.label} type={card.type} />
-            <h3 className="text-xl font-bold text-foreground mt-6">{card.name}</h3>
-            <div className="mt-2">
-              <PriceDisplay price={price} salePrice={salePrice} />
-            </div>
-            <p className="text-muted-foreground text-sm mt-1">Лимит: {card.limit}</p>
-            <ul className="mt-6 space-y-2 flex-1">
-              {card.features.map((f) => (
-                <li key={f} className="text-sm text-muted-foreground flex items-start gap-2">
-                  <span className="mt-0.5">—</span> {f}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 space-y-1.5">
-              {card.extras.map((e) => (
-                <p key={e} className="text-sm text-primary flex items-center gap-2">
-                  <Check className="w-4 h-4" /> {e}
-                </p>
-              ))}
-            </div>
-            <Button
-              className="mt-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
+            <motion.div
+              key={card.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: idx * 0.1, duration: 0.4 }}
             >
-              Купить — {buyLabel}
-            </Button>
-          </div>
-        ); })}
-      </div>
-
-      {/* Diamond Card */}
-      {(() => {
-        const diamond = cardCatalog.find(c => c.name === "Diamond")!;
-        const price = getPrice("Diamond");
-        const salePrice = getSalePrice("Diamond");
-        const buyLabel = salePrice || price;
-        return (
-          <div className="mt-8">
-            <div className="bg-gradient-to-br from-[hsl(210,30%,8%)] to-[hsl(200,25%,12%)] border border-[hsl(195,60%,30%)]/30 rounded-2xl p-6 md:p-8 max-w-3xl mx-auto relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(195,80%,60%)]/5 to-transparent animate-[diamond-shine_3s_ease-in-out_infinite]" />
-              
-              {userCards.includes("Diamond") && (
-                <div className="flex items-center gap-1.5 mb-4 relative z-10">
-                  <Check className="w-4 h-4 text-[hsl(195,80%,60%)]" />
-                  <span className="text-[hsl(195,80%,60%)] text-xs font-semibold">Ваша карта</span>
-                </div>
-              )}
-
-              <div className="flex flex-col md:flex-row gap-8 relative z-10">
-                <div className="md:w-72 shrink-0">
-                  <div className="relative mb-4 flex justify-center">
-                    <DiamondIcon3D className="w-20 h-20" />
+              <div 
+                className="bg-gradient-to-br rounded-2xl p-6 md:p-8 max-w-3xl mx-auto relative overflow-hidden"
+                style={{
+                  backgroundImage: `linear-gradient(to bottom right, ${card.bgSection.includes('from-') ? '' : ''}var(--tw-gradient-from), var(--tw-gradient-to))`,
+                  borderWidth: 1,
+                  borderColor: card.borderColor + '4D',
+                }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${card.bgSection} -z-0`} style={{ zIndex: 0 }} />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent animate-pulse pointer-events-none" style={{ zIndex: 1 }} />
+                
+                {userCards.includes(card.name) && (
+                  <div className="flex items-center gap-1.5 mb-4 relative z-10">
+                    <Check className={`w-4 h-4 ${card.accentTw}`} />
+                    <span className={`${card.accentTw} text-xs font-semibold`}>Ваша карта</span>
                   </div>
-                  <div className="perspective-[800px]">
-                    <div className={`bg-gradient-to-br ${diamond.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden shadow-[0_10px_40px_hsl(195,80%,50%,0.2),0_0_30px_hsl(195,80%,50%,0.1)] hover:[transform:rotateY(-5deg)_rotateX(3deg)] transition-transform duration-500`}
-                      style={{ transformStyle: 'preserve-3d' }}
+                )}
+
+                <div className="flex flex-col md:flex-row gap-8 relative z-10">
+                  <div className="md:w-72 shrink-0">
+                    {isDiamond && (
+                      <div className="relative mb-4 flex justify-center">
+                        <DiamondIcon3D className="w-20 h-20" />
+                      </div>
+                    )}
+                    {!isDiamond && (
+                      <div className="relative mb-4 flex justify-center">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${card.accentColor}33, ${card.accentColor}11)`, border: `1px solid ${card.accentColor}33` }}>
+                          <card.icon className={`w-8 h-8 ${card.accentTw}`} />
+                        </div>
+                      </div>
+                    )}
+                    <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-5 h-44 flex flex-col justify-between relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]`}
+                      style={{ boxShadow: `0 10px 40px ${card.shadowColor}, 0 0 30px ${card.shadowColor}` }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
                       <div className="absolute top-0 right-0 w-28 h-28 rounded-full border border-white/10 -translate-y-8 translate-x-8" />
@@ -417,64 +416,87 @@ const CardsTab = () => {
                           <span className="text-white/80 text-xs font-medium tracking-wider">NeoBank</span>
                           <div className="w-7 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1.5" />
                         </div>
-                        <DiamondIcon3D className="w-8 h-8" />
+                        {isDiamond ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-5 h-5 text-white/30 rotate-90" />}
                       </div>
                       <div className="flex justify-between items-end relative z-10">
                         <div>
-                          <p className="text-white/50 font-mono text-xs">4••• •••• •••• ••••</p>
-                          <p className="text-[hsl(195,80%,70%)] text-xs mt-1 font-semibold tracking-wider">DIAMOND</p>
+                          <p className="text-white/50 font-mono text-xs">{card.type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
+                          <p className={`${card.accentTw} text-xs mt-1 font-semibold tracking-wider`}>{card.name.toUpperCase()}</p>
                         </div>
-                        <p className="text-white/90 font-bold text-sm">VISA</p>
+                        {card.type === "visa" ? (
+                          <p className="text-white/90 font-bold text-sm">VISA</p>
+                        ) : (
+                          <span className="flex items-center">
+                            <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                            <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-2xl font-bold text-foreground">Diamond</h3>
-                    <DiamondIcon3D className="w-6 h-6" />
-                    <span className="text-[10px] px-3 py-1 rounded-full font-bold bg-gradient-to-r from-[hsl(195,80%,60%)]/20 to-[hsl(210,80%,50%)]/20 text-[hsl(195,80%,60%)] uppercase tracking-wider border border-[hsl(195,60%,50%)]/30">Premium</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-2xl font-bold text-foreground">{card.name}</h3>
+                      {isDiamond && <DiamondIcon3D className="w-6 h-6" />}
+                      {card.badge && (
+                        <span className="text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider border"
+                          style={{
+                            background: `linear-gradient(135deg, ${card.accentColor}20, ${card.accentColor}10)`,
+                            color: card.accentColor,
+                            borderColor: card.accentColor + '4D',
+                          }}
+                        >
+                          {card.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <PriceDisplay price={price} salePrice={salePrice} />
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-1">Лимит: {card.limit}</p>
+
+                    {isDiamond && (
+                      <div className="rounded-xl p-4 mt-4 mb-4 border" style={{ background: `${card.accentColor}11`, borderColor: card.accentColor + '20' }}>
+                        <p className="text-foreground font-semibold text-sm mb-1">Вывод без блокировок на карты МИР</p>
+                        <p className="text-muted-foreground text-xs">Автоматическое определение моста для безопасного вывода. Никаких блокировок и задержек.</p>
+                      </div>
+                    )}
+
+                    <ul className="space-y-2 mb-4 mt-4">
+                      {card.features.map((f) => (
+                        <li key={f} className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Check className={`w-4 h-4 ${card.accentTw} shrink-0`} /> {f}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="space-y-1.5 mb-6">
+                      {card.extras.map((e) => (
+                        <p key={e} className={`text-sm ${card.accentTw} flex items-center gap-2`}>
+                          <Check className="w-4 h-4" /> {e}
+                        </p>
+                      ))}
+                    </div>
+
+                    <Button
+                      className="w-full gap-2 text-white"
+                      style={{
+                        background: `linear-gradient(135deg, ${card.accentColor}, ${card.borderColor})`,
+                        boxShadow: `0 0 20px ${card.shadowColor}`,
+                      }}
+                      onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
+                    >
+                      Купить — {buyLabel}
+                    </Button>
                   </div>
-                  <div className="mt-2">
-                    <PriceDisplay price={price} salePrice={salePrice} />
-                  </div>
-                  <p className="text-muted-foreground text-sm mt-1">Лимит: {diamond.limit}</p>
-
-                  <div className="bg-[hsl(195,40%,15%)] rounded-xl p-4 mt-4 mb-4 border border-[hsl(195,60%,30%)]/20">
-                    <p className="text-foreground font-semibold text-sm mb-1">Вывод без блокировок на карты МИР</p>
-                    <p className="text-muted-foreground text-xs">Автоматическое определение моста для безопасного вывода. Никаких блокировок и задержек.</p>
-                  </div>
-
-                  <ul className="space-y-2 mb-4">
-                    {diamond.features.map((f) => (
-                      <li key={f} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Check className="w-4 h-4 text-[hsl(195,80%,60%)] shrink-0" /> {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="space-y-1.5 mb-6">
-                    {diamond.extras.map((e) => (
-                      <p key={e} className="text-sm text-[hsl(195,80%,60%)] flex items-center gap-2">
-                        <Check className="w-4 h-4" /> {e}
-                      </p>
-                    ))}
-                  </div>
-
-                  <Button
-                    className="w-full bg-gradient-to-r from-[hsl(195,80%,40%)] to-[hsl(210,90%,30%)] hover:opacity-90 text-white gap-2 shadow-[0_0_20px_hsl(195,80%,50%,0.2)]"
-                    onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}
-                  >
-                    Купить — {buyLabel}
-                  </Button>
                 </div>
               </div>
-            </div>
-          </div>
-        );
-      })()}
-    </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 };
 
