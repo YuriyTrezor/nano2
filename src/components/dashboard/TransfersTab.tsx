@@ -231,11 +231,7 @@ const TransfersTab = () => {
   const availableCards = userCards.filter(c => !blockedCards.includes(c));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -246,7 +242,7 @@ const TransfersTab = () => {
             Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
-        <motion.div whileTap={{ scale: 0.97 }}>
+        <div>
           <Button onClick={() => {
             if (documentRequested) { setDocAlert(true); return; }
             if (isBlocked) { setBlockedAlert(true); return; }
@@ -255,7 +251,7 @@ const TransfersTab = () => {
           }} className="gap-2 w-full sm:w-auto">
             <CreditCard className="w-4 h-4" /> Новый перевод
           </Button>
-        </motion.div>
+        </div>
       </div>
 
       {/* Blocked alert */}
@@ -305,11 +301,8 @@ const TransfersTab = () => {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 relative"
+          <div
+            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 relative animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
@@ -322,9 +315,8 @@ const TransfersTab = () => {
             {/* Tabs */}
             <div className="flex flex-wrap gap-2 mb-6">
               {tabs.map(tab => (
-                <motion.button
+                <button
                   key={tab.key}
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                     activeTab === tab.key
@@ -333,7 +325,7 @@ const TransfersTab = () => {
                   }`}
                 >
                   {tab.icon} {tab.label}
-                </motion.button>
+                </button>
               ))}
             </div>
 
@@ -404,15 +396,15 @@ const TransfersTab = () => {
               {(activeTab !== "own" || availableCards.length >= 2) && (
                 <>
                   <Input placeholder="Сумма ₽" value={amount} onChange={e => setAmount(e.target.value)} className="bg-secondary border-border" type="number" />
-                  <motion.div whileTap={{ scale: 0.98 }}>
+                  <div>
                     <Button onClick={handleSubmit} className="w-full h-12 text-base font-semibold">
                       Отправить
                     </Button>
-                  </motion.div>
+                  </div>
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
@@ -444,10 +436,8 @@ const TransfersTab = () => {
               const positive = tx.amount >= 0;
               const isExpanded = expandedTxId === tx.id;
               return (
-                <motion.div
+                <div
                   key={tx.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
                   className="flex items-start justify-between py-4 border-b border-border last:border-0 cursor-pointer"
                   onClick={() => setExpandedTxId(isExpanded ? null : tx.id)}
                 >
@@ -461,13 +451,13 @@ const TransfersTab = () => {
                     </div>
                   </div>
                   <p className={`text-sm font-semibold shrink-0 ml-2 ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
-                </motion.div>
+                </div>
               );
             })
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
