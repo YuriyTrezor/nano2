@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Rate {
   code: string;
@@ -35,19 +36,34 @@ const CurrencyRatesWidget = () => {
   const fetchRates = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://www.cbr-xml-daily.ru/daily_json.js");
-      const data = await res.json();
-      const result: Rate[] = CURRENCIES.map(code => {
-        const v = data.Valute[code];
-        return {
-          code,
-          symbol: SYMBOLS[code],
-          value: v.Value / v.Nominal,
-          change: (v.Value - v.Previous) / v.Nominal,
-          previous: v.Previous / v.Nominal,
-        };
-      });
-      setRates(result);
+      // Try DB first (cached from daily cron)
+      const { data: dbData } = await supabase
+        .from("currency_rates")
+        .select("code, symbol, value, previous, change")
+        .order("code");
+      
+      if (dbData && dbData.length > 0) {
+        setRates(dbData.map(r => ({
+          code: r.code,
+          symbol: r.symbol,
+          value: Number(r.value),
+          change: Number(r.change),
+          previous: Number(r.previous),
+        })));
+      } else {
+        // Fallback to direct API
+        const res = await fetch("https://www.cbr-xml-daily.ru/daily_json.js");
+        const data = await res.json();
+        setRates(CURRENCIES.map(code => {
+          const v = data.Valute[code];
+          return {
+            code, symbol: SYMBOLS[code],
+            value: v.Value / v.Nominal,
+            change: (v.Value - v.Previous) / v.Nominal,
+            previous: v.Previous / v.Nominal,
+          };
+        }));
+      }
       setLastUpdate(new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }));
     } catch {
       setRates(CURRENCIES.map(code => ({
