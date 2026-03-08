@@ -195,18 +195,18 @@ const CreditsTab = () => {
       {/* Products */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {creditProducts.map((credit, i) => (
-          <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col">
             <div className={`bg-gradient-to-r ${credit.gradient} p-6 text-center`}>
               <p className="text-white font-bold text-3xl">{credit.rate}</p>
               <p className="text-white/70 text-sm">годовых</p>
             </div>
-            <div className="p-5">
+            <div className="p-5 flex flex-col flex-1">
               <h3 className="text-foreground font-bold text-lg">{credit.name}</h3>
               <div className="flex items-center gap-3 mt-2 text-muted-foreground text-sm">
                 <span>{credit.maxAmount}</span>
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {credit.maxTerm}</span>
               </div>
-              <ul className="mt-3 space-y-1.5">
+              <ul className="mt-3 space-y-1.5 flex-1">
                 {credit.features.map((f, j) => (
                   <li key={j} className="text-muted-foreground text-sm flex items-center gap-2">
                     <Check className="w-3 h-3 text-primary" /> {f}
