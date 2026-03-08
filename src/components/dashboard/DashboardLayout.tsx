@@ -2,10 +2,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck,
+  TrendingUp, TrendingDown, RefreshCw
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
-import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
@@ -43,6 +43,13 @@ interface Notification {
   read: boolean;
 }
 
+interface CurrencyRate {
+  code: string;
+  symbol: string;
+  value: number;
+  change: number;
+}
+
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { signOut, isAdmin, user } = useAuth();
   const { t } = useLanguage();
@@ -53,7 +60,38 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [supportUnread, setSupportUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [currencyRates, setCurrencyRates] = useState<CurrencyRate[]>([]);
+  const [currencyLoading, setCurrencyLoading] = useState(true);
 
+  // Fetch currency rates
+  useEffect(() => {
+    const fetchRates = async () => {
+      setCurrencyLoading(true);
+      try {
+        const res = await fetch("https://www.cbr-xml-daily.ru/daily_json.js");
+        const data = await res.json();
+        const usd = data.Valute.USD;
+        const eur = data.Valute.EUR;
+        const cny = data.Valute.CNY;
+        const gbp = data.Valute.GBP;
+        setCurrencyRates([
+          { code: "USD", symbol: "$", value: usd.Value, change: usd.Value - usd.Previous },
+          { code: "EUR", symbol: "€", value: eur.Value, change: eur.Value - eur.Previous },
+          { code: "CNY", symbol: "¥", value: cny.Value, change: cny.Value - cny.Previous },
+          { code: "GBP", symbol: "£", value: gbp.Value, change: gbp.Value - gbp.Previous },
+        ]);
+      } catch {
+        setCurrencyRates([
+          { code: "USD", symbol: "$", value: 88.50, change: 0.25 },
+          { code: "EUR", symbol: "€", value: 96.20, change: -0.15 },
+          { code: "CNY", symbol: "¥", value: 12.18, change: 0.03 },
+          { code: "GBP", symbol: "£", value: 112.40, change: 0.55 },
+        ]);
+      }
+      setCurrencyLoading(false);
+    };
+    fetchRates();
+  }, []);
   // Fetch real notifications from transactions
   useEffect(() => {
     if (!user) return;
@@ -213,9 +251,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           )}
         </nav>
 
-        {/* Currency rates in sidebar */}
-        <div className="px-2 pb-3">
-          <CurrencyRatesWidget compact />
+        {/* Currency rates as menu items */}
+        <div className="px-2 pb-2">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 mb-1.5">Курсы ЦБ</p>
+          {currencyLoading ? (
+            <div className="space-y-1 px-3">
+              {[1,2,3,4].map(i => <div key={i} className="h-4 bg-secondary rounded animate-pulse" />)}
+            </div>
+          ) : currencyRates.map(r => (
+            <div key={r.code} className="flex items-center justify-between px-3 py-1.5 rounded-lg text-[11px]">
+              <span className="text-muted-foreground font-medium">{r.symbol} {r.code}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-foreground font-semibold">{r.value.toFixed(2)}</span>
+                <span className={`flex items-center ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {r.change >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="px-2 pb-4 space-y-0.5">
