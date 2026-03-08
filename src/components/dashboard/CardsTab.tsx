@@ -386,7 +386,7 @@ const CardsTab = () => {
                   </div>
                   <div className="flex justify-between items-end relative z-10">
                     <div>
-                      <p className="text-white/50 font-mono text-[10px]">{card.type === "mastercard" ? "5" : "4"}••• •••• ••••</p>
+                      <p className="text-white/50 font-mono text-sm tracking-wider">{card.type === "mastercard" ? "5" : "4"}••• •••• ••••</p>
                       <p className={`${card.accentTw} text-[10px] mt-0.5 font-semibold tracking-wider`}>{card.name.toUpperCase()}</p>
                     </div>
                     {card.type === "visa" ? (
