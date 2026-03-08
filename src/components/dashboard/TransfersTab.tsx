@@ -419,16 +419,7 @@ const TransfersTab = () => {
         </div>
         <div className="space-y-0">
           {loading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 py-4 border-b border-border last:border-0">
-                <Skeleton className="w-9 h-9 rounded-full shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3.5 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))
+            <p className="text-muted-foreground text-sm text-center py-4">Загрузка...</p>
           ) : filtered.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-4">Нет операций</p>
           ) : (
