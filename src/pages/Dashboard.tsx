@@ -10,6 +10,7 @@ import SupportTab from "@/components/dashboard/SupportTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 import VerificationTab from "@/components/dashboard/VerificationTab";
 import AdminVerificationsTab from "@/components/dashboard/AdminVerificationsTab";
+import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import FloatingChat from "@/components/FloatingChat";
 
 const Dashboard = () => {
@@ -21,6 +22,7 @@ const Dashboard = () => {
         <Route path="cards" element={<CardsTab />} />
         <Route path="deposits" element={<DepositsTab />} />
         <Route path="credits" element={<CreditsTab />} />
+        <Route path="rates" element={<CurrencyRatesWidget />} />
         <Route path="admin" element={<AdminTab />} />
         <Route path="support" element={<SupportTab />} />
         <Route path="settings" element={<SettingsTab />} />
