@@ -50,7 +50,7 @@ const cardCatalog = [
     defaultPrice: "24 999 ₽",
     limit: "5 000 000 ₽/мес",
     features: ["Кэшбэк 3%", "Бесконтактная оплата", "Apple Pay / Google Pay", "Бесплатные переводы"],
-    extras: ["Доступны переводы SWIFT"],
+    extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
     gradient: "from-[hsl(35,80%,50%)] to-[hsl(25,90%,40%)]",
     bgSection: "from-[hsl(35,30%,8%)] to-[hsl(25,25%,12%)]",
     borderColor: "hsl(35,60%,30%)",
