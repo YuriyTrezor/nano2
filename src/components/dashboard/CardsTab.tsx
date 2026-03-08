@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 const transliterate = (text: string): string => {

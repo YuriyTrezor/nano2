@@ -3,7 +3,7 @@ import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+
 import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
