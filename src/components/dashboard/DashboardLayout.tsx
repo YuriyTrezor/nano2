@@ -220,7 +220,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <link.icon className="w-4 h-4" />
               {t(link.label)}
             </NavLink>
-
+          ))}
 
           {isAdmin && (
             <div className="pt-2">
