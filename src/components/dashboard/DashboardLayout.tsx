@@ -220,60 +220,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <link.icon className="w-4 h-4" />
               {t(link.label)}
             </NavLink>
-          ))}
 
-          {/* Deposits & Credits in one row */}
-          <div className="grid grid-cols-2 gap-1">
-            {financeLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-1.5 px-2 py-2 rounded-lg text-xs transition-colors",
-                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )
-                }
-              >
-                <link.icon className="w-3.5 h-3.5" />
-                {t(link.label)}
-              </NavLink>
-            ))}
-          </div>
-
-          {/* Currency rates as nav menu */}
-          <div className="pt-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full",
-                  "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}>
-                  <TrendingUp className="w-4 h-4" />
-                  {t("Курс валют")}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent side="right" align="start" className="w-56 p-2">
-                <p className="text-xs font-semibold text-foreground px-2 pb-2 border-b border-border mb-2">Курсы ЦБ РФ</p>
-                {currencyLoading ? (
-                  <div className="space-y-2 px-2">
-                    {[1,2,3,4].map(i => <div key={i} className="h-5 bg-secondary rounded animate-pulse" />)}
-                  </div>
-                ) : currencyRates.map(r => (
-                  <div key={r.code} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-secondary text-sm">
-                    <span className="text-muted-foreground font-medium">{r.symbol} {r.code}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-foreground font-semibold">{r.value.toFixed(2)}</span>
-                      <span className={`flex items-center text-xs ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
-                        {r.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        <span className="ml-0.5">{Math.abs(r.change).toFixed(2)}</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </PopoverContent>
-            </Popover>
-          </div>
 
           {isAdmin && (
             <div className="pt-2">
