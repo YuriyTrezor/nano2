@@ -5,6 +5,7 @@ import {
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
+import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
