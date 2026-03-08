@@ -213,6 +213,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           )}
         </nav>
 
+        {/* Currency rates in sidebar */}
+        <div className="px-2 pb-3">
+          <CurrencyRatesWidget compact />
+        </div>
+
         <div className="px-2 pb-4 space-y-0.5">
           {bottomLinks.map((link) => (
             <NavLink
