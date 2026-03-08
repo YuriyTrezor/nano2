@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
-import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
+import CurrencyRatesCompact from "@/components/dashboard/CurrencyRatesCompact";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import {
@@ -590,7 +590,7 @@ const OverviewTab = () => {
             </div>
           </div>
           {/* Currency Rates */}
-          <CurrencyRatesWidget />
+          <CurrencyRatesCompact />
         </div>
       </div>
     </div>
