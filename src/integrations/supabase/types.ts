@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      currency_rates: {
+        Row: {
+          change: number
+          code: string
+          id: string
+          nominal: number
+          previous: number
+          symbol: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          change: number
+          code: string
+          id?: string
+          nominal?: number
+          previous: number
+          symbol: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          change?: number
+          code?: string
+          id?: string
+          nominal?: number
+          previous?: number
+          symbol?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       login_sessions: {
         Row: {
           created_at: string
