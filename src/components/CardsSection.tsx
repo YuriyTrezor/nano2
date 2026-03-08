@@ -54,7 +54,7 @@ const cardData = [
     icon: Gem,
     type: "visa" as const,
     label: "Platinum Card",
-    badge: "Elite",
+    badge: null,
   },
 ];
 
