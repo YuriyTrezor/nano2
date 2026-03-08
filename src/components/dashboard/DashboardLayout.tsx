@@ -17,11 +17,9 @@ const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
   { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
   { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
-];
-
-const financeLinks = [
   { to: "/dashboard/deposits", icon: PiggyBank, label: "Вклады" },
   { to: "/dashboard/credits", icon: Landmark, label: "Кредиты" },
+  { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
 ];
 
 const adminLinks = [
