@@ -157,19 +157,19 @@ const DepositsTab = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {deposits.map((dep, i) => (
-          <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col">
             <div className={`bg-gradient-to-r ${dep.gradient} p-6 text-center`}>
               <div className="flex justify-center mb-2">{dep.icon}</div>
               <p className="text-white font-bold text-4xl">{dep.rate}</p>
               <p className="text-white/70 text-sm">годовых</p>
             </div>
-            <div className="p-5">
+            <div className="p-5 flex flex-col flex-1">
               <h3 className="text-foreground font-bold text-lg">{dep.name}</h3>
               <div className="flex items-center gap-3 mt-2 text-muted-foreground text-sm">
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {dep.duration}</span>
                 <span>{dep.minAmount}</span>
               </div>
-              <ul className="mt-3 space-y-1.5">
+              <ul className="mt-3 space-y-1.5 flex-1">
                 {dep.features.map((f, j) => (
                   <li key={j} className="text-muted-foreground text-sm flex items-center gap-2">
                     <span className="text-primary">•</span> {f}

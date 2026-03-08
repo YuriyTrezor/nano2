@@ -46,13 +46,7 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleInstall}
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title={isEn ? "Install App" : "Установить приложение"}
-          >
-            <Download className="w-5 h-5" />
-          </button>
+
           <div className="hidden sm:flex items-center rounded-full border border-border overflow-hidden">
             <button
               onClick={() => lang !== "ru" && toggleLang()}
