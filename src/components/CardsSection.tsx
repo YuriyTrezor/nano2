@@ -134,7 +134,7 @@ const CardsSection = () => {
               </div>
               <p className="text-muted-foreground text-xs mt-1">{isEn ? "Limit" : "Лимит"}: {card.limit}</p>
 
-              <ul className="mt-4 space-y-1.5 flex-1">
+              <ul className="mt-4 space-y-1.5">
                 {(isEn ? card.featuresEn : card.features).map((f) => (
                   <li key={f} className="text-xs text-muted-foreground flex items-start gap-2">
                     <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${card.accentTw}`} /> {f}
@@ -142,7 +142,7 @@ const CardsSection = () => {
                 ))}
               </ul>
 
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-1 flex-1">
                 {(isEn ? card.extrasEn : card.extras).map((e) => (
                   <p key={e} className={`text-xs ${card.accentTw} flex items-center gap-2`}>
                     <Check className="w-3.5 h-3.5" /> {e}

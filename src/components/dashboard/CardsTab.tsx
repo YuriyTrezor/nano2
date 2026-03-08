@@ -364,9 +364,9 @@ const CardsTab = () => {
           const buyLabel = salePrice || price;
           
           return (
-            <div key={card.name} className="relative overflow-hidden rounded-2xl border" style={{ borderColor: card.borderColor + '4D' }}>
+            <div key={card.name} className="relative overflow-hidden rounded-2xl border flex flex-col" style={{ borderColor: card.borderColor + '4D' }}>
               <div className={`absolute inset-0 bg-gradient-to-br ${card.bgSection}`} />
-              <div className="relative z-10 p-5">
+              <div className="relative z-10 p-5 flex flex-col flex-1">
                 {userCards.includes(card.name) && (
                   <div className="flex items-center gap-1.5 mb-3">
                     <Check className={`w-3.5 h-3.5 ${card.accentTw}`} />
@@ -423,7 +423,7 @@ const CardsTab = () => {
                   ))}
                 </ul>
 
-                <div className="space-y-1 mb-4">
+                <div className="space-y-1 mb-4 flex-1">
                   {card.extras.map((e) => (
                     <p key={e} className={`text-xs ${card.accentTw} flex items-center gap-1.5`}>
                       <Check className="w-3.5 h-3.5" /> {e}
@@ -431,7 +431,7 @@ const CardsTab = () => {
                   ))}
                 </div>
 
-                <Button size="sm" className="w-full gap-2 text-white text-xs"
+                <Button size="sm" className="w-full gap-2 text-white text-xs mt-auto"
                   style={{ background: `linear-gradient(135deg, ${card.accentColor}, ${card.borderColor})`, boxShadow: `0 0 15px ${card.shadowColor}` }}
                   onClick={() => toast.info("Свяжитесь с Вашим менеджером или напишите в чат (внизу справа)")}>
                   Купить — {buyLabel}
