@@ -64,17 +64,17 @@ const CurrencyRatesWidget = ({ compact = false }: { compact?: boolean }) => {
           ))}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className={compact ? "space-y-1.5" : "space-y-2.5"}>
           {rates.map(r => (
             <div key={r.code} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-foreground">{r.symbol}</span>
-                <span className="text-foreground text-sm font-medium">{r.code}/RUB</span>
+              <div className="flex items-center gap-1.5">
+                {!compact && <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-foreground">{r.symbol}</span>}
+                <span className={`text-foreground font-medium ${compact ? "text-[11px]" : "text-sm"}`}>{compact ? r.code : `${r.code}/RUB`}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-foreground text-sm font-semibold">{r.value.toFixed(2)} ₽</span>
-                <span className={`flex items-center gap-0.5 text-[11px] font-medium ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {r.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <div className="flex items-center gap-1.5">
+                <span className={`text-foreground font-semibold ${compact ? "text-[11px]" : "text-sm"}`}>{r.value.toFixed(2)}</span>
+                <span className={`flex items-center gap-0.5 font-medium ${compact ? "text-[9px]" : "text-[11px]"} ${r.change >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {r.change >= 0 ? <TrendingUp className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} /> : <TrendingDown className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />}
                   {r.change >= 0 ? "+" : ""}{r.change.toFixed(2)}
                 </span>
               </div>
