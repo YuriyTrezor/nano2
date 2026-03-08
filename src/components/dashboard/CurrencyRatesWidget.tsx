@@ -9,7 +9,7 @@ interface Rate {
   change: number;
 }
 
-const CurrencyRatesWidget = () => {
+const CurrencyRatesWidget = ({ compact = false }: { compact?: boolean }) => {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState("");
@@ -47,11 +47,11 @@ const CurrencyRatesWidget = () => {
   useEffect(() => { fetchRates(); }, []);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-foreground font-semibold text-sm">Курсы валют ЦБ РФ</h3>
+    <div className={`bg-card border border-border rounded-2xl ${compact ? "p-2.5" : "p-4 md:p-5"}`}>
+      <div className={`flex items-center justify-between ${compact ? "mb-2" : "mb-3"}`}>
+        <h3 className={`text-foreground font-semibold ${compact ? "text-[11px]" : "text-sm"}`}>{compact ? "Курсы ЦБ" : "Курсы валют ЦБ РФ"}</h3>
         <button onClick={fetchRates} className="text-muted-foreground hover:text-foreground transition-colors" title="Обновить">
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`${compact ? "w-3 h-3" : "w-3.5 h-3.5"} ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
       {loading ? (
