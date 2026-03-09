@@ -96,10 +96,11 @@ const OverviewTab = () => {
   };
 
   const computePercentChange = () => {
+    const cardTxs = transactions.filter(tx => tx.card_name && userCards.includes(tx.card_name));
     const now = Date.now();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    const recent = transactions.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
-    const older = transactions.filter(tx => {
+    const recent = cardTxs.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
+    const older = cardTxs.filter(tx => {
       const age = now - new Date(tx.created_at).getTime();
       return age >= thirtyDays && age < thirtyDays * 2;
     });
