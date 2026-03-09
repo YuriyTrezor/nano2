@@ -29,6 +29,7 @@ interface Transaction {
   title: string;
   category: string;
   amount: number;
+  card_name: string;
   created_at: string;
 }
 
@@ -86,11 +87,11 @@ const TransfersTab = () => {
 
       const { data } = await supabase
         .from("transactions")
-        .select("id, title, category, amount, created_at")
+        .select("id, title, category, amount, card_name, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
-      if (data) setTransactions(data);
+        .limit(500);
+      if (data) setTransactions(data as Transaction[]);
       setLoading(false);
     };
     fetchData();
