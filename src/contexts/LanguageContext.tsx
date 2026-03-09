@@ -32,7 +32,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "Пополнить": { ru: "Пополнить", en: "Top Up" },
   "Оплатить": { ru: "Оплатить", en: "Pay" },
   "Мои счета": { ru: "Мои счета", en: "My Accounts" },
-  "Основной счёт": { ru: "Основной счёт", en: "Main Account" },
+  "Общий счёт": { ru: "Общий счёт", en: "Total Account" },
   "Мои карты": { ru: "Мои карты", en: "My Cards" },
   "Управление банковскими картами": { ru: "Управление банковскими картами", en: "Manage your bank cards" },
   "История": { ru: "История", en: "History" },

@@ -29,6 +29,7 @@ interface Transaction {
   title: string;
   category: string;
   amount: number;
+  card_name: string;
   created_at: string;
 }
 
@@ -62,8 +63,10 @@ const TransfersTab = () => {
   const [fromCard, setFromCard] = useState("");
   const [toCard, setToCard] = useState("");
 
-  // Compute balance from transactions
-  const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Total balance = sum of card-specific balances only
+  const balance = transactions
+    .filter(tx => tx.card_name && userCards.includes(tx.card_name))
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   // Fetch user transactions and blocked status from DB
   useEffect(() => {
@@ -84,11 +87,11 @@ const TransfersTab = () => {
 
       const { data } = await supabase
         .from("transactions")
-        .select("id, title, category, amount, created_at")
+        .select("id, title, category, amount, card_name, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
-      if (data) setTransactions(data);
+        .limit(500);
+      if (data) setTransactions(data as Transaction[]);
       setLoading(false);
     };
     fetchData();
@@ -160,11 +163,11 @@ const TransfersTab = () => {
       // Refresh transactions
       const { data: refreshed } = await supabase
         .from("transactions")
-        .select("id, title, category, amount, created_at")
+        .select("id, title, category, amount, card_name, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
-      if (refreshed) setTransactions(refreshed);
+        .limit(500);
+      if (refreshed) setTransactions(refreshed as Transaction[]);
 
       toast.success(`Перевод ${sum.toLocaleString("ru-RU")} ₽ с ${fromCard} на ${toCard} выполнен`);
       setAmount("");
@@ -190,19 +193,23 @@ const TransfersTab = () => {
       title = `Перевод → ${cardNumber}`;
     }
 
+    // External transfer — deduct from first available card
+    const defaultCard = availableCards.length > 0 ? availableCards[0] : "";
+
     const { data, error } = await supabase.from("transactions").insert({
       user_id: user.id,
       title,
       category: activeTab === "bank" ? "Межбанковский перевод" : "Перевод",
       amount: -sum,
-    }).select("id, title, category, amount, created_at").single();
+      card_name: defaultCard,
+    }).select("id, title, category, amount, card_name, created_at").single();
 
     if (error) {
       toast.error("Ошибка при переводе: " + error.message);
       return;
     }
 
-    if (data) setTransactions(prev => [data, ...prev]);
+    if (data) setTransactions(prev => [data as Transaction, ...prev]);
 
     toast.success(`Перевод на сумму ${sum.toLocaleString("ru-RU")} ₽ выполнен`);
     setCardNumber("");

@@ -83,7 +83,10 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  const balance = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Total balance = sum of card-specific balances (only transactions assigned to user's cards)
+  const balance = transactions
+    .filter(tx => tx.card_name && userCards.includes(tx.card_name))
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
   const cardBalance = (cardName: string) => {
@@ -93,10 +96,11 @@ const OverviewTab = () => {
   };
 
   const computePercentChange = () => {
+    const cardTxs = transactions.filter(tx => tx.card_name && userCards.includes(tx.card_name));
     const now = Date.now();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    const recent = transactions.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
-    const older = transactions.filter(tx => {
+    const recent = cardTxs.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
+    const older = cardTxs.filter(tx => {
       const age = now - new Date(tx.created_at).getTime();
       return age >= thirtyDays && age < thirtyDays * 2;
     });
@@ -580,7 +584,7 @@ const OverviewTab = () => {
               <div className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${isBlocked ? "bg-destructive text-destructive-foreground" : "bg-destructive text-destructive-foreground"}`}>RUB</div>
                 <div>
-                  <p className="text-foreground text-sm font-medium">{t("Основной счёт")}</p>
+                  <p className="text-foreground text-sm font-medium">{t("Общий счёт")}</p>
                   <p className="text-muted-foreground text-xs">RUB</p>
                 </div>
               </div>

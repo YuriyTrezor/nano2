@@ -282,7 +282,12 @@ const SupportTab = () => {
             {tickets.length === 0 && (
               <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
             )}
-            {tickets.map((ticket) => (
+            {[...tickets].sort((a, b) => {
+              const aUnread = unreadCounts[a.id] || 0;
+              const bUnread = unreadCounts[b.id] || 0;
+              if (bUnread !== aUnread) return bUnread - aUnread;
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }).map((ticket) => (
               <div key={ticket.id} className="relative group">
                 <button
                   onClick={() => setSelectedTicket(ticket.id)}
