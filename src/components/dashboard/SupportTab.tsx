@@ -1,9 +1,7 @@
-import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, CalendarIcon } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +48,7 @@ const SupportTab = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [uploading, setUploading] = useState(false);
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [dateAsc, setDateAsc] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesCount = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -277,26 +275,9 @@ const SupportTab = () => {
       </div>
       <div className="flex items-center gap-3 mb-6">
         <p className="text-muted-foreground text-sm">{t("Сообщения из чата поддержки")}</p>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={`gap-1.5 text-xs ${dateFilter ? "border-primary text-primary" : ""}`}>
-              <CalendarIcon className="w-3.5 h-3.5" />
-              {dateFilter ? dateFilter.toLocaleDateString("ru-RU") : "Дата"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateFilter}
-              onSelect={setDateFilter}
-            />
-          </PopoverContent>
-        </Popover>
-        {dateFilter && (
-          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setDateFilter(undefined)}>
-            Сбросить
-          </Button>
-        )}
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setDateAsc(prev => !prev)}>
+          <ArrowUpDown className="w-3.5 h-3.5" />
+        </Button>
       </div>
 
       <div className="flex gap-4 h-[500px]">
@@ -308,59 +289,33 @@ const SupportTab = () => {
               <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
             )}
             {[...tickets]
-              .filter(ticket => {
-                if (!dateFilter) return true;
-                const ticketDate = new Date(ticket.created_at);
-                return ticketDate.toDateString() === dateFilter.toDateString();
-              })
               .sort((a, b) => {
                 const aUnread = unreadCounts[a.id] || 0;
                 const bUnread = unreadCounts[b.id] || 0;
                 if (aUnread > 0 && bUnread === 0) return -1;
                 if (bUnread > 0 && aUnread === 0) return 1;
                 if (bUnread !== aUnread) return bUnread - aUnread;
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                return dateAsc ? diff : -diff;
               }).map((ticket) => (
-              <div key={ticket.id} className="relative group">
-                <button
-                  onClick={() => setSelectedTicket(ticket.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                  }`}
-                >
-                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                  <p className="text-muted-foreground text-[10px] mt-1">
-                    {new Date(ticket.created_at).toLocaleString("ru-RU")}
-                  </p>
-                  {(unreadCounts[ticket.id] || 0) > 0 && (
-                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                      {unreadCounts[ticket.id]}
-                    </span>
-                  )}
-                </button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Удалить переписку?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Все сообщения в этом диалоге будут удалены безвозвратно.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Отмена</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteConversation(ticket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Удалить
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <button
+                key={ticket.id}
+                onClick={() => setSelectedTicket(ticket.id)}
+                className={`w-full text-left p-3 rounded-xl transition-colors relative ${
+                  selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
+                }`}
+              >
+                <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
+                <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
+                <p className="text-muted-foreground text-[10px] mt-1">
+                  {new Date(ticket.created_at).toLocaleString("ru-RU")}
+                </p>
+                {(unreadCounts[ticket.id] || 0) > 0 && (
+                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                    {unreadCounts[ticket.id]}
+                  </span>
+                )}
+              </button>
             ))}
           </div>
         </div>
@@ -369,11 +324,28 @@ const SupportTab = () => {
         <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col">
           {currentTicket ? (
             <>
-              <div className="p-4 border-b border-border">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <div>
                   <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
                   <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
                 </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Удалить переписку?</AlertDialogTitle>
+                      <AlertDialogDescription>Все сообщения в этом диалоге будут удалены безвозвратно.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Отмена</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteConversation(currentTicket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
                 {messages.map(msg => (
