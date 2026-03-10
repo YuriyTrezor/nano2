@@ -144,20 +144,22 @@ const TransfersTab = () => {
       }
 
       // Internal transfer — two transactions that cancel each other out
-      const { error: e1 } = await supabase.from("transactions").insert({
-        user_id: user.id,
-        title: `Перевод ${fromCard} → ${toCard}`,
-        category: "Внутренний перевод",
-        amount: -sum,
-        card_name: fromCard,
-      });
-      const { error: e2 } = await supabase.from("transactions").insert({
-        user_id: user.id,
-        title: `Перевод ${fromCard} → ${toCard}`,
-        category: "Внутренний перевод",
-        amount: sum,
-        card_name: toCard,
-      });
+      const { error: transferError } = await supabase.from("transactions").insert([
+        {
+          user_id: user.id,
+          title: `Перевод ${fromCard} → ${toCard}`,
+          category: "Внутренний перевод",
+          amount: -sum,
+          card_name: fromCard,
+        },
+        {
+          user_id: user.id,
+          title: `Перевод ${fromCard} → ${toCard}`,
+          category: "Внутренний перевод",
+          amount: sum,
+          card_name: toCard,
+        },
+      ]);
 
       if (e1 || e2) {
         toast.error("Ошибка при переводе");
