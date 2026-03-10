@@ -115,11 +115,6 @@ const TransfersTab = () => {
       toast.error("Введите корректную сумму");
       return;
     }
-    if (sum > balance) {
-      toast.error("Недостаточно средств на счёте");
-      return;
-    }
-
     // Own cards transfer
     if (activeTab === "own") {
       if (!fromCard || !toCard) {
@@ -136,6 +131,15 @@ const TransfersTab = () => {
       }
       if (blockedCards.includes(toCard)) {
         toast.error(`Карта ${toCard} заблокирована`);
+        return;
+      }
+
+      // Check fromCard balance specifically
+      const fromCardBalance = transactions
+        .filter(tx => tx.card_name === fromCard)
+        .reduce((s, tx) => s + Number(tx.amount), 0);
+      if (sum > fromCardBalance) {
+        toast.error(`Недостаточно средств на карте ${fromCard}`);
         return;
       }
 
