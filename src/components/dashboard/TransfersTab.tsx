@@ -161,19 +161,18 @@ const TransfersTab = () => {
         },
       ]);
 
-      if (e1 || e2) {
+      if (transferError) {
         toast.error("Ошибка при переводе");
         return;
       }
 
       // Refresh transactions
-      const { data: refreshed } = await supabase
-        .from("transactions")
-        .select("id, title, category, amount, card_name, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (refreshed) setTransactions(refreshed as Transaction[]);
+      try {
+        const refreshed = await fetchAllUserTransactions<Transaction>(user.id);
+        setTransactions(refreshed);
+      } catch (error) {
+        console.error("Failed to refresh transactions:", error);
+      }
 
       toast.success(`Перевод ${sum.toLocaleString("ru-RU")} ₽ с ${fromCard} на ${toCard} выполнен`);
       setAmount("");

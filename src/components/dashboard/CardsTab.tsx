@@ -178,10 +178,10 @@ const CardsTab = () => {
         setBlockedCards((data as any).blocked_cards ?? []);
       }
 
-      const { data: txData } = await supabase
-        .from("transactions")
-        .select("amount, card_name")
-        .eq("user_id", user.id);
+      const txData = await fetchAllUserTransactions<{ amount: number; card_name: string }>(
+        user.id,
+        "amount, card_name"
+      );
       if (txData) {
         const balances: Record<string, number> = {};
         txData.forEach(tx => {
