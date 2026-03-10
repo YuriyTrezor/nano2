@@ -129,13 +129,12 @@ const OverviewTab = () => {
         setDocumentRequested((profile as any).document_requested ?? false);
       }
 
-      const { data: txData } = await supabase
-        .from("transactions")
-        .select("id, title, category, amount, card_name, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (txData) setTransactions(txData as Transaction[]);
+      try {
+        const txData = await fetchAllUserTransactions<Transaction>(user.id);
+        setTransactions(txData);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      }
     };
     fetchData();
 
