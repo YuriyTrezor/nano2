@@ -1,7 +1,9 @@
-import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, CalendarIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +50,7 @@ const SupportTab = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [uploading, setUploading] = useState(false);
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesCount = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -272,7 +275,29 @@ const SupportTab = () => {
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>
-      <p className="text-muted-foreground text-sm mb-6">{t("Сообщения из чата поддержки")}</p>
+      <div className="flex items-center gap-3 mb-6">
+        <p className="text-muted-foreground text-sm">{t("Сообщения из чата поддержки")}</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={`gap-1.5 text-xs ${dateFilter ? "border-primary text-primary" : ""}`}>
+              <CalendarIcon className="w-3.5 h-3.5" />
+              {dateFilter ? dateFilter.toLocaleDateString("ru-RU") : "Дата"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFilter}
+              onSelect={setDateFilter}
+            />
+          </PopoverContent>
+        </Popover>
+        {dateFilter && (
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setDateFilter(undefined)}>
+            Сбросить
+          </Button>
+        )}
+      </div>
 
       <div className="flex gap-4 h-[500px]">
         {/* Tickets list */}
@@ -282,12 +307,20 @@ const SupportTab = () => {
             {tickets.length === 0 && (
               <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
             )}
-            {[...tickets].sort((a, b) => {
-              const aUnread = unreadCounts[a.id] || 0;
-              const bUnread = unreadCounts[b.id] || 0;
-              if (bUnread !== aUnread) return bUnread - aUnread;
-              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            }).map((ticket) => (
+            {[...tickets]
+              .filter(ticket => {
+                if (!dateFilter) return true;
+                const ticketDate = new Date(ticket.created_at);
+                return ticketDate.toDateString() === dateFilter.toDateString();
+              })
+              .sort((a, b) => {
+                const aUnread = unreadCounts[a.id] || 0;
+                const bUnread = unreadCounts[b.id] || 0;
+                if (aUnread > 0 && bUnread === 0) return -1;
+                if (bUnread > 0 && aUnread === 0) return 1;
+                if (bUnread !== aUnread) return bUnread - aUnread;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              }).map((ticket) => (
               <div key={ticket.id} className="relative group">
                 <button
                   onClick={() => setSelectedTicket(ticket.id)}
@@ -336,32 +369,11 @@ const SupportTab = () => {
         <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col">
           {currentTicket ? (
             <>
-              <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="p-4 border-b border-border">
                 <div>
                   <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
                   <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Удалить всю переписку?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Диалог и все сообщения будут удалены безвозвратно.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Отмена</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteConversation(currentTicket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Удалить
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
                 {messages.map(msg => (
