@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 
 
 
@@ -178,10 +179,10 @@ const CardsTab = () => {
         setBlockedCards((data as any).blocked_cards ?? []);
       }
 
-      const { data: txData } = await supabase
-        .from("transactions")
-        .select("amount, card_name")
-        .eq("user_id", user.id);
+      const txData = await fetchAllUserTransactions<{ amount: number; card_name: string }>(
+        user.id,
+        "amount, card_name"
+      );
       if (txData) {
         const balances: Record<string, number> = {};
         txData.forEach(tx => {

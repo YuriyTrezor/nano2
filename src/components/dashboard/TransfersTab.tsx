@@ -6,6 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 
 
 import {
@@ -85,13 +86,12 @@ const TransfersTab = () => {
         setBlockedCards((profile as any).blocked_cards ?? []);
       }
 
-      const { data } = await supabase
-        .from("transactions")
-        .select("id, title, category, amount, card_name, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (data) setTransactions(data as Transaction[]);
+      try {
+        const data = await fetchAllUserTransactions<Transaction>(user.id);
+        setTransactions(data);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      }
       setLoading(false);
     };
     fetchData();
@@ -144,34 +144,35 @@ const TransfersTab = () => {
       }
 
       // Internal transfer — two transactions that cancel each other out
-      const { error: e1 } = await supabase.from("transactions").insert({
-        user_id: user.id,
-        title: `Перевод ${fromCard} → ${toCard}`,
-        category: "Внутренний перевод",
-        amount: -sum,
-        card_name: fromCard,
-      });
-      const { error: e2 } = await supabase.from("transactions").insert({
-        user_id: user.id,
-        title: `Перевод ${fromCard} → ${toCard}`,
-        category: "Внутренний перевод",
-        amount: sum,
-        card_name: toCard,
-      });
+      const { error: transferError } = await supabase.from("transactions").insert([
+        {
+          user_id: user.id,
+          title: `Перевод ${fromCard} → ${toCard}`,
+          category: "Внутренний перевод",
+          amount: -sum,
+          card_name: fromCard,
+        },
+        {
+          user_id: user.id,
+          title: `Перевод ${fromCard} → ${toCard}`,
+          category: "Внутренний перевод",
+          amount: sum,
+          card_name: toCard,
+        },
+      ]);
 
-      if (e1 || e2) {
+      if (transferError) {
         toast.error("Ошибка при переводе");
         return;
       }
 
       // Refresh transactions
-      const { data: refreshed } = await supabase
-        .from("transactions")
-        .select("id, title, category, amount, card_name, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (refreshed) setTransactions(refreshed as Transaction[]);
+      try {
+        const refreshed = await fetchAllUserTransactions<Transaction>(user.id);
+        setTransactions(refreshed);
+      } catch (error) {
+        console.error("Failed to refresh transactions:", error);
+      }
 
       toast.success(`Перевод ${sum.toLocaleString("ru-RU")} ₽ с ${fromCard} на ${toCard} выполнен`);
       setAmount("");
