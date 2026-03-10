@@ -275,7 +275,29 @@ const SupportTab = () => {
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>
-      <p className="text-muted-foreground text-sm mb-6">{t("Сообщения из чата поддержки")}</p>
+      <div className="flex items-center gap-3 mb-6">
+        <p className="text-muted-foreground text-sm">{t("Сообщения из чата поддержки")}</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={`gap-1.5 text-xs ${dateFilter ? "border-primary text-primary" : ""}`}>
+              <CalendarIcon className="w-3.5 h-3.5" />
+              {dateFilter ? dateFilter.toLocaleDateString("ru-RU") : "Дата"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFilter}
+              onSelect={setDateFilter}
+            />
+          </PopoverContent>
+        </Popover>
+        {dateFilter && (
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setDateFilter(undefined)}>
+            Сбросить
+          </Button>
+        )}
+      </div>
 
       <div className="flex gap-4 h-[500px]">
         {/* Tickets list */}
