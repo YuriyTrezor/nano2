@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import useEmblaCarousel from "embla-carousel-react";
 
 const transliterate = (text: string): string => {
