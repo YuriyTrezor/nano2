@@ -86,13 +86,12 @@ const TransfersTab = () => {
         setBlockedCards((profile as any).blocked_cards ?? []);
       }
 
-      const { data } = await supabase
-        .from("transactions")
-        .select("id, title, category, amount, card_name, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (data) setTransactions(data as Transaction[]);
+      try {
+        const data = await fetchAllUserTransactions<Transaction>(user.id);
+        setTransactions(data);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      }
       setLoading(false);
     };
     fetchData();
