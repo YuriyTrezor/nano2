@@ -289,59 +289,33 @@ const SupportTab = () => {
               <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
             )}
             {[...tickets]
-              .filter(ticket => {
-                if (!dateFilter) return true;
-                const ticketDate = new Date(ticket.created_at);
-                return ticketDate.toDateString() === dateFilter.toDateString();
-              })
               .sort((a, b) => {
                 const aUnread = unreadCounts[a.id] || 0;
                 const bUnread = unreadCounts[b.id] || 0;
                 if (aUnread > 0 && bUnread === 0) return -1;
                 if (bUnread > 0 && aUnread === 0) return 1;
                 if (bUnread !== aUnread) return bUnread - aUnread;
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                return dateAsc ? diff : -diff;
               }).map((ticket) => (
-              <div key={ticket.id} className="relative group">
-                <button
-                  onClick={() => setSelectedTicket(ticket.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                  }`}
-                >
-                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                  <p className="text-muted-foreground text-[10px] mt-1">
-                    {new Date(ticket.created_at).toLocaleString("ru-RU")}
-                  </p>
-                  {(unreadCounts[ticket.id] || 0) > 0 && (
-                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                      {unreadCounts[ticket.id]}
-                    </span>
-                  )}
-                </button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Удалить переписку?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Все сообщения в этом диалоге будут удалены безвозвратно.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Отмена</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteConversation(ticket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Удалить
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <button
+                key={ticket.id}
+                onClick={() => setSelectedTicket(ticket.id)}
+                className={`w-full text-left p-3 rounded-xl transition-colors relative ${
+                  selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
+                }`}
+              >
+                <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
+                <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
+                <p className="text-muted-foreground text-[10px] mt-1">
+                  {new Date(ticket.created_at).toLocaleString("ru-RU")}
+                </p>
+                {(unreadCounts[ticket.id] || 0) > 0 && (
+                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                    {unreadCounts[ticket.id]}
+                  </span>
+                )}
+              </button>
             ))}
           </div>
         </div>
