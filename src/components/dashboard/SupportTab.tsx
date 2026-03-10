@@ -48,7 +48,7 @@ const SupportTab = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [uploading, setUploading] = useState(false);
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [dateAsc, setDateAsc] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesCount = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
