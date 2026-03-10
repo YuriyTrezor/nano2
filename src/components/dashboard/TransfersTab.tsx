@@ -181,6 +181,12 @@ const TransfersTab = () => {
       return;
     }
 
+    // External transfers - check total balance
+    if (sum > balance) {
+      toast.error("Недостаточно средств на счёте");
+      return;
+    }
+
     if (activeTab === "bank" && (!bankBik.trim() || !bankAccount.trim())) {
       toast.error("Заполните реквизиты банка");
       return;

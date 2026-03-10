@@ -369,32 +369,11 @@ const SupportTab = () => {
         <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col">
           {currentTicket ? (
             <>
-              <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="p-4 border-b border-border">
                 <div>
                   <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
                   <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Удалить всю переписку?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Диалог и все сообщения будут удалены безвозвратно.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Отмена</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteConversation(currentTicket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Удалить
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
                 {messages.map(msg => (
