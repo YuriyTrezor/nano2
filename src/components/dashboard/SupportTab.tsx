@@ -1,4 +1,4 @@
-import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, CalendarIcon } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
