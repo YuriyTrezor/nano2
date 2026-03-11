@@ -297,6 +297,7 @@ const OverviewTab = () => {
         </div>
       )}
 
+      <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, {displayName} 👋</h1>
         <p className="text-muted-foreground text-sm">{t("Вот обзор ваших финансов")}</p>
       </div>
