@@ -11,6 +11,7 @@ import SettingsTab from "@/components/dashboard/SettingsTab";
 import VerificationTab from "@/components/dashboard/VerificationTab";
 import AdminVerificationsTab from "@/components/dashboard/AdminVerificationsTab";
 import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
+import ComplianceTab from "@/components/dashboard/ComplianceTab";
 
 
 const Dashboard = () => {
@@ -28,6 +29,7 @@ const Dashboard = () => {
         <Route path="settings" element={<SettingsTab />} />
         <Route path="verification" element={<VerificationTab />} />
         <Route path="verifications" element={<AdminVerificationsTab />} />
+        <Route path="compliance" element={<ComplianceTab />} />
       </Routes>
       
     </DashboardLayout>

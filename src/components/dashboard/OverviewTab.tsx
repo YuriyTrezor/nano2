@@ -276,6 +276,26 @@ const OverviewTab = () => {
         </div>
       )}
 
+      {/* Document requested banner */}
+      {documentRequested && !isBlocked && (
+        <div className="mb-4 p-4 rounded-2xl border border-[hsl(210,80%,50%)]/30 bg-[hsl(210,80%,50%)]/10 flex items-start gap-3">
+          <FileWarning className="w-5 h-5 text-[hsl(210,80%,60%)] shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-foreground text-sm font-semibold mb-1">Требуется подтверждение происхождения средств</p>
+            <p className="text-muted-foreground text-xs mb-3">
+              В соответствии с требованиями законодательства нам необходимо получить подтверждающие документы. 
+              Не переживайте — это стандартная процедура, и мы готовы помочь вам её пройти.
+            </p>
+            <button
+              onClick={() => navigate("/dashboard/compliance")}
+              className="inline-flex items-center gap-1.5 text-[hsl(210,80%,60%)] hover:text-[hsl(210,80%,70%)] text-sm font-medium transition-colors"
+            >
+              Узнать подробнее и решить вопрос
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("Добро пожаловать")}, {displayName} 👋</h1>
