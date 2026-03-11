@@ -42,6 +42,7 @@ const Navbar = () => {
             <a href="#contacts" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Контакты")}</a>
             <a href="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{isEn ? "About" : "О банке"}</a>
             <a href="/swift" className="text-muted-foreground hover:text-foreground transition-colors text-sm">SWIFT</a>
+            <a href="/documents" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{isEn ? "Documents" : "Документы"}</a>
             <a href="/support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">{t("Поддержка")}</a>
           </div>
         </div>

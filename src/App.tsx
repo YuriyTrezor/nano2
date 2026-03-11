@@ -39,6 +39,7 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/swift" element={<Swift />} />
             <Route path="/about" element={<About />} />
+            <Route path="/documents" element={<Documents />} />
             <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
