@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import Swift from "./pages/Swift";
 import About from "./pages/About";
+import Documents from "./pages/Documents";
 
 const queryClient = new QueryClient();
 
