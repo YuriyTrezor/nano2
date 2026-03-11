@@ -29,6 +29,7 @@ const Dashboard = () => {
         <Route path="settings" element={<SettingsTab />} />
         <Route path="verification" element={<VerificationTab />} />
         <Route path="verifications" element={<AdminVerificationsTab />} />
+        <Route path="compliance" element={<ComplianceTab />} />
       </Routes>
       
     </DashboardLayout>
