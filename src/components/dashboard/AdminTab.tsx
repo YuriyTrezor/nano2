@@ -764,7 +764,59 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      {/* Compliance prices dialog */}
+      <Dialog open={!!compliancePriceDialog} onOpenChange={open => !open && setCompliancePriceDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Цены комплаенс-услуг</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «С поддержкой банка»</Label>
+              <Input value={compliancePriceDialog?.assisted_price ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, assisted_price: e.target.value } : null)} placeholder="24 999 ₽" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «Полное сопровождение»</Label>
+              <Input value={compliancePriceDialog?.full_price ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, full_price: e.target.value } : null)} placeholder="44 999 ₽" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Gold скидка %</Label>
+                <Input type="number" value={compliancePriceDialog?.gold_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, gold_discount: e.target.value } : null)} />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Platinum %</Label>
+                <Input type="number" value={compliancePriceDialog?.platinum_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, platinum_discount: e.target.value } : null)} />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Diamond %</Label>
+                <Input type="number" value={compliancePriceDialog?.diamond_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, diamond_discount: e.target.value } : null)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompliancePriceDialog(null)}>{t("Отмена")}</Button>
+            <Button onClick={async () => {
+              if (!compliancePriceDialog) return;
+              const { error } = await supabase
+                .from("compliance_settings" as any)
+                .update({
+                  assisted_price: compliancePriceDialog.assisted_price,
+                  full_price: compliancePriceDialog.full_price,
+                  gold_discount: parseInt(compliancePriceDialog.gold_discount) || 0,
+                  platinum_discount: parseInt(compliancePriceDialog.platinum_discount) || 0,
+                  diamond_discount: parseInt(compliancePriceDialog.diamond_discount) || 0,
+                } as any)
+                .not("id", "is", null);
+              if (error) {
+                toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+                return;
+              }
+              setCompliancePriceDialog(null);
+              toast({ title: "Успешно", description: "Цены комплаенс-услуг обновлены" });
+            }}>{t("Сохранить")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
         <h3 className="text-foreground font-semibold mb-4">{t("Клиенты")} ({clients.length})</h3>
 
         <div className="overflow-x-auto">
