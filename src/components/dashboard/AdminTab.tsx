@@ -72,6 +72,13 @@ const AdminTab = () => {
   const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
   const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string } | null>(null);
   const [passwordDialog, setPasswordDialog] = useState<{ index: number; password: string } | null>(null);
+  const [compliancePriceDialog, setCompliancePriceDialog] = useState<{
+    assisted_price: string;
+    full_price: string;
+    gold_discount: string;
+    platinum_discount: string;
+    diamond_discount: string;
+  } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
