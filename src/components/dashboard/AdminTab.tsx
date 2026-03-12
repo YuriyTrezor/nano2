@@ -466,7 +466,7 @@ const AdminTab = () => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
@@ -487,6 +487,34 @@ const AdminTab = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <Button variant="outline" size="sm" onClick={async () => {
+            const { data } = await supabase
+              .from("compliance_settings" as any)
+              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount")
+              .limit(1)
+              .single();
+            if (data) {
+              const d = data as any;
+              setCompliancePriceDialog({
+                assisted_price: d.assisted_price,
+                full_price: d.full_price,
+                gold_discount: String(d.gold_discount),
+                platinum_discount: String(d.platinum_discount),
+                diamond_discount: String(d.diamond_discount),
+              });
+            } else {
+              setCompliancePriceDialog({
+                assisted_price: "24 999 ₽",
+                full_price: "44 999 ₽",
+                gold_discount: "10",
+                platinum_discount: "15",
+                diamond_discount: "25",
+              });
+            }
+          }} className="gap-2">
+            <FileWarning className="w-4 h-4" />
+            Цены комплаенс
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchRegistrations} disabled={loading} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             {t("Обновить")}
