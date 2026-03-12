@@ -817,6 +817,7 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
+      <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="text-foreground font-semibold mb-4">{t("Клиенты")} ({clients.length})</h3>
 
         <div className="overflow-x-auto">
