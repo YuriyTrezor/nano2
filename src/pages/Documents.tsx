@@ -15,44 +15,42 @@ const Documents = () => {
         <div className="max-w-4xl mx-auto">
 
           {/* Header */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2 justify-center">
             <FileText className="w-7 h-7 text-primary" />
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {isEn ? "Proof of Funds" : "Подтверждение происхождения средств"}
             </h1>
           </div>
-          <p className="text-muted-foreground mb-10 max-w-2xl">
+          <p className="text-muted-foreground mb-10 max-w-2xl text-center mx-auto">
             {isEn
               ? "Everything you need to know about source of funds verification — why it's required, what to expect, and how we can help."
               : "Всё, что вам нужно знать о верификации источника происхождения средств — зачем это нужно, чего ожидать и как мы можем помочь."}
           </p>
 
           {/* Reassurance block */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-8">
-            <div className="flex items-start gap-4">
-              <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-1" />
-              <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">
-                  {isEn ? "Don't worry — this is completely normal" : "Не переживайте — это абсолютно нормально"}
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {isEn
-                    ? "If your bank has requested documents confirming the source of your funds, there is no reason for concern. This is a standard procedure required by international financial regulations (AML/KYC) and is practiced by every licensed financial institution worldwide. This request does not mean suspicion — it means your bank operates legally and transparently."
-                    : "Если ваш банк запросил документы, подтверждающие происхождение денежных средств, — не стоит беспокоиться. Это стандартная процедура, предусмотренная международным финансовым законодательством (AML/KYC), и применяется абсолютно каждым лицензированным финансовым учреждением в мире. Этот запрос не означает подозрений — он означает, что ваш банк работает легально и прозрачно."}
-                </p>
-              </div>
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-8 text-center">
+            <div className="flex items-center gap-3 justify-center mb-3">
+              <ShieldCheck className="w-8 h-8 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "Don't worry — this is completely normal" : "Не переживайте — это абсолютно нормально"}
+              </h2>
             </div>
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+              {isEn
+                ? "If your bank has requested documents confirming the source of your funds, there is no reason for concern. This is a standard procedure required by international financial regulations (AML/KYC) and is practiced by every licensed financial institution worldwide. This request does not mean suspicion — it means your bank operates legally and transparently."
+                : "Если ваш банк запросил документы, подтверждающие происхождение денежных средств, — не стоит беспокоиться. Это стандартная процедура, предусмотренная международным финансовым законодательством (AML/KYC), и применяется абсолютно каждым лицензированным финансовым учреждением в мире. Этот запрос не означает подозрений — он означает, что ваш банк работает легально и прозрачно."}
+            </p>
           </div>
 
           {/* Why is this required */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <Scale className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Why is this required?" : "Почему это требуется?"}
               </h2>
             </div>
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <div className="space-y-4 text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               <p>
                 {isEn
                   ? "Under the European Anti-Money Laundering Directives (AMLD), the USA PATRIOT Act, and similar legislation in most jurisdictions, financial institutions are legally obligated to verify the origin of funds exceeding certain thresholds."
@@ -68,7 +66,7 @@ const Documents = () => {
 
           {/* What documents are typically required */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <FileText className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "What documents may be required?" : "Какие документы могут потребоваться?"}
@@ -82,8 +80,6 @@ const Documents = () => {
                 "Business income statements",
                 "Inheritance or gift documentation",
                 "Investment portfolio statements",
-                "Loan or credit agreements",
-                "Bank statements from other institutions",
               ] : [
                 "Трудовой договор или расчётные листы",
                 "Налоговые декларации",
@@ -91,8 +87,6 @@ const Documents = () => {
                 "Документы о доходах от бизнеса",
                 "Документы о наследстве или дарении",
                 "Выписки инвестиционного портфеля",
-                "Кредитные договоры",
-                "Выписки из других банков",
               ]).map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-secondary/50 rounded-xl px-4 py-3">
                   <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
@@ -103,14 +97,14 @@ const Documents = () => {
           </div>
 
           {/* What happens if you don't provide */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <AlertTriangle className="w-6 h-6 text-amber-500" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "What if I don't provide the documents?" : "Что будет, если не предоставить документы?"}
               </h2>
             </div>
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <div className="space-y-4 text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               <p>
                 {isEn
                   ? "If the requested documents are not provided within the specified timeframe, the financial institution may be forced to restrict account operations — including withdrawals, transfers, and card payments. In some cases, the account may be frozen entirely until the verification is complete."
@@ -125,14 +119,14 @@ const Documents = () => {
           </div>
 
           {/* How NeoBank can help */}
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <Landmark className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "How NeoBank can help" : "Как NeoBank может помочь"}
               </h2>
             </div>
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <div className="space-y-4 text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               <p>
                 {isEn
                   ? "We understand that gathering and preparing the right documents can be stressful and confusing. That's why NeoBank offers professional assistance in preparing your proof of funds documentation."
@@ -143,7 +137,7 @@ const Documents = () => {
                   ? "Our compliance specialists will:"
                   : "Наши специалисты по комплаенсу:"}
               </p>
-              <div className="space-y-2">
+              <div className="space-y-2 text-left max-w-md mx-auto">
                 {(isEn ? [
                   "Analyze your situation and determine exactly which documents are needed",
                   "Prepare a complete documentation package that meets regulatory standards",
@@ -168,13 +162,13 @@ const Documents = () => {
 
           {/* Service tiers */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <CreditCard className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Our Solutions" : "Наши решения"}
               </h2>
             </div>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-6 text-center">
               {isEn
                 ? "Choose the level of support that suits your needs. Higher-tier card holders receive enhanced compliance support as part of their package."
                 : "Выберите уровень поддержки, который подходит именно вам. Держатели карт более высокого уровня получают расширенную поддержку по комплаенсу в составе пакета услуг."}
@@ -245,7 +239,7 @@ const Documents = () => {
 
           {/* FAQ */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-5 justify-center">
               <HelpCircle className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Frequently Asked Questions" : "Часто задаваемые вопросы"}
