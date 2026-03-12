@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      compliance_settings: {
+        Row: {
+          assisted_price: string
+          diamond_discount: number
+          full_price: string
+          gold_discount: number
+          id: string
+          platinum_discount: number
+          updated_at: string
+        }
+        Insert: {
+          assisted_price?: string
+          diamond_discount?: number
+          full_price?: string
+          gold_discount?: number
+          id?: string
+          platinum_discount?: number
+          updated_at?: string
+        }
+        Update: {
+          assisted_price?: string
+          diamond_discount?: number
+          full_price?: string
+          gold_discount?: number
+          id?: string
+          platinum_discount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       currency_rates: {
         Row: {
           change: number

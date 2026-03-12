@@ -72,6 +72,13 @@ const AdminTab = () => {
   const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
   const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string } | null>(null);
   const [passwordDialog, setPasswordDialog] = useState<{ index: number; password: string } | null>(null);
+  const [compliancePriceDialog, setCompliancePriceDialog] = useState<{
+    assisted_price: string;
+    full_price: string;
+    gold_discount: string;
+    platinum_discount: string;
+    diamond_discount: string;
+  } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
@@ -459,7 +466,7 @@ const AdminTab = () => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
@@ -480,6 +487,34 @@ const AdminTab = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <Button variant="outline" size="sm" onClick={async () => {
+            const { data } = await supabase
+              .from("compliance_settings" as any)
+              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount")
+              .limit(1)
+              .single();
+            if (data) {
+              const d = data as any;
+              setCompliancePriceDialog({
+                assisted_price: d.assisted_price,
+                full_price: d.full_price,
+                gold_discount: String(d.gold_discount),
+                platinum_discount: String(d.platinum_discount),
+                diamond_discount: String(d.diamond_discount),
+              });
+            } else {
+              setCompliancePriceDialog({
+                assisted_price: "24 999 ₽",
+                full_price: "44 999 ₽",
+                gold_discount: "10",
+                platinum_discount: "15",
+                diamond_discount: "25",
+              });
+            }
+          }} className="gap-2">
+            <FileWarning className="w-4 h-4" />
+            Цены комплаенс
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchRegistrations} disabled={loading} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             {t("Обновить")}
@@ -725,6 +760,59 @@ const AdminTab = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditTx(null)}>{t("Отмена")}</Button>
             <Button onClick={handleUpdateTransaction}>{t("Сохранить")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Compliance prices dialog */}
+      <Dialog open={!!compliancePriceDialog} onOpenChange={open => !open && setCompliancePriceDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Цены комплаенс-услуг</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «С поддержкой банка»</Label>
+              <Input value={compliancePriceDialog?.assisted_price ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, assisted_price: e.target.value } : null)} placeholder="24 999 ₽" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «Полное сопровождение»</Label>
+              <Input value={compliancePriceDialog?.full_price ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, full_price: e.target.value } : null)} placeholder="44 999 ₽" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Gold скидка %</Label>
+                <Input type="number" value={compliancePriceDialog?.gold_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, gold_discount: e.target.value } : null)} />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Platinum %</Label>
+                <Input type="number" value={compliancePriceDialog?.platinum_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, platinum_discount: e.target.value } : null)} />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Diamond %</Label>
+                <Input type="number" value={compliancePriceDialog?.diamond_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, diamond_discount: e.target.value } : null)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompliancePriceDialog(null)}>{t("Отмена")}</Button>
+            <Button onClick={async () => {
+              if (!compliancePriceDialog) return;
+              const { error } = await supabase
+                .from("compliance_settings" as any)
+                .update({
+                  assisted_price: compliancePriceDialog.assisted_price,
+                  full_price: compliancePriceDialog.full_price,
+                  gold_discount: parseInt(compliancePriceDialog.gold_discount) || 0,
+                  platinum_discount: parseInt(compliancePriceDialog.platinum_discount) || 0,
+                  diamond_discount: parseInt(compliancePriceDialog.diamond_discount) || 0,
+                } as any)
+                .not("id", "is", null);
+              if (error) {
+                toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+                return;
+              }
+              setCompliancePriceDialog(null);
+              toast({ title: "Успешно", description: "Цены комплаенс-услуг обновлены" });
+            }}>{t("Сохранить")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

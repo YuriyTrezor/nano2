@@ -1,7 +1,8 @@
 import { FileWarning, Shield, CheckCircle2, FileText, Clock, Phone, ArrowRight, BadgeCheck, Crown, Gem, AlertTriangle, Scale, Globe, Lock, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const faqItems = [
   {
@@ -14,7 +15,7 @@ const faqItems = [
   },
   {
     q: "Какие документы обычно требуются?",
-    a: "Перечень зависит от суммы и характера операций: справка 2-НДФЛ, налоговая декларация, договор купли-продажи, трудовой договор, выписка из другого банка. Наши специалисты помогут определить минимально необходимый пакет."
+    a: "Перечень зависит от суммы и характера операций: справка 2-НДФЛ, налоговая декларация, договор купли-продажи, трудовой договор. Наши специалисты помогут определить минимально необходимый пакет."
   },
   {
     q: "Мои данные в безопасности?",
@@ -22,26 +23,57 @@ const faqItems = [
   },
 ];
 
+interface ComplianceSettings {
+  assisted_price: string;
+  full_price: string;
+  gold_discount: number;
+  platinum_discount: number;
+  diamond_discount: number;
+}
+
 const ComplianceTab = () => {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [settings, setSettings] = useState<ComplianceSettings>({
+    assisted_price: "24 999 ₽",
+    full_price: "44 999 ₽",
+    gold_discount: 10,
+    platinum_discount: 15,
+    diamond_discount: 25,
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("compliance_settings" as any)
+        .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount")
+        .limit(1)
+        .single();
+      if (data) {
+        setSettings(data as any);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   return (
-    <div className="max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <FileWarning className="w-6 h-6 text-[hsl(210,80%,60%)]" />
-        <h1 className="text-2xl font-bold text-foreground">Подтверждение происхождения средств</h1>
+    <div className="max-w-4xl mx-auto">
+      {/* Header - centered */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <FileWarning className="w-6 h-6 text-[hsl(210,80%,60%)]" />
+          <h1 className="text-2xl font-bold text-foreground">Подтверждение происхождения средств</h1>
+        </div>
+        <p className="text-muted-foreground text-sm">Информация о процедуре и варианты решения</p>
       </div>
-      <p className="text-muted-foreground text-sm mb-8">Информация о процедуре и варианты решения</p>
 
-      {/* Info banner */}
-      <div className="bg-[hsl(210,80%,50%)]/10 border border-[hsl(210,80%,50%)]/20 rounded-2xl p-5 mb-8">
-        <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-[hsl(210,80%,60%)] shrink-0 mt-0.5" />
+      {/* Info banner - centered */}
+      <div className="bg-[hsl(210,80%,50%)]/10 border border-[hsl(210,80%,50%)]/20 rounded-2xl p-5 mb-8 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <Shield className="w-5 h-5 text-[hsl(210,80%,60%)]" />
           <div>
             <h3 className="text-foreground font-semibold mb-1">Это стандартная процедура</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl mx-auto">
               Запрос документов о происхождении средств — обязательная процедура, установленная законодательством РФ 
               (ФЗ-115) и международными стандартами. Это не связано с какими-либо нарушениями с Вашей стороны. 
               Все крупные банки мира следуют аналогичным требованиям. Пожалуйста, не переживайте — мы готовы 
@@ -51,9 +83,9 @@ const ComplianceTab = () => {
         </div>
       </div>
 
-      {/* What's needed */}
-      <div className="bg-card border border-border rounded-2xl p-5 mb-6">
-        <h3 className="text-foreground font-semibold mb-4 flex items-center gap-2">
+      {/* What's needed - centered */}
+      <div className="bg-card border border-border rounded-2xl p-5 mb-6 text-center">
+        <h3 className="text-foreground font-semibold mb-4 flex items-center justify-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
           Какие документы могут потребоваться
         </h3>
@@ -63,7 +95,6 @@ const ComplianceTab = () => {
             "Налоговая декларация (3-НДФЛ)",
             "Договор купли-продажи имущества",
             "Трудовой или гражданско-правовой договор",
-            "Выписка по счёту из другого банка",
             "Документы о наследстве / дарении",
             "Справка о получении дивидендов",
             "Иные подтверждающие документы",
@@ -128,7 +159,7 @@ const ComplianceTab = () => {
             Персональный менеджер поможет собрать документы, подготовит справки и проведёт проверку в приоритетном порядке.
           </p>
           <div className="mb-4">
-            <span className="text-2xl font-bold text-foreground">15 000 ₽</span>
+            <span className="text-2xl font-bold text-foreground">{settings.assisted_price}</span>
             <span className="text-muted-foreground text-xs ml-1">разово</span>
           </div>
           <ul className="space-y-2 mb-5 text-sm">
@@ -165,7 +196,7 @@ const ComplianceTab = () => {
             Включает юридическое консультирование.
           </p>
           <div className="mb-4">
-            <span className="text-2xl font-bold text-white">45 000 ₽</span>
+            <span className="text-2xl font-bold text-white">{settings.full_price}</span>
             <span className="text-white/40 text-xs ml-1">разово</span>
           </div>
           <ul className="space-y-2 mb-5 text-sm">
@@ -196,17 +227,17 @@ const ComplianceTab = () => {
         </div>
       </div>
 
-      {/* Upgrade hint */}
-      <div className="bg-gradient-to-r from-[hsl(35,80%,30%)]/10 to-[hsl(270,40%,25%)]/10 border border-[hsl(35,80%,40%)]/20 rounded-2xl p-5 mb-8">
-        <div className="flex items-start gap-3">
-          <BadgeCheck className="w-5 h-5 text-[hsl(35,80%,50%)] shrink-0 mt-0.5" />
+      {/* Upgrade hint - centered */}
+      <div className="bg-gradient-to-r from-[hsl(35,80%,30%)]/10 to-[hsl(270,40%,25%)]/10 border border-[hsl(35,80%,40%)]/20 rounded-2xl p-5 mb-8 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <BadgeCheck className="w-5 h-5 text-[hsl(35,80%,50%)]" />
           <div>
             <h3 className="text-foreground font-semibold mb-1">Владельцам карт Gold, Platinum и Diamond</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl mx-auto">
               Для держателей премиальных карт услуга сопровождения по комплаенс-запросам входит в пакет обслуживания 
-              на льготных условиях. Карта <strong className="text-[hsl(35,80%,50%)]">Gold</strong> — скидка 30%, 
-              <strong className="text-[hsl(270,60%,60%)]"> Platinum</strong> — скидка 50%, 
-              <strong className="text-[hsl(195,80%,60%)]"> Diamond</strong> — полное сопровождение включено бесплатно.
+              на льготных условиях. Карта <strong className="text-[hsl(35,80%,50%)]">Gold</strong> — скидка {settings.gold_discount}%, 
+              <strong className="text-[hsl(270,60%,60%)]"> Platinum</strong> — скидка {settings.platinum_discount}%, 
+              <strong className="text-[hsl(195,80%,60%)]"> Diamond</strong> — скидка {settings.diamond_discount}%.
               Обновите свою карту, чтобы получить доступ к расширенной поддержке.
             </p>
             <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/dashboard/cards")}>
