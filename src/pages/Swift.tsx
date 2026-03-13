@@ -45,19 +45,19 @@ const Swift = () => {
           </div>
 
           {/* Sanctions context */}
-          <div className="bg-gradient-to-br from-[hsl(35,80%,50%)]/10 to-[hsl(25,90%,40%)]/5 border border-[hsl(35,80%,50%)]/30 rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-[hsl(35,80%,50%)]/10 to-[hsl(25,90%,40%)]/5 border border-[hsl(35,80%,50%)]/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-[hsl(35,80%,50%)]" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "SWIFT and Russian Sanctions" : "SWIFT и санкции против РФ"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "Since 2022, a number of major Russian banks have been disconnected from the SWIFT network as part of international sanctions imposed by the EU, USA, and their allies. This has significantly limited the ability of Russian residents and businesses to make international transfers through traditional channels."
                 : "С 2022 года ряд крупнейших российских банков был отключён от сети SWIFT в рамках международных санкций, введённых ЕС, США и их союзниками. Это существенно ограничило возможности российских резидентов и бизнеса совершать международные переводы через традиционные каналы."}
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "Disconnected banks cannot send or receive international transfers via SWIFT, which affects both personal and corporate payments — from paying for goods abroad to receiving salaries from foreign companies."
                 : "Отключённые банки не могут отправлять и получать международные переводы через SWIFT, что затрагивает как личные, так и корпоративные платежи — от оплаты товаров за рубежом до получения зарплат от иностранных компаний."}
