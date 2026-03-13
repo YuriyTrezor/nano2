@@ -994,6 +994,8 @@ const AdminTab = () => {
                         title="Комплаенс-цены"
                       >
                         <Scale className="w-3 h-3" /> {client.compliancePrices ? "Комп. ✎" : "Комп."}
+                      </button>
+                      <button
                         onClick={() => handleBlock(originalIndex)}
                         className={`p-1.5 text-xs px-2 py-1 rounded font-medium ${client.blocked ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}
                       >
