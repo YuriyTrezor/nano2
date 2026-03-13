@@ -123,7 +123,7 @@ const Swift = () => {
 
           {/* How to use */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
-            <h2 className="text-xl font-bold text-foreground mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-4 text-center">
               {isEn ? "How to Make a SWIFT Transfer" : "Как сделать SWIFT-перевод"}
             </h2>
             <div className="space-y-4">
