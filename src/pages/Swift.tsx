@@ -65,19 +65,19 @@ const Swift = () => {
           </div>
 
           {/* NeoBank solution */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Building2 className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "NeoBank — Your Access to SWIFT" : "NeoBank — Ваш доступ к SWIFT"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "NeoBank provides full SWIFT transfer capabilities for its clients. As a bank registered outside the jurisdiction of sanctions, NeoBank maintains uninterrupted access to the SWIFT network and offers international transfers in USD, EUR, GBP, CHF and other currencies."
                 : "NeoBank предоставляет своим клиентам полноценный доступ к SWIFT-переводам. Будучи банком, зарегистрированным вне юрисдикции санкций, NeoBank сохраняет бесперебойный доступ к сети SWIFT и предлагает международные переводы в USD, EUR, GBP, CHF и других валютах."}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "We issue international Visa and Mastercard cards with full SWIFT support — allowing you to send and receive funds worldwide without restrictions, blocks, or delays."
                 : "Мы выпускаем международные карты Visa и Mastercard с полной поддержкой SWIFT — позволяя вам отправлять и получать средства по всему миру без ограничений, блокировок и задержек."}
