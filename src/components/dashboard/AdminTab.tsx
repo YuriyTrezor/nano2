@@ -827,6 +827,66 @@ const AdminTab = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Per-client compliance prices dialog */}
+      <Dialog open={!!clientComplianceDialog} onOpenChange={open => !open && setClientComplianceDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Комплаенс-цены — {clientComplianceDialog !== null ? clients[clientComplianceDialog.index]?.name : ""}</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground">Индивидуальные цены для этого клиента. Оставьте пустым, чтобы использовать глобальные настройки.</p>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «С поддержкой банка»</Label>
+              <Input value={clientComplianceDialog?.assisted_price ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, assisted_price: e.target.value } : null)} placeholder="Глобальная" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Цена «Полное сопровождение»</Label>
+              <Input value={clientComplianceDialog?.full_price ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, full_price: e.target.value } : null)} placeholder="Глобальная" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Gold скидка %</Label>
+                <Input type="number" value={clientComplianceDialog?.gold_discount ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, gold_discount: e.target.value } : null)} placeholder="Глоб." />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Platinum %</Label>
+                <Input type="number" value={clientComplianceDialog?.platinum_discount ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, platinum_discount: e.target.value } : null)} placeholder="Глоб." />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Diamond %</Label>
+                <Input type="number" value={clientComplianceDialog?.diamond_discount ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, diamond_discount: e.target.value } : null)} placeholder="Глоб." />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClientComplianceDialog(null)}>{t("Отмена")}</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              if (!clientComplianceDialog) return;
+              setClientComplianceDialog(prev => prev ? { ...prev, assisted_price: "", full_price: "", gold_discount: "", platinum_discount: "", diamond_discount: "" } : null);
+            }}>Сбросить</Button>
+            <Button onClick={async () => {
+              if (!clientComplianceDialog) return;
+              const client = clients[clientComplianceDialog.index];
+              const hasAny = clientComplianceDialog.assisted_price || clientComplianceDialog.full_price || clientComplianceDialog.gold_discount || clientComplianceDialog.platinum_discount || clientComplianceDialog.diamond_discount;
+              const prices = hasAny ? {
+                ...(clientComplianceDialog.assisted_price ? { assisted_price: clientComplianceDialog.assisted_price } : {}),
+                ...(clientComplianceDialog.full_price ? { full_price: clientComplianceDialog.full_price } : {}),
+                ...(clientComplianceDialog.gold_discount ? { gold_discount: parseInt(clientComplianceDialog.gold_discount) } : {}),
+                ...(clientComplianceDialog.platinum_discount ? { platinum_discount: parseInt(clientComplianceDialog.platinum_discount) } : {}),
+                ...(clientComplianceDialog.diamond_discount ? { diamond_discount: parseInt(clientComplianceDialog.diamond_discount) } : {}),
+              } : null;
+
+              const { error } = await supabase.from("profiles").update({ compliance_prices: prices } as any).eq("user_id", client.userId);
+              if (error) {
+                toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+                return;
+              }
+              setClients(prev => prev.map((c, i) => i === clientComplianceDialog.index ? { ...c, compliancePrices: prices as any } : c));
+              setClientComplianceDialog(null);
+              toast({ title: "Успешно", description: prices ? `Индивидуальные комплаенс-цены установлены — ${client.name}` : `Используются глобальные цены — ${client.name}` });
+            }}>{t("Сохранить")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="text-foreground font-semibold mb-4">{t("Клиенты")} ({clients.length})</h3>
 
