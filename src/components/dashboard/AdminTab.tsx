@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning, KeyRound } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning, KeyRound, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
