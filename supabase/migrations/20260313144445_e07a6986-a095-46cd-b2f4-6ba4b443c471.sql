@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN compliance_prices jsonb DEFAULT NULL;
