@@ -106,6 +106,7 @@ export type Database = {
           blocked_cards: string[]
           card_prices: Json | null
           cards: string[]
+          compliance_prices: Json | null
           created_at: string
           display_name: string | null
           document_requested: boolean
@@ -123,6 +124,7 @@ export type Database = {
           blocked_cards?: string[]
           card_prices?: Json | null
           cards?: string[]
+          compliance_prices?: Json | null
           created_at?: string
           display_name?: string | null
           document_requested?: boolean
@@ -140,6 +142,7 @@ export type Database = {
           blocked_cards?: string[]
           card_prices?: Json | null
           cards?: string[]
+          compliance_prices?: Json | null
           created_at?: string
           display_name?: string | null
           document_requested?: boolean
