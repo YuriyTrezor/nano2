@@ -12,32 +12,32 @@ const Swift = () => {
       <Navbar />
       <main className="pt-24 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-center gap-3 mb-2 text-center">
             <ArrowLeftRight className="w-7 h-7 text-primary" />
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {isEn ? "SWIFT Transfers" : "Переводы SWIFT"}
             </h1>
           </div>
-          <p className="text-muted-foreground mb-10">
+          <p className="text-muted-foreground mb-10 text-center">
             {isEn
               ? "International bank transfers via SWIFT network"
               : "Международные банковские переводы через сеть SWIFT"}
           </p>
 
           {/* What is SWIFT */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Globe className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "What is SWIFT?" : "Что такое SWIFT?"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "SWIFT (Society for Worldwide Interbank Financial Telecommunication) is a global messaging network used by over 11,000 banks and financial institutions in 200+ countries. It enables secure international money transfers between banks by transmitting standardized payment instructions."
                 : "SWIFT (Society for Worldwide Interbank Financial Telecommunication) — это глобальная межбанковская система передачи информации и совершения платежей. Она объединяет более 11 000 финансовых организаций в 200+ странах мира и обеспечивает безопасную передачу платёжных поручений между банками."}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "SWIFT itself does not transfer money — it transmits secure messages between banks with instructions on how to move funds. Each bank in the network has a unique SWIFT/BIC code that identifies it during transactions."
                 : "SWIFT сама по себе не переводит деньги — она передаёт защищённые сообщения между банками с инструкциями о перемещении средств. Каждый банк в сети имеет уникальный SWIFT/BIC код, который идентифицирует его при проведении операций."}
@@ -45,19 +45,19 @@ const Swift = () => {
           </div>
 
           {/* Sanctions context */}
-          <div className="bg-gradient-to-br from-[hsl(35,80%,50%)]/10 to-[hsl(25,90%,40%)]/5 border border-[hsl(35,80%,50%)]/30 rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-[hsl(35,80%,50%)]/10 to-[hsl(25,90%,40%)]/5 border border-[hsl(35,80%,50%)]/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-[hsl(35,80%,50%)]" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "SWIFT and Russian Sanctions" : "SWIFT и санкции против РФ"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "Since 2022, a number of major Russian banks have been disconnected from the SWIFT network as part of international sanctions imposed by the EU, USA, and their allies. This has significantly limited the ability of Russian residents and businesses to make international transfers through traditional channels."
                 : "С 2022 года ряд крупнейших российских банков был отключён от сети SWIFT в рамках международных санкций, введённых ЕС, США и их союзниками. Это существенно ограничило возможности российских резидентов и бизнеса совершать международные переводы через традиционные каналы."}
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "Disconnected banks cannot send or receive international transfers via SWIFT, which affects both personal and corporate payments — from paying for goods abroad to receiving salaries from foreign companies."
                 : "Отключённые банки не могут отправлять и получать международные переводы через SWIFT, что затрагивает как личные, так и корпоративные платежи — от оплаты товаров за рубежом до получения зарплат от иностранных компаний."}
@@ -65,19 +65,19 @@ const Swift = () => {
           </div>
 
           {/* NeoBank solution */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Building2 className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "NeoBank — Your Access to SWIFT" : "NeoBank — Ваш доступ к SWIFT"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "NeoBank provides full SWIFT transfer capabilities for its clients. As a bank registered outside the jurisdiction of sanctions, NeoBank maintains uninterrupted access to the SWIFT network and offers international transfers in USD, EUR, GBP, CHF and other currencies."
                 : "NeoBank предоставляет своим клиентам полноценный доступ к SWIFT-переводам. Будучи банком, зарегистрированным вне юрисдикции санкций, NeoBank сохраняет бесперебойный доступ к сети SWIFT и предлагает международные переводы в USD, EUR, GBP, CHF и других валютах."}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "We issue international Visa and Mastercard cards with full SWIFT support — allowing you to send and receive funds worldwide without restrictions, blocks, or delays."
                 : "Мы выпускаем международные карты Visa и Mastercard с полной поддержкой SWIFT — позволяя вам отправлять и получать средства по всему миру без ограничений, блокировок и задержек."}
@@ -123,7 +123,7 @@ const Swift = () => {
 
           {/* How to use */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
-            <h2 className="text-xl font-bold text-foreground mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-4 text-center">
               {isEn ? "How to Make a SWIFT Transfer" : "Как сделать SWIFT-перевод"}
             </h2>
             <div className="space-y-4">
