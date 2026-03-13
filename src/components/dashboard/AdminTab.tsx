@@ -79,6 +79,14 @@ const AdminTab = () => {
     platinum_discount: string;
     diamond_discount: string;
   } | null>(null);
+  const [clientComplianceDialog, setClientComplianceDialog] = useState<{
+    index: number;
+    assisted_price: string;
+    full_price: string;
+    gold_discount: string;
+    platinum_discount: string;
+    diamond_discount: string;
+  } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
