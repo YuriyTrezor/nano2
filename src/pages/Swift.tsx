@@ -25,19 +25,19 @@ const Swift = () => {
           </p>
 
           {/* What is SWIFT */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Globe className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "What is SWIFT?" : "Что такое SWIFT?"}
               </h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-4 max-w-3xl mx-auto">
               {isEn
                 ? "SWIFT (Society for Worldwide Interbank Financial Telecommunication) is a global messaging network used by over 11,000 banks and financial institutions in 200+ countries. It enables secure international money transfers between banks by transmitting standardized payment instructions."
                 : "SWIFT (Society for Worldwide Interbank Financial Telecommunication) — это глобальная межбанковская система передачи информации и совершения платежей. Она объединяет более 11 000 финансовых организаций в 200+ странах мира и обеспечивает безопасную передачу платёжных поручений между банками."}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {isEn
                 ? "SWIFT itself does not transfer money — it transmits secure messages between banks with instructions on how to move funds. Each bank in the network has a unique SWIFT/BIC code that identifies it during transactions."
                 : "SWIFT сама по себе не переводит деньги — она передаёт защищённые сообщения между банками с инструкциями о перемещении средств. Каждый банк в сети имеет уникальный SWIFT/BIC код, который идентифицирует его при проведении операций."}
