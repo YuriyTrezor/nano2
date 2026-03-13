@@ -154,6 +154,7 @@ const AdminTab = () => {
           withdrawalBlocked: p.withdrawal_blocked ?? false,
           cardPrices: p.card_prices ?? null,
           documentRequested: p.document_requested ?? false,
+          compliancePrices: p.compliance_prices ?? null,
         }));
 
         for (const client of dbClients) {
