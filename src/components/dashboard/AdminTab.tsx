@@ -128,7 +128,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices, document_requested")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices, document_requested, compliance_prices")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
