@@ -37,6 +37,7 @@ interface Client {
   withdrawalBlocked: boolean;
   cardPrices: Record<string, string> | null;
   documentRequested: boolean;
+  compliancePrices: Record<string, string> | null;
 }
 
 const DEFAULT_CARD_PRICES: Record<string, string> = {
