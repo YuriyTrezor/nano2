@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const faqItems = [
   {
@@ -33,6 +34,7 @@ interface ComplianceSettings {
 
 const ComplianceTab = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [settings, setSettings] = useState<ComplianceSettings>({
     assisted_price: "24 999 ₽",
@@ -44,17 +46,39 @@ const ComplianceTab = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase
+      // Fetch global settings
+      const { data: globalData } = await supabase
         .from("compliance_settings" as any)
         .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount")
         .limit(1)
         .single();
-      if (data) {
-        setSettings(data as any);
+
+      let base: ComplianceSettings = globalData as any ?? settings;
+
+      // Fetch per-client overrides
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("compliance_prices")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profile && (profile as any).compliance_prices) {
+          const cp = (profile as any).compliance_prices;
+          base = {
+            assisted_price: cp.assisted_price ?? base.assisted_price,
+            full_price: cp.full_price ?? base.full_price,
+            gold_discount: cp.gold_discount ?? base.gold_discount,
+            platinum_discount: cp.platinum_discount ?? base.platinum_discount,
+            diamond_discount: cp.diamond_discount ?? base.diamond_discount,
+          };
+        }
       }
+
+      setSettings(base);
     };
     fetchSettings();
-  }, []);
+  }, [user]);
 
   return (
     <div className="max-w-4xl mx-auto">
