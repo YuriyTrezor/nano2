@@ -979,6 +979,21 @@ const AdminTab = () => {
                         <FileWarning className="w-3 h-3" /> {client.documentRequested ? "Док. ⚠" : "Док. ✓"}
                       </button>
                       <button
+                        onClick={() => {
+                          const cp = client.compliancePrices ?? {};
+                          setClientComplianceDialog({
+                            index: originalIndex,
+                            assisted_price: (cp as any).assisted_price ?? "",
+                            full_price: (cp as any).full_price ?? "",
+                            gold_discount: (cp as any).gold_discount != null ? String((cp as any).gold_discount) : "",
+                            platinum_discount: (cp as any).platinum_discount != null ? String((cp as any).platinum_discount) : "",
+                            diamond_discount: (cp as any).diamond_discount != null ? String((cp as any).diamond_discount) : "",
+                          });
+                        }}
+                        className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.compliancePrices ? 'bg-[hsl(210,80%,50%)]/20 text-[hsl(210,80%,60%)]' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                        title="Комплаенс-цены"
+                      >
+                        <Scale className="w-3 h-3" /> {client.compliancePrices ? "Комп. ✎" : "Комп."}
                         onClick={() => handleBlock(originalIndex)}
                         className={`p-1.5 text-xs px-2 py-1 rounded font-medium ${client.blocked ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}
                       >
