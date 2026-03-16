@@ -32,7 +32,7 @@ const Dashboard = () => {
         <Route path="verifications" element={<AdminVerificationsTab />} />
         <Route path="compliance" element={<ComplianceTab />} />
       </Routes>
-      
+      <FloatingChat />
     </DashboardLayout>
   );
 };
