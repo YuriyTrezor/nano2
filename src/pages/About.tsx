@@ -37,7 +37,7 @@ const About = () => {
           </p>
 
           {/* Mission */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-4">
               {isEn ? "Our Mission" : "Наша миссия"}
             </h2>
