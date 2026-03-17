@@ -50,7 +50,7 @@ const About = () => {
 
           {/* Who we are */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4">
               <Landmark className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Who We Are" : "Кто мы"}
