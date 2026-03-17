@@ -26,7 +26,7 @@ const About = () => {
       <Navbar />
       <main className="pt-24 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2">
             <Building2 className="w-7 h-7 text-primary" />
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {isEn ? "About NeoBank" : "О банке"}
