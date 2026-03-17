@@ -114,7 +114,7 @@ const About = () => {
 
           {/* What we offer */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <BadgeCheck className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "What We Offer" : "Наши услуги"}
@@ -149,7 +149,7 @@ const About = () => {
 
           {/* Regulatory */}
           <div className="bg-gradient-to-br from-primary/5 to-transparent border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Shield className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Regulation & Compliance" : "Регулирование и комплаенс"}
@@ -171,7 +171,7 @@ const About = () => {
 
           {/* History Timeline */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Our History" : "История банка"}
@@ -197,7 +197,7 @@ const About = () => {
 
           {/* Numbers */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <Award className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "NeoBank in Numbers" : "NeoBank в цифрах"}
