@@ -26,18 +26,18 @@ const About = () => {
       <Navbar />
       <main className="pt-24 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-center gap-3 mb-2">
             <Building2 className="w-7 h-7 text-primary" />
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {isEn ? "About NeoBank" : "О банке"}
             </h1>
           </div>
-          <p className="text-muted-foreground mb-10">
+          <p className="text-muted-foreground mb-10 text-center">
             {isEn ? "Our mission, history and values" : "Наша миссия, история и ценности"}
           </p>
 
           {/* Mission */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 md:p-8 mb-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-4">
               {isEn ? "Our Mission" : "Наша миссия"}
             </h2>
@@ -49,8 +49,8 @@ const About = () => {
           </div>
 
           {/* Who we are */}
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Landmark className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
                 {isEn ? "Who We Are" : "Кто мы"}
