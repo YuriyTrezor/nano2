@@ -535,24 +535,64 @@ const SupportTab = () => {
                 </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.sender_role !== "user" ? "justify-end" : "justify-start"} group`}>
-                    <div
-                      className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
-                        msg.sender_role !== "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                      }`}
-                    >
-                      {renderMessageText(msg.text)}
-                      <p className="text-[10px] opacity-70 mt-1">{formatDateTime(msg.created_at)}</p>
-                      <button
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
+                {messages.map((msg, idx) => {
+                  const prevMsg = messages[idx - 1];
+                  const currentDate = getDateLabel(msg.created_at);
+                  const prevDate = prevMsg ? getDateLabel(prevMsg.created_at) : null;
+                  const showDateSeparator = currentDate !== prevDate;
+                  const isSupport = msg.sender_role !== "user";
+
+                  return (
+                    <div key={msg.id}>
+                      {showDateSeparator && (
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-border" />
+                          <span className="text-[11px] font-medium text-muted-foreground px-2">{currentDate}</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                      )}
+                      <div className={`flex ${isSupport ? "justify-end" : "justify-start"} group`}>
+                        {!isSupport && (
+                          <Avatar className="w-6 h-6 mr-2 mt-1 shrink-0">
+                            <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                              {getInitials(currentTicket.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div
+                          className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
+                            isSupport ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {!isSupport && (
+                            <p className="text-[10px] font-semibold opacity-70 mb-0.5">{currentTicket.display_name}</p>
+                          )}
+                          {isSupport && (
+                            <p className="text-[10px] font-semibold opacity-70 mb-0.5 flex items-center gap-1">
+                              <ShieldCheck className="w-2.5 h-2.5" />
+                              Поддержка
+                            </p>
+                          )}
+                          {renderMessageText(msg.text)}
+                          <p className="text-[10px] opacity-70 mt-1">{formatTime(msg.created_at)}</p>
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                        {isSupport && (
+                          <Avatar className="w-6 h-6 ml-2 mt-1 shrink-0">
+                            <AvatarFallback className="text-[8px] bg-primary/20 text-primary">
+                              <ShieldCheck className="w-3 h-3" />
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
               <div className="p-4 border-t border-border flex gap-2">
