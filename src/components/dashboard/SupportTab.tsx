@@ -51,6 +51,31 @@ const formatDateTime = (value: string) =>
     minute: "2-digit",
   });
 
+const formatTime = (value: string) =>
+  new Date(value).toLocaleString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const getDateLabel = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+
+  if (isSameDay(date, today)) return "Сегодня";
+  if (isSameDay(date, yesterday)) return "Вчера";
+  return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
+};
+
+const getInitials = (name?: string) => {
+  if (!name) return "?";
+  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+};
+
 const SupportTab = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
