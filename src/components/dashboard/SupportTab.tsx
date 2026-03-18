@@ -1,4 +1,4 @@
-import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown, User, ShieldCheck } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { playNotificationSound } from "@/utils/notificationSound";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +50,31 @@ const formatDateTime = (value: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+const formatTime = (value: string) =>
+  new Date(value).toLocaleString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const getDateLabel = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+
+  if (isSameDay(date, today)) return "Сегодня";
+  if (isSameDay(date, yesterday)) return "Вчера";
+  return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
+};
+
+const getInitials = (name?: string) => {
+  if (!name) return "?";
+  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+};
 
 const SupportTab = () => {
   const { t } = useLanguage();
@@ -420,24 +447,46 @@ const SupportTab = () => {
                 const diff = new Date(a.last_activity_at).getTime() - new Date(b.last_activity_at).getTime();
                 return dateAsc ? diff : -diff;
               })
-              .map((ticket) => (
-                <button
-                  key={ticket.id}
-                  onClick={() => setSelectedTicket(ticket.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                  }`}
-                >
-                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                  <p className="text-muted-foreground text-[10px] mt-1">{formatDateTime(ticket.last_activity_at)}</p>
-                  {(unreadCounts[ticket.id] || 0) > 0 && (
-                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                      {unreadCounts[ticket.id]}
-                    </span>
-                  )}
-                </button>
-              ))}
+              .map((ticket) => {
+                const hasUnread = (unreadCounts[ticket.id] || 0) > 0;
+                const isSelected = selectedTicket === ticket.id;
+                return (
+                  <button
+                    key={ticket.id}
+                    onClick={() => setSelectedTicket(ticket.id)}
+                    className={`w-full text-left p-3 rounded-xl transition-all relative ${
+                      isSelected
+                        ? "bg-secondary ring-1 ring-primary/30"
+                        : hasUnread
+                        ? "bg-primary/5 border border-primary/20 hover:bg-primary/10"
+                        : "hover:bg-secondary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className={`w-8 h-8 shrink-0 ${hasUnread ? "ring-2 ring-primary" : ""}`}>
+                        <AvatarFallback className={`text-[10px] font-bold ${hasUnread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {getInitials(ticket.display_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
+                          {ticket.display_name}
+                        </p>
+                        <p className={`text-xs truncate ${hasUnread ? "text-foreground/70" : "text-muted-foreground"}`}>
+                          {ticket.subject}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground text-[10px] mt-1.5 ml-[42px]">{formatDateTime(ticket.last_activity_at)}</p>
+                    {hasUnread && (
+                      <span className="absolute top-3 right-3 min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center animate-pulse">
+                        {unreadCounts[ticket.id]}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
           </div>
         </div>
 
@@ -445,9 +494,22 @@ const SupportTab = () => {
           {currentTicket ? (
             <>
               <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
-                  <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                      {getInitials(currentTicket.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
+                      <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0">
+                        <User className="w-2.5 h-2.5" />
+                        Клиент
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+                  </div>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -473,24 +535,64 @@ const SupportTab = () => {
                 </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.sender_role !== "user" ? "justify-end" : "justify-start"} group`}>
-                    <div
-                      className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
-                        msg.sender_role !== "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                      }`}
-                    >
-                      {renderMessageText(msg.text)}
-                      <p className="text-[10px] opacity-70 mt-1">{formatDateTime(msg.created_at)}</p>
-                      <button
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
+                {messages.map((msg, idx) => {
+                  const prevMsg = messages[idx - 1];
+                  const currentDate = getDateLabel(msg.created_at);
+                  const prevDate = prevMsg ? getDateLabel(prevMsg.created_at) : null;
+                  const showDateSeparator = currentDate !== prevDate;
+                  const isSupport = msg.sender_role !== "user";
+
+                  return (
+                    <div key={msg.id}>
+                      {showDateSeparator && (
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-border" />
+                          <span className="text-[11px] font-medium text-muted-foreground px-2">{currentDate}</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                      )}
+                      <div className={`flex ${isSupport ? "justify-end" : "justify-start"} group`}>
+                        {!isSupport && (
+                          <Avatar className="w-6 h-6 mr-2 mt-1 shrink-0">
+                            <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                              {getInitials(currentTicket.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div
+                          className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
+                            isSupport ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {!isSupport && (
+                            <p className="text-[10px] font-semibold opacity-70 mb-0.5">{currentTicket.display_name}</p>
+                          )}
+                          {isSupport && (
+                            <p className="text-[10px] font-semibold opacity-70 mb-0.5 flex items-center gap-1">
+                              <ShieldCheck className="w-2.5 h-2.5" />
+                              Поддержка
+                            </p>
+                          )}
+                          {renderMessageText(msg.text)}
+                          <p className="text-[10px] opacity-70 mt-1">{formatTime(msg.created_at)}</p>
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                        {isSupport && (
+                          <Avatar className="w-6 h-6 ml-2 mt-1 shrink-0">
+                            <AvatarFallback className="text-[8px] bg-primary/20 text-primary">
+                              <ShieldCheck className="w-3 h-3" />
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
               <div className="p-4 border-t border-border flex gap-2">
