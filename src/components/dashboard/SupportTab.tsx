@@ -494,9 +494,22 @@ const SupportTab = () => {
           {currentTicket ? (
             <>
               <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
-                  <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                      {getInitials(currentTicket.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
+                      <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0">
+                        <User className="w-2.5 h-2.5" />
+                        Клиент
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
+                  </div>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
