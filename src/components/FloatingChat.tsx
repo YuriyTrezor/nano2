@@ -1,5 +1,5 @@
 import { MessageCircle, Send, X, Paperclip, FileText, Download } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,15 @@ interface ChatMessage {
   created_at: string;
 }
 
+const formatMessageDateTime = (value: string) =>
+  new Date(value).toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 const FloatingChat = () => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -25,75 +34,109 @@ const FloatingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!user) return;
-    const loadTicket = async () => {
-      const { data: existingTickets } = await supabase
-        .from("support_tickets")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("status", "open")
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (existingTickets && existingTickets.length > 0) {
-        const tid = existingTickets[0].id;
-        setTicketId(tid);
-        loadMessages(tid);
-        loadUnread(tid);
-      }
-    };
-    loadTicket();
-  }, [user]);
-
-  const loadMessages = async (tid: string) => {
+  const loadMessages = useCallback(async (tid: string) => {
     const { data } = await supabase
       .from("support_messages")
       .select("id, text, sender_role, created_at")
       .eq("ticket_id", tid)
       .order("created_at", { ascending: true });
-    if (data) setMessages(data);
-  };
 
-  const loadUnread = async (tid: string) => {
+    if (data) setMessages(data);
+  }, []);
+
+  const loadUnread = useCallback(async (tid: string) => {
     const { data } = await supabase
       .from("support_messages")
       .select("id")
       .eq("ticket_id", tid)
       .eq("sender_role", "support")
       .eq("is_read", false);
+
     setUnreadCount(data?.length || 0);
-  };
+  }, []);
+
+  const loadLatestOpenTicket = useCallback(async () => {
+    if (!user) return;
+
+    const { data: existingTickets } = await supabase
+      .from("support_tickets")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (existingTickets && existingTickets.length > 0) {
+      const tid = existingTickets[0].id;
+      setTicketId(tid);
+      await Promise.all([loadMessages(tid), loadUnread(tid)]);
+    }
+  }, [user, loadMessages, loadUnread]);
 
   useEffect(() => {
     if (!user) return;
+    loadLatestOpenTicket();
+  }, [user, loadLatestOpenTicket]);
+
+  useEffect(() => {
+    if (!user) return;
+
     const channel = supabase
       .channel("client-support")
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "support_messages",
-      }, (payload) => {
-        const msg = payload.new as any;
-        if (msg.ticket_id === ticketId) {
-          setMessages(prev => {
-            if (prev.find(m => m.id === msg.id)) return prev;
-            return [...prev, { id: msg.id, text: msg.text, sender_role: msg.sender_role, created_at: msg.created_at }];
-          });
-          if (msg.sender_role === "support") {
-            playNotificationSound();
-            if (!open) {
-              setUnreadCount(prev => prev + 1);
-            } else {
-              supabase.from("support_messages").update({ is_read: true }).eq("id", msg.id).then();
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_messages",
+        },
+        (payload) => {
+          const msg = payload.new as any;
+          if (msg.ticket_id === ticketId) {
+            setMessages((prev) => {
+              if (prev.find((m) => m.id === msg.id)) return prev;
+              return [...prev, { id: msg.id, text: msg.text, sender_role: msg.sender_role, created_at: msg.created_at }];
+            });
+
+            if (msg.sender_role === "support") {
+              playNotificationSound();
+              if (!open) {
+                setUnreadCount((prev) => prev + 1);
+              } else {
+                supabase.from("support_messages").update({ is_read: true }).eq("id", msg.id).then();
+              }
             }
           }
         }
-      })
-      .subscribe();
+      )
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          if (ticketId) {
+            void Promise.all([loadMessages(ticketId), loadUnread(ticketId)]);
+          } else {
+            void loadLatestOpenTicket();
+          }
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
-  }, [ticketId, open, user]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ticketId, open, user, loadMessages, loadUnread, loadLatestOpenTicket]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const intervalId = window.setInterval(() => {
+      if (ticketId) {
+        void Promise.all([loadMessages(ticketId), loadUnread(ticketId)]);
+      } else {
+        void loadLatestOpenTicket();
+      }
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [user, ticketId, loadMessages, loadUnread, loadLatestOpenTicket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,12 +158,15 @@ const FloatingChat = () => {
   const ensureTicket = async (): Promise<string | null> => {
     if (ticketId) return ticketId;
     if (!user) return null;
+
     const { data: newTicket } = await supabase
       .from("support_tickets")
       .insert({ user_id: user.id, subject: "Новое обращение" })
       .select("id")
       .single();
+
     if (!newTicket) return null;
+
     setTicketId(newTicket.id);
     return newTicket.id;
   };
@@ -130,12 +176,18 @@ const FloatingChat = () => {
     const tid = await ensureTicket();
     if (!tid) return;
 
-    await supabase.from("support_messages").insert({
+    const { error } = await supabase.from("support_messages").insert({
       ticket_id: tid,
       sender_id: user.id,
       sender_role: "user",
       text: text.trim(),
     });
+
+    if (error) {
+      toast({ title: "Ошибка отправки сообщения", variant: "destructive" });
+      return;
+    }
+
     setText("");
   };
 
@@ -150,12 +202,13 @@ const FloatingChat = () => {
 
     setUploading(true);
     const tid = await ensureTicket();
-    if (!tid) { setUploading(false); return; }
+    if (!tid) {
+      setUploading(false);
+      return;
+    }
 
     const filePath = `${tid}/${Date.now()}_${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("support-attachments")
-      .upload(filePath, file);
+    const { error: uploadError } = await supabase.storage.from("support-attachments").upload(filePath, file);
 
     if (uploadError) {
       toast({ title: "Ошибка загрузки файла", variant: "destructive" });
@@ -163,16 +216,20 @@ const FloatingChat = () => {
       return;
     }
 
-    const { data: urlData } = supabase.storage
-      .from("support-attachments")
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from("support-attachments").getPublicUrl(filePath);
 
-    await supabase.from("support_messages").insert({
+    const { error: messageError } = await supabase.from("support_messages").insert({
       ticket_id: tid,
       sender_id: user.id,
       sender_role: "user",
       text: `📎 [${file.name}](${urlData.publicUrl})`,
     });
+
+    if (messageError) {
+      toast({ title: "Ошибка отправки файла", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
 
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -197,7 +254,10 @@ const FloatingChat = () => {
   return (
     <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50">
       {open && (
-        <div className="mb-3 w-[calc(100vw-2rem)] sm:w-80 bg-card border border-border rounded-2xl shadow-lg flex flex-col overflow-hidden" style={{ height: 400 }}>
+        <div
+          className="mb-3 w-[calc(100vw-2rem)] sm:w-80 bg-card border border-border rounded-2xl shadow-lg flex flex-col overflow-hidden"
+          style={{ height: 400 }}
+        >
           <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">
             <span className="text-foreground font-semibold text-sm">Чат поддержки</span>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
@@ -205,18 +265,16 @@ const FloatingChat = () => {
             </button>
           </div>
           <div className="flex-1 p-3 overflow-y-auto space-y-2">
-            {messages.length === 0 && (
-              <p className="text-muted-foreground text-xs text-center mt-8">Напишите ваш вопрос — мы ответим!</p>
-            )}
-            {messages.map(msg => (
+            {messages.length === 0 && <p className="text-muted-foreground text-xs text-center mt-8">Напишите ваш вопрос — мы ответим!</p>}
+            {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender_role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-xl px-3 py-2 ${
-                  msg.sender_role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                }`}>
+                <div
+                  className={`max-w-[80%] rounded-xl px-3 py-2 ${
+                    msg.sender_role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+                  }`}
+                >
                   {renderMessageText(msg.text)}
-                  <p className="text-[9px] opacity-60 mt-0.5">
-                    {new Date(msg.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
+                  <p className="text-[9px] opacity-60 mt-0.5">{formatMessageDateTime(msg.created_at)}</p>
                 </div>
               </div>
             ))}
@@ -242,8 +300,8 @@ const FloatingChat = () => {
             <Input
               placeholder="Введите сообщение..."
               value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSend()}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
               className="text-sm h-9"
             />
             <Button size="icon" className="h-9 w-9 shrink-0" onClick={handleSend}>

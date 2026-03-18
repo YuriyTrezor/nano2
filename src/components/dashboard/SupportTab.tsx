@@ -1,5 +1,5 @@
 import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,7 +25,9 @@ interface Ticket {
   subject: string;
   status: string;
   created_at: string;
+  updated_at: string;
   display_name?: string;
+  last_activity_at: string;
 }
 
 interface Message {
@@ -37,6 +39,15 @@ interface Message {
   is_read: boolean;
   created_at: string;
 }
+
+const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const SupportTab = () => {
   const { t } = useLanguage();
@@ -50,49 +61,81 @@ const SupportTab = () => {
   const [uploading, setUploading] = useState(false);
   const [dateAsc, setDateAsc] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevMessagesCount = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    const { data: ticketsData } = await supabase
-      .from("support_tickets")
-      .select("*")
-      .order("updated_at", { ascending: false });
+  const fetchTickets = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
 
-    if (ticketsData) {
-      // Get display names for each ticket owner
-      const userIds = [...new Set(ticketsData.map(t => t.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", userIds);
+    try {
+      const { data: ticketsData } = await supabase
+        .from("support_tickets")
+        .select("*")
+        .order("updated_at", { ascending: false });
 
-      const profileMap: Record<string, string> = {};
-      profiles?.forEach(p => { profileMap[p.user_id] = p.display_name || "Пользователь"; });
+      if (!ticketsData || ticketsData.length === 0) {
+        setTickets([]);
+        setUnreadCounts({});
+        return;
+      }
 
-      setTickets(ticketsData.map(t => ({
-        ...t,
-        display_name: profileMap[t.user_id] || "Пользователь",
-      })));
+      const userIds = [...new Set(ticketsData.map((t) => t.user_id))];
+      const ticketIds = ticketsData.map((t) => t.id);
 
-      // Fetch unread counts per ticket (messages from users, not read by admin)
-      const { data: unreadData } = await supabase
+      const profilesPromise = userIds.length
+        ? supabase.from("profiles").select("user_id, display_name").in("user_id", userIds)
+        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null }> });
+
+      const unreadPromise = supabase
         .from("support_messages")
         .select("ticket_id")
         .eq("sender_role", "user")
         .eq("is_read", false);
 
+      const latestMessagesPromise = ticketIds.length
+        ? supabase
+            .from("support_messages")
+            .select("ticket_id, created_at")
+            .in("ticket_id", ticketIds)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] as Array<{ ticket_id: string; created_at: string }> });
+
+      const [{ data: profilesData }, { data: unreadData }, { data: latestMessagesData }] = await Promise.all([
+        profilesPromise,
+        unreadPromise,
+        latestMessagesPromise,
+      ]);
+
+      const profileMap: Record<string, string> = {};
+      profilesData?.forEach((p) => {
+        profileMap[p.user_id] = p.display_name || "Пользователь";
+      });
+
       const counts: Record<string, number> = {};
-      unreadData?.forEach(m => {
+      unreadData?.forEach((m) => {
         counts[m.ticket_id] = (counts[m.ticket_id] || 0) + 1;
       });
       setUnreadCounts(counts);
-    }
-    setLoading(false);
-  };
 
-  const fetchMessages = async (ticketId: string) => {
+      const latestByTicket: Record<string, string> = {};
+      latestMessagesData?.forEach((m) => {
+        if (!latestByTicket[m.ticket_id]) {
+          latestByTicket[m.ticket_id] = m.created_at;
+        }
+      });
+
+      setTickets(
+        ticketsData.map((t) => ({
+          ...t,
+          display_name: profileMap[t.user_id] || "Пользователь",
+          last_activity_at: latestByTicket[t.id] || t.updated_at || t.created_at,
+        }))
+      );
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
+
+  const fetchMessages = useCallback(async (ticketId: string, markUserMessagesRead = false) => {
     const { data } = await supabase
       .from("support_messages")
       .select("*")
@@ -101,102 +144,168 @@ const SupportTab = () => {
 
     if (data) {
       setMessages(data);
-      prevMessagesCount.current = data.length;
     }
 
-    // Mark user messages as read
-    await supabase
-      .from("support_messages")
-      .update({ is_read: true })
-      .eq("ticket_id", ticketId)
-      .eq("sender_role", "user")
-      .eq("is_read", false);
+    if (markUserMessagesRead) {
+      await supabase
+        .from("support_messages")
+        .update({ is_read: true })
+        .eq("ticket_id", ticketId)
+        .eq("sender_role", "user")
+        .eq("is_read", false);
 
-    setUnreadCounts(prev => ({ ...prev, [ticketId]: 0 }));
-  };
-
-  useEffect(() => {
-    fetchTickets();
+      setUnreadCounts((prev) => ({ ...prev, [ticketId]: 0 }));
+    }
   }, []);
 
   useEffect(() => {
-    if (selectedTicket) fetchMessages(selectedTicket);
-  }, [selectedTicket]);
+    fetchTickets();
+  }, [fetchTickets]);
 
-  // Realtime subscription
+  useEffect(() => {
+    if (selectedTicket) {
+      void fetchMessages(selectedTicket, true);
+    }
+  }, [selectedTicket, fetchMessages]);
+
   useEffect(() => {
     const channel = supabase
       .channel("admin-support-messages")
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "support_messages",
-      }, (payload) => {
-        const newMsg = payload.new as Message;
-        
-        // If in current ticket, add message
-        if (newMsg.ticket_id === selectedTicket) {
-          setMessages(prev => {
-            if (prev.find(m => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_messages",
+        },
+        (payload) => {
+          const newMsg = payload.new as Message;
+          const isCurrentTicket = newMsg.ticket_id === selectedTicket;
+          const isUserMessage = newMsg.sender_role === "user";
+
+          let ticketFound = false;
+          setTickets((prev) => {
+            const hasTicket = prev.some((t) => t.id === newMsg.ticket_id);
+            ticketFound = hasTicket;
+            if (!hasTicket) return prev;
+
+            return prev.map((t) =>
+              t.id === newMsg.ticket_id
+                ? {
+                    ...t,
+                    updated_at: newMsg.created_at,
+                    last_activity_at: newMsg.created_at,
+                  }
+                : t
+            );
           });
-          // Mark as read if from user
-          if (newMsg.sender_role === "user") {
-            supabase.from("support_messages").update({ is_read: true }).eq("id", newMsg.id).then();
+
+          if (!ticketFound) {
+            void fetchTickets(true);
           }
-        }
-        
-        // Play sound and update unread if from user
-        if (newMsg.sender_role === "user" && newMsg.sender_id !== user?.id) {
-          playNotificationSound();
-          if (newMsg.ticket_id !== selectedTicket) {
-            setUnreadCounts(prev => ({
+
+          if (isCurrentTicket) {
+            setMessages((prev) => {
+              if (prev.find((m) => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+
+            if (isUserMessage) {
+              setUnreadCounts((prev) => ({ ...prev, [newMsg.ticket_id]: 0 }));
+              supabase.from("support_messages").update({ is_read: true }).eq("id", newMsg.id).then();
+            }
+          } else if (isUserMessage) {
+            setUnreadCounts((prev) => ({
               ...prev,
               [newMsg.ticket_id]: (prev[newMsg.ticket_id] || 0) + 1,
             }));
           }
-          fetchTickets();
+
+          if (isUserMessage && newMsg.sender_id !== user?.id) {
+            playNotificationSound();
+          }
         }
-      })
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "support_tickets",
-      }, () => {
-        playNotificationSound();
-        fetchTickets();
-      })
-      .subscribe();
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_tickets",
+        },
+        () => {
+          playNotificationSound();
+          void fetchTickets(true);
+        }
+      )
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          void fetchTickets(true);
+          if (selectedTicket) {
+            void fetchMessages(selectedTicket, false);
+          }
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedTicket, user?.id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket, user?.id, fetchTickets, fetchMessages]);
 
-  // Auto-scroll
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void fetchTickets(true);
+      if (selectedTicket) {
+        void fetchMessages(selectedTicket, false);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [selectedTicket, fetchTickets, fetchMessages]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !selectedTicket || !user) return;
-    await supabase.from("support_messages").insert({
+    const trimmedText = messageText.trim();
+    if (!trimmedText || !selectedTicket || !user) return;
+
+    const { error } = await supabase.from("support_messages").insert({
       ticket_id: selectedTicket,
       sender_id: user.id,
       sender_role: "support",
-      text: messageText.trim(),
+      text: trimmedText,
     });
+
+    if (error) {
+      toast({ title: "Ошибка отправки сообщения", variant: "destructive" });
+      return;
+    }
+
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === selectedTicket
+          ? {
+              ...ticket,
+              last_activity_at: new Date().toISOString(),
+            }
+          : ticket
+      )
+    );
     setMessageText("");
   };
 
   const handleDeleteMessage = async (msgId: string) => {
     await supabase.from("support_messages").delete().eq("id", msgId);
-    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
     toast({ title: "Сообщение удалено" });
   };
 
   const handleDeleteConversation = async (ticketId: string) => {
     await supabase.from("support_messages").delete().eq("ticket_id", ticketId);
     await supabase.from("support_tickets").delete().eq("id", ticketId);
-    setTickets(prev => prev.filter(t => t.id !== ticketId));
+    setTickets((prev) => prev.filter((t) => t.id !== ticketId));
     if (selectedTicket === ticketId) {
       setSelectedTicket(null);
       setMessages([]);
@@ -215,9 +324,7 @@ const SupportTab = () => {
 
     setUploading(true);
     const filePath = `${selectedTicket}/${Date.now()}_${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("support-attachments")
-      .upload(filePath, file);
+    const { error: uploadError } = await supabase.storage.from("support-attachments").upload(filePath, file);
 
     if (uploadError) {
       toast({ title: "Ошибка загрузки файла", variant: "destructive" });
@@ -225,16 +332,31 @@ const SupportTab = () => {
       return;
     }
 
-    const { data: urlData } = supabase.storage
-      .from("support-attachments")
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from("support-attachments").getPublicUrl(filePath);
 
-    await supabase.from("support_messages").insert({
+    const { error: messageError } = await supabase.from("support_messages").insert({
       ticket_id: selectedTicket,
       sender_id: user.id,
       sender_role: "support",
       text: `📎 [${file.name}](${urlData.publicUrl})`,
     });
+
+    if (messageError) {
+      toast({ title: "Ошибка отправки файла", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === selectedTicket
+          ? {
+              ...ticket,
+              last_activity_at: new Date().toISOString(),
+            }
+          : ticket
+      )
+    );
 
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -255,7 +377,7 @@ const SupportTab = () => {
   };
 
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
-  const currentTicket = tickets.find(t => t.id === selectedTicket);
+  const currentTicket = tickets.find((t) => t.id === selectedTicket);
 
   return (
     <div>
@@ -269,58 +391,56 @@ const SupportTab = () => {
             </span>
           )}
         </h1>
-        <Button variant="ghost" size="icon" onClick={fetchTickets} disabled={loading}>
+        <Button variant="ghost" size="icon" onClick={() => fetchTickets()} disabled={loading}>
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>
       <div className="flex items-center gap-3 mb-6">
         <p className="text-muted-foreground text-sm">{t("Сообщения из чата поддержки")}</p>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setDateAsc(prev => !prev)}>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setDateAsc((prev) => !prev)}>
           <ArrowUpDown className="w-3.5 h-3.5" />
         </Button>
       </div>
 
       <div className="flex gap-4 h-[500px]">
-        {/* Tickets list */}
         <div className="w-80 bg-card border border-border rounded-2xl p-4 flex flex-col">
-          <h3 className="text-foreground font-semibold mb-3">{t("Диалоги")} ({tickets.length})</h3>
+          <h3 className="text-foreground font-semibold mb-3">
+            {t("Диалоги")} ({tickets.length})
+          </h3>
           <div className="space-y-2 flex-1 overflow-y-auto">
-            {tickets.length === 0 && (
-              <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>
-            )}
+            {tickets.length === 0 && <p className="text-muted-foreground text-xs text-center mt-4">Нет обращений</p>}
             {[...tickets]
               .sort((a, b) => {
-                const aUnread = unreadCounts[a.id] || 0;
-                const bUnread = unreadCounts[b.id] || 0;
-                if (aUnread > 0 && bUnread === 0) return -1;
-                if (bUnread > 0 && aUnread === 0) return 1;
-                if (bUnread !== aUnread) return bUnread - aUnread;
-                const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                const aHasUnread = (unreadCounts[a.id] || 0) > 0;
+                const bHasUnread = (unreadCounts[b.id] || 0) > 0;
+
+                if (aHasUnread && !bHasUnread) return -1;
+                if (bHasUnread && !aHasUnread) return 1;
+
+                const diff = new Date(a.last_activity_at).getTime() - new Date(b.last_activity_at).getTime();
                 return dateAsc ? diff : -diff;
-              }).map((ticket) => (
-              <button
-                key={ticket.id}
-                onClick={() => setSelectedTicket(ticket.id)}
-                className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                  selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                }`}
-              >
-                <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                <p className="text-muted-foreground text-[10px] mt-1">
-                  {new Date(ticket.created_at).toLocaleString("ru-RU")}
-                </p>
-                {(unreadCounts[ticket.id] || 0) > 0 && (
-                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                    {unreadCounts[ticket.id]}
-                  </span>
-                )}
-              </button>
-            ))}
+              })
+              .map((ticket) => (
+                <button
+                  key={ticket.id}
+                  onClick={() => setSelectedTicket(ticket.id)}
+                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
+                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
+                  }`}
+                >
+                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
+                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
+                  <p className="text-muted-foreground text-[10px] mt-1">{formatDateTime(ticket.last_activity_at)}</p>
+                  {(unreadCounts[ticket.id] || 0) > 0 && (
+                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                      {unreadCounts[ticket.id]}
+                    </span>
+                  )}
+                </button>
+              ))}
           </div>
         </div>
 
-        {/* Chat area */}
         <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col">
           {currentTicket ? (
             <>
@@ -342,21 +462,26 @@ const SupportTab = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Отмена</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteConversation(currentTicket.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Удалить</AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => handleDeleteConversation(currentTicket.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Удалить
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                {messages.map(msg => (
+                {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender_role !== "user" ? "justify-end" : "justify-start"} group`}>
-                    <div className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
-                      msg.sender_role !== "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                    }`}>
+                    <div
+                      className={`max-w-[70%] rounded-xl px-4 py-2 relative ${
+                        msg.sender_role !== "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+                      }`}
+                    >
                       {renderMessageText(msg.text)}
-                      <p className="text-[10px] opacity-70 mt-1">
-                        {new Date(msg.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
-                      </p>
+                      <p className="text-[10px] opacity-70 mt-1">{formatDateTime(msg.created_at)}</p>
                       <button
                         onClick={() => handleDeleteMessage(msg.id)}
                         className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
@@ -388,8 +513,8 @@ const SupportTab = () => {
                 <Input
                   placeholder={t("Введите ответ...")}
                   value={messageText}
-                  onChange={e => setMessageText(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleSendMessage()}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="bg-secondary border-border text-foreground"
                 />
                 <Button onClick={handleSendMessage} size="icon">
