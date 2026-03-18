@@ -84,9 +84,8 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Total balance = sum of card-specific balances (only transactions assigned to user's cards)
+  // Total balance = sum of ALL transactions for the user
   const balance = transactions
-    .filter(tx => tx.card_name && userCards.includes(tx.card_name))
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
