@@ -96,7 +96,7 @@ const OverviewTab = () => {
   };
 
   const computePercentChange = () => {
-    const cardTxs = transactions.filter(tx => tx.card_name && userCards.includes(tx.card_name));
+    const cardTxs = transactions;
     const now = Date.now();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     const recent = cardTxs.filter(tx => now - new Date(tx.created_at).getTime() < thirtyDays);
