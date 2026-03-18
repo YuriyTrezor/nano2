@@ -1,4 +1,4 @@
-import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, Trash2, Paperclip, FileText, Download, ArrowUpDown, User, ShieldCheck } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { playNotificationSound } from "@/utils/notificationSound";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
