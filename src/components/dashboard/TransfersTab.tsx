@@ -64,9 +64,8 @@ const TransfersTab = () => {
   const [fromCard, setFromCard] = useState("");
   const [toCard, setToCard] = useState("");
 
-  // Total balance = sum of card-specific balances only
+  // Total balance = sum of ALL transactions for the user
   const balance = transactions
-    .filter(tx => tx.card_name && userCards.includes(tx.card_name))
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   // Fetch user transactions and blocked status from DB
