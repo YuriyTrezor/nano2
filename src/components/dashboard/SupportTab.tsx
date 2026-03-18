@@ -447,24 +447,46 @@ const SupportTab = () => {
                 const diff = new Date(a.last_activity_at).getTime() - new Date(b.last_activity_at).getTime();
                 return dateAsc ? diff : -diff;
               })
-              .map((ticket) => (
-                <button
-                  key={ticket.id}
-                  onClick={() => setSelectedTicket(ticket.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-colors relative ${
-                    selectedTicket === ticket.id ? "bg-secondary" : "hover:bg-secondary/50"
-                  }`}
-                >
-                  <p className="text-foreground font-semibold text-sm">{ticket.display_name}</p>
-                  <p className="text-muted-foreground text-xs truncate">{ticket.subject}</p>
-                  <p className="text-muted-foreground text-[10px] mt-1">{formatDateTime(ticket.last_activity_at)}</p>
-                  {(unreadCounts[ticket.id] || 0) > 0 && (
-                    <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                      {unreadCounts[ticket.id]}
-                    </span>
-                  )}
-                </button>
-              ))}
+              .map((ticket) => {
+                const hasUnread = (unreadCounts[ticket.id] || 0) > 0;
+                const isSelected = selectedTicket === ticket.id;
+                return (
+                  <button
+                    key={ticket.id}
+                    onClick={() => setSelectedTicket(ticket.id)}
+                    className={`w-full text-left p-3 rounded-xl transition-all relative ${
+                      isSelected
+                        ? "bg-secondary ring-1 ring-primary/30"
+                        : hasUnread
+                        ? "bg-primary/5 border border-primary/20 hover:bg-primary/10"
+                        : "hover:bg-secondary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className={`w-8 h-8 shrink-0 ${hasUnread ? "ring-2 ring-primary" : ""}`}>
+                        <AvatarFallback className={`text-[10px] font-bold ${hasUnread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {getInitials(ticket.display_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
+                          {ticket.display_name}
+                        </p>
+                        <p className={`text-xs truncate ${hasUnread ? "text-foreground/70" : "text-muted-foreground"}`}>
+                          {ticket.subject}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground text-[10px] mt-1.5 ml-[42px]">{formatDateTime(ticket.last_activity_at)}</p>
+                    {hasUnread && (
+                      <span className="absolute top-3 right-3 min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center animate-pulse">
+                        {unreadCounts[ticket.id]}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
           </div>
         </div>
 
