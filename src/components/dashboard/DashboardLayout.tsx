@@ -48,8 +48,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { signOut, isAdmin, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string; amount: number; created_at: string; category: string }>>([]);
+  const [allTransactions, setAllTransactions] = useState<Array<{ id: string; title: string; amount: number; created_at: string; category: string }>>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const [supportUnread, setSupportUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
