@@ -202,6 +202,67 @@ const About = () => {
             </div>
           </div>
 
+          {/* Licenses & Certificates */}
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <FileCheck className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "Licenses & Certificates" : "Лицензии и сертификаты"}
+              </h2>
+            </div>
+            <p className="text-muted-foreground text-center mb-6">
+              {isEn
+                ? "NeoBank International AG holds all necessary licenses and certificates for international banking operations. Click on any document to view in full size."
+                : "NeoBank International AG обладает всеми необходимыми лицензиями и сертификатами для осуществления международной банковской деятельности. Нажмите на документ для просмотра в полном размере."}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {licenses.map((license, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedLicense(license.image)}
+                  className="group relative bg-secondary/50 rounded-xl p-3 border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 text-left"
+                >
+                  <div className="relative overflow-hidden rounded-lg mb-3 aspect-[3/4] bg-muted">
+                    <img
+                      src={license.image}
+                      alt={license.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-background/90 text-foreground px-3 py-1.5 rounded-full font-medium">
+                        {isEn ? "View" : "Открыть"}
+                      </span>
+                    </div>
+                  </div>
+                  <h4 className="text-foreground font-semibold text-xs mb-0.5 leading-tight">{license.title}</h4>
+                  <p className="text-muted-foreground text-[10px]">{license.number}</p>
+                  <p className="text-muted-foreground text-[10px] mt-0.5">{license.issuer}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lightbox */}
+          {selectedLicense && (
+            <div
+              className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setSelectedLicense(null)}
+            >
+              <button
+                onClick={() => setSelectedLicense(null)}
+                className="absolute top-6 right-6 text-foreground/70 hover:text-foreground bg-card border border-border rounded-full p-2 z-10"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <img
+                src={selectedLicense}
+                alt="License"
+                className="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+
           {/* History Timeline */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
             <div className="flex items-center justify-center gap-3 mb-6">
