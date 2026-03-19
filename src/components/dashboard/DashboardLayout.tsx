@@ -58,18 +58,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Fetch real notifications from transactions
+  // Fetch transactions for search
   useEffect(() => {
     if (!user) return;
-    const fetchNotifications = async () => {
+    const fetchTx = async () => {
       const { data } = await supabase
         .from("transactions")
-        .select("id, title, amount, created_at")
+        .select("id, title, amount, created_at, category")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(500);
       if (data) {
-        setNotifications(data.map(tx => ({
+        setAllTransactions(data);
+        // Also use for notifications
+        setNotifications(data.slice(0, 10).map(tx => ({
           id: tx.id,
           text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
           time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
@@ -77,12 +79,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         })));
       }
     };
-    fetchNotifications();
+    fetchTx();
 
     const channel = supabase
       .channel("notifications-realtime")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` }, (payload) => {
         const tx = payload.new as any;
+        const newTx = { id: tx.id, title: tx.title, amount: Number(tx.amount), created_at: tx.created_at, category: tx.category || "" };
+        setAllTransactions(prev => [newTx, ...prev]);
         setNotifications(prev => [{
           id: tx.id,
           text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
