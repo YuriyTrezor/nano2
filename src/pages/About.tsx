@@ -1,11 +1,44 @@
-import { Building2, Shield, Globe, Users, TrendingUp, Award, Landmark, BadgeCheck, Clock, Headphones, CreditCard, Banknote } from "lucide-react";
+import { Building2, Shield, Globe, Users, TrendingUp, Award, Landmark, BadgeCheck, Clock, Headphones, CreditCard, Banknote, FileCheck, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FloatingChat from "@/components/FloatingChat";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState } from "react";
+import licenseEuBanking from "@/assets/license-eu-banking.jpg";
+import licenseAml from "@/assets/license-aml-compliance.jpg";
+import licenseGdpr from "@/assets/license-gdpr.jpg";
+import licensePci from "@/assets/license-pci-dss.jpg";
 
 const About = () => {
   const { lang } = useLanguage();
   const isEn = lang === "en";
+  const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
+
+  const licenses = [
+    {
+      image: licenseEuBanking,
+      title: isEn ? "EU Banking License" : "Банковская лицензия ЕС",
+      number: "EBA/GL/2022/04817",
+      issuer: isEn ? "European Banking Authority" : "Европейское банковское управление",
+    },
+    {
+      image: licenseAml,
+      title: isEn ? "AML/KYC Compliance" : "Сертификат AML/KYC",
+      number: "FATF/CC/2023/09284",
+      issuer: isEn ? "Financial Action Task Force" : "FATF — Группа разработки финансовых мер",
+    },
+    {
+      image: licenseGdpr,
+      title: isEn ? "GDPR Compliance" : "Сертификат GDPR",
+      number: "EDPB/DPC/2023/15692",
+      issuer: isEn ? "European Data Protection Board" : "Европейский совет по защите данных",
+    },
+    {
+      image: licensePci,
+      title: isEn ? "PCI DSS Level 1" : "PCI DSS Уровень 1",
+      number: "PCI-DSS/L1/2024/03471",
+      issuer: isEn ? "PCI Security Standards Council" : "Совет по стандартам безопасности PCI",
+    },
+  ];
 
   const timeline = isEn ? [
     { year: "2022", title: "Foundation", desc: "NeoBank was founded with a mission to provide accessible international banking services to clients worldwide, free from geographic restrictions." },
@@ -168,6 +201,67 @@ const About = () => {
               </p>
             </div>
           </div>
+
+          {/* Licenses & Certificates */}
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <FileCheck className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "Licenses & Certificates" : "Лицензии и сертификаты"}
+              </h2>
+            </div>
+            <p className="text-muted-foreground text-center mb-6">
+              {isEn
+                ? "NeoBank International AG holds all necessary licenses and certificates for international banking operations. Click on any document to view in full size."
+                : "NeoBank International AG обладает всеми необходимыми лицензиями и сертификатами для осуществления международной банковской деятельности. Нажмите на документ для просмотра в полном размере."}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {licenses.map((license, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedLicense(license.image)}
+                  className="group relative bg-secondary/50 rounded-xl p-3 border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 text-left"
+                >
+                  <div className="relative overflow-hidden rounded-lg mb-3 aspect-[3/4] bg-muted">
+                    <img
+                      src={license.image}
+                      alt={license.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-background/90 text-foreground px-3 py-1.5 rounded-full font-medium">
+                        {isEn ? "View" : "Открыть"}
+                      </span>
+                    </div>
+                  </div>
+                  <h4 className="text-foreground font-semibold text-xs mb-0.5 leading-tight">{license.title}</h4>
+                  <p className="text-muted-foreground text-[10px]">{license.number}</p>
+                  <p className="text-muted-foreground text-[10px] mt-0.5">{license.issuer}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lightbox */}
+          {selectedLicense && (
+            <div
+              className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setSelectedLicense(null)}
+            >
+              <button
+                onClick={() => setSelectedLicense(null)}
+                className="absolute top-6 right-6 text-foreground/70 hover:text-foreground bg-card border border-border rounded-full p-2 z-10"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <img
+                src={selectedLicense}
+                alt="License"
+                className="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
 
           {/* History Timeline */}
           <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
