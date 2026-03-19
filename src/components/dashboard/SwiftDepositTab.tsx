@@ -107,7 +107,7 @@ const SwiftDepositTab = () => {
             <ul className="text-muted-foreground text-sm space-y-2">
               <li>• В назначении платежа обязательно укажите ваш email: <span className="text-foreground font-medium">{user?.email || "ваш@email.com"}</span></li>
               <li>• Срок зачисления: <span className="text-foreground font-medium">1-3 рабочих дня</span></li>
-              <li>• Минимальная сумма пополнения: <span className="text-foreground font-medium">$100 / €100 / £100 / ₣100</span></li>
+              <li>• Минимальная сумма пополнения: <span className="text-foreground font-medium">$1000 / €1000 / £1000 / ₣1000</span></li>
               <li>• Комиссия за зачисление: <span className="text-foreground font-medium">0%</span></li>
               <li>• Конвертация в рубли по курсу ЦБ на дату зачисления</li>
             </ul>
