@@ -12,6 +12,7 @@ import VerificationTab from "@/components/dashboard/VerificationTab";
 import AdminVerificationsTab from "@/components/dashboard/AdminVerificationsTab";
 import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import ComplianceTab from "@/components/dashboard/ComplianceTab";
+import SwiftDepositTab from "@/components/dashboard/SwiftDepositTab";
 import FloatingChat from "@/components/FloatingChat";
 
 
@@ -31,6 +32,7 @@ const Dashboard = () => {
         <Route path="verification" element={<VerificationTab />} />
         <Route path="verifications" element={<AdminVerificationsTab />} />
         <Route path="compliance" element={<ComplianceTab />} />
+        <Route path="swift-deposit" element={<SwiftDepositTab />} />
       </Routes>
       <FloatingChat />
     </DashboardLayout>
