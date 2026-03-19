@@ -280,17 +280,57 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-end gap-3">
           {/* Search */}
           {searchOpen ? (
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
+            <div className="relative flex items-center gap-2 flex-1 max-w-sm">
               <Input
                 ref={searchRef}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Поиск по операциям..."
+                placeholder="Поиск по операциям и разделам..."
                 className="bg-secondary border-border text-foreground h-9 text-sm"
+                onKeyDown={e => {
+                  if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                }}
               />
               <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
+              {/* Search results dropdown */}
+              {searchQuery.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg max-h-80 overflow-y-auto z-50">
+                  {navSearchItems.length > 0 && (
+                    <div className="p-1.5 border-b border-border">
+                      <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider font-medium">Разделы</p>
+                      {navSearchItems.map(item => (
+                        <button key={item.to} onClick={() => { navigate(item.to); setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
+                          <LayoutDashboard className="w-3.5 h-3.5 text-muted-foreground" />
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {filteredResults.length > 0 && (
+                    <div className="p-1.5">
+                      <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider font-medium">Операции</p>
+                      {filteredResults.map(tx => (
+                        <button key={tx.id} onClick={() => { navigate("/dashboard/transfers"); setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm hover:bg-secondary transition-colors">
+                          <div className="min-w-0 text-left">
+                            <p className="text-foreground text-sm truncate">{tx.title}</p>
+                            <p className="text-muted-foreground text-xs">{tx.category}</p>
+                          </div>
+                          <span className={`text-sm font-medium shrink-0 ml-2 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
+                            {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {navSearchItems.length === 0 && filteredResults.length === 0 && (
+                    <div className="p-4 text-center text-muted-foreground text-sm">Ничего не найдено</div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
