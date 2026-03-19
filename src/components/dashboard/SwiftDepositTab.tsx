@@ -12,7 +12,7 @@ const requisites = [
   { label: "Корреспондентский счёт / Correspondent Account", value: "100 9541 280" },
   { label: "Наименование получателя / Beneficiary Name", value: "NeoBank Client Account" },
   { label: "IBAN / Account Number", value: "GE29NB0000000012345678" },
-  { label: "Назначение платежа / Payment Purpose", value: "Account top-up / Пополнение счёта" },
+  { label: "Назначение платежа / Payment Purpose", value: "NeoBank" },
 ];
 
 const currencies = [
