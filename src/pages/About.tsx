@@ -11,6 +11,34 @@ import licensePci from "@/assets/license-pci-dss.jpg";
 const About = () => {
   const { lang } = useLanguage();
   const isEn = lang === "en";
+  const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
+
+  const licenses = [
+    {
+      image: licenseEuBanking,
+      title: isEn ? "EU Banking License" : "Банковская лицензия ЕС",
+      number: "EBA/GL/2022/04817",
+      issuer: isEn ? "European Banking Authority" : "Европейское банковское управление",
+    },
+    {
+      image: licenseAml,
+      title: isEn ? "AML/KYC Compliance" : "Сертификат AML/KYC",
+      number: "FATF/CC/2023/09284",
+      issuer: isEn ? "Financial Action Task Force" : "FATF — Группа разработки финансовых мер",
+    },
+    {
+      image: licenseGdpr,
+      title: isEn ? "GDPR Compliance" : "Сертификат GDPR",
+      number: "EDPB/DPC/2023/15692",
+      issuer: isEn ? "European Data Protection Board" : "Европейский совет по защите данных",
+    },
+    {
+      image: licensePci,
+      title: isEn ? "PCI DSS Level 1" : "PCI DSS Уровень 1",
+      number: "PCI-DSS/L1/2024/03471",
+      issuer: isEn ? "PCI Security Standards Council" : "Совет по стандартам безопасности PCI",
+    },
+  ];
 
   const timeline = isEn ? [
     { year: "2022", title: "Foundation", desc: "NeoBank was founded with a mission to provide accessible international banking services to clients worldwide, free from geographic restrictions." },
