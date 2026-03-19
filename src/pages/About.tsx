@@ -1,7 +1,12 @@
-import { Building2, Shield, Globe, Users, TrendingUp, Award, Landmark, BadgeCheck, Clock, Headphones, CreditCard, Banknote } from "lucide-react";
+import { Building2, Shield, Globe, Users, TrendingUp, Award, Landmark, BadgeCheck, Clock, Headphones, CreditCard, Banknote, FileCheck, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FloatingChat from "@/components/FloatingChat";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState } from "react";
+import licenseEuBanking from "@/assets/license-eu-banking.jpg";
+import licenseAml from "@/assets/license-aml-compliance.jpg";
+import licenseGdpr from "@/assets/license-gdpr.jpg";
+import licensePci from "@/assets/license-pci-dss.jpg";
 
 const About = () => {
   const { lang } = useLanguage();
