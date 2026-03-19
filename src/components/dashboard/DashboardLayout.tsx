@@ -151,6 +151,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (searchOpen && searchRef.current) searchRef.current.focus();
   }, [searchOpen]);
 
+  // Search filtering
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return allTransactions
+      .filter(tx => tx.title.toLowerCase().includes(q) || tx.category.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [searchQuery, allTransactions]);
+
+  // Navigation search items
+  const navSearchItems = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    const items = [
+      { label: "Обзор", to: "/dashboard" },
+      { label: "Переводы", to: "/dashboard/transfers" },
+      { label: "Карты", to: "/dashboard/cards" },
+      { label: "Вклады", to: "/dashboard/deposits" },
+      { label: "Кредиты", to: "/dashboard/credits" },
+      { label: "Курс валют", to: "/dashboard/rates" },
+      { label: "Настройки", to: "/dashboard/settings" },
+      { label: "Верификация", to: "/dashboard/verification" },
+      { label: "Комплаенс", to: "/dashboard/compliance" },
+    ];
+    return items.filter(i => i.label.toLowerCase().includes(q));
+  }, [searchQuery]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
