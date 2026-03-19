@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck,
-  TrendingUp
+  TrendingUp, Globe
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
