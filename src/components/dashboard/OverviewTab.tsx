@@ -358,9 +358,17 @@ const OverviewTab = () => {
                 <div className="relative">
                   <div ref={emblaRef} className="overflow-hidden rounded-xl">
                     <div className="flex">
-                      {activeCards.map((card, i) => (
+                      {activeCards.map((card, i) => {
+                        const isCardBlocked = blockedCards.includes(card.name);
+                        return (
                         <div key={i} className="min-w-0 shrink-0 grow-0 basis-full">
-                          <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative select-none`}>
+                          <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative select-none ${isCardBlocked ? "opacity-70" : ""}`}>
+                            {isCardBlocked && (
+                              <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-destructive/90 text-destructive-foreground px-2 py-0.5 rounded-full">
+                                <Lock className="w-3 h-3" />
+                                <span className="text-[10px] font-medium">Заблокирована</span>
+                              </div>
+                            )}
                             <div className="flex justify-between items-start mb-4">
                               <div className="w-8 h-5 bg-yellow-500 rounded" />
                               {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
@@ -394,7 +402,7 @@ const OverviewTab = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ); })}
                     </div>
                   </div>
                   {activeCards.length > 1 && (
@@ -502,9 +510,17 @@ const OverviewTab = () => {
               <div className="relative">
                 <div ref={emblaRef} className="overflow-hidden rounded-xl">
                   <div className="flex">
-                    {activeCards.map((card, i) => (
+                    {activeCards.map((card, i) => {
+                      const isCardBlocked = blockedCards.includes(card.name);
+                      return (
                       <div key={i} className="min-w-0 shrink-0 grow-0 basis-full">
-                        <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative`}>
+                        <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative ${isCardBlocked ? "opacity-70" : ""}`}>
+                          {isCardBlocked && (
+                            <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-destructive/90 text-destructive-foreground px-2 py-0.5 rounded-full">
+                              <Lock className="w-3 h-3" />
+                              <span className="text-[10px] font-medium">Заблокирована</span>
+                            </div>
+                          )}
                           <div className="flex justify-between items-start mb-4">
                             <div className="w-8 h-5 bg-yellow-500 rounded" />
                             {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
@@ -538,7 +554,7 @@ const OverviewTab = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    ); })}
                   </div>
                 </div>
                 {activeCards.length > 1 && (

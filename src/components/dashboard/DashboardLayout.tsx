@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
@@ -8,7 +8,7 @@ import {
 import neobankLogo from "@/assets/neobank-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,25 +48,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { signOut, isAdmin, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string; amount: number; created_at: string; category: string }>>([]);
+  const [allTransactions, setAllTransactions] = useState<Array<{ id: string; title: string; amount: number; created_at: string; category: string }>>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const [supportUnread, setSupportUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Fetch real notifications from transactions
+  // Fetch transactions for search
   useEffect(() => {
     if (!user) return;
-    const fetchNotifications = async () => {
+    const fetchTx = async () => {
       const { data } = await supabase
         .from("transactions")
-        .select("id, title, amount, created_at")
+        .select("id, title, amount, created_at, category")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(500);
       if (data) {
-        setNotifications(data.map(tx => ({
+        setAllTransactions(data);
+        // Also use for notifications
+        setNotifications(data.slice(0, 10).map(tx => ({
           id: tx.id,
           text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
           time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
@@ -74,12 +79,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         })));
       }
     };
-    fetchNotifications();
+    fetchTx();
 
     const channel = supabase
       .channel("notifications-realtime")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` }, (payload) => {
         const tx = payload.new as any;
+        const newTx = { id: tx.id, title: tx.title, amount: Number(tx.amount), created_at: tx.created_at, category: tx.category || "" };
+        setAllTransactions(prev => [newTx, ...prev]);
         setNotifications(prev => [{
           id: tx.id,
           text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
@@ -143,6 +150,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   useEffect(() => {
     if (searchOpen && searchRef.current) searchRef.current.focus();
   }, [searchOpen]);
+
+  // Search filtering
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return allTransactions
+      .filter(tx => tx.title.toLowerCase().includes(q) || tx.category.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [searchQuery, allTransactions]);
+
+  // Navigation search items
+  const navSearchItems = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    const items = [
+      { label: "Обзор", to: "/dashboard" },
+      { label: "Переводы", to: "/dashboard/transfers" },
+      { label: "Карты", to: "/dashboard/cards" },
+      { label: "Вклады", to: "/dashboard/deposits" },
+      { label: "Кредиты", to: "/dashboard/credits" },
+      { label: "Курс валют", to: "/dashboard/rates" },
+      { label: "Настройки", to: "/dashboard/settings" },
+      { label: "Верификация", to: "/dashboard/verification" },
+      { label: "Комплаенс", to: "/dashboard/compliance" },
+    ];
+    return items.filter(i => i.label.toLowerCase().includes(q));
+  }, [searchQuery]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -246,17 +280,57 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-end gap-3">
           {/* Search */}
           {searchOpen ? (
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
+            <div className="relative flex items-center gap-2 flex-1 max-w-sm">
               <Input
                 ref={searchRef}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Поиск по операциям..."
+                placeholder="Поиск по операциям и разделам..."
                 className="bg-secondary border-border text-foreground h-9 text-sm"
+                onKeyDown={e => {
+                  if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                }}
               />
               <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
+              {/* Search results dropdown */}
+              {searchQuery.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg max-h-80 overflow-y-auto z-50">
+                  {navSearchItems.length > 0 && (
+                    <div className="p-1.5 border-b border-border">
+                      <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider font-medium">Разделы</p>
+                      {navSearchItems.map(item => (
+                        <button key={item.to} onClick={() => { navigate(item.to); setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
+                          <LayoutDashboard className="w-3.5 h-3.5 text-muted-foreground" />
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {filteredResults.length > 0 && (
+                    <div className="p-1.5">
+                      <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider font-medium">Операции</p>
+                      {filteredResults.map(tx => (
+                        <button key={tx.id} onClick={() => { navigate("/dashboard/transfers"); setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm hover:bg-secondary transition-colors">
+                          <div className="min-w-0 text-left">
+                            <p className="text-foreground text-sm truncate">{tx.title}</p>
+                            <p className="text-muted-foreground text-xs">{tx.category}</p>
+                          </div>
+                          <span className={`text-sm font-medium shrink-0 ml-2 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
+                            {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {navSearchItems.length === 0 && filteredResults.length === 0 && (
+                    <div className="p-4 text-center text-muted-foreground text-sm">Ничего не найдено</div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
