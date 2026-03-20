@@ -34,6 +34,7 @@ const Dashboard = () => {
         <Route path="verifications" element={<AdminVerificationsTab />} />
         <Route path="compliance" element={<ComplianceTab />} />
         <Route path="swift-deposit" element={<SwiftDepositTab />} />
+        <Route path="payments" element={<PaymentsTab />} />
       </Routes>
       <FloatingChat />
     </DashboardLayout>
