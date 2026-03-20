@@ -361,38 +361,43 @@ const OverviewTab = () => {
                       {activeCards.map((card, i) => {
                         const isCardBlocked = blockedCards.includes(card.name);
                         return (
-                        <div key={i} className="min-w-0 shrink-0 grow-0 basis-full">
-                          <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative select-none ${isCardBlocked ? "opacity-70" : ""}`}>
+                        <div key={i} className="min-w-0 shrink-0 grow-0 basis-full card-perspective">
+                          <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '180px' }}>
+                            {/* Front */}
+                            <div className={`card-front bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative select-none card-holographic ${isCardBlocked ? "opacity-70" : ""}`}>
                             {isCardBlocked && (
                               <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-destructive/90 text-destructive-foreground px-2 py-0.5 rounded-full">
                                 <Lock className="w-3 h-3" />
                                 <span className="text-[10px] font-medium">Заблокирована</span>
                               </div>
                             )}
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="w-8 h-5 bg-yellow-500 rounded" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-xl" />
+                            <div className="flex justify-between items-start mb-4 relative z-10">
+                              <div className="card-chip">
+                                <div className="card-chip-lines" />
+                              </div>
                               {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
                             </div>
-                          <p className="text-white/60 font-mono text-[10px] mb-1">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
-                            <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left">
-                              <p className="text-white font-mono text-base tracking-[0.2em] mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                          <p className="text-white/60 font-mono text-[10px] mb-1 relative z-10 card-text-embossed">BALANCE</p>
+                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
+                            <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
+                              <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                             </button>
-                            <div className="flex justify-between items-end">
+                            <div className="flex justify-between items-end relative z-10">
                               <div>
-                                <p className="text-white/50 text-[10px]">CARDHOLDER</p>
-                                <p className="text-white text-xs font-medium">{card.holder}</p>
+                                <p className="text-white/50 text-[10px] card-text-embossed">CARDHOLDER</p>
+                                <p className="text-white text-xs font-medium card-text-embossed">{card.holder}</p>
                               </div>
                               <div>
-                                <p className="text-white/50 text-[10px]">EXPIRES</p>
-                                <p className="text-white text-xs font-medium">{card.expiry}</p>
+                                <p className="text-white/50 text-[10px] card-text-embossed">EXPIRES</p>
+                                <p className="text-white text-xs font-medium card-text-embossed">{card.expiry}</p>
                               </div>
                               <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                                <p className="text-white/50 text-[10px]">CVV</p>
-                                <p className="text-white text-xs font-medium">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                                <p className="text-white/50 text-[10px]">CVV ↻</p>
+                                <p className="text-white text-xs font-medium">•••</p>
                               </button>
                             {card.type === "VISA" ? (
-                              <p className="text-white font-bold text-lg italic">VISA</p>
+                              <p className="text-white font-bold text-lg italic card-text-embossed">VISA</p>
                             ) : (
                               <span className="flex items-center">
                                 <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
@@ -400,6 +405,25 @@ const OverviewTab = () => {
                               </span>
                             )}
                             </div>
+                          </div>
+                          {/* Back */}
+                          <div className={`card-back bg-gradient-to-br ${card.gradient} rounded-xl relative overflow-hidden`}>
+                            <div className="w-full h-10 bg-black/70 mt-5" />
+                            <div className="px-4 mt-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 h-8 bg-white/10 rounded flex items-center justify-end px-3">
+                                  <span className="text-white font-mono text-sm font-bold italic card-text-embossed">{card.cvv}</span>
+                                </div>
+                                <p className="text-white/50 text-[9px] font-mono">CVV2</p>
+                              </div>
+                              <div className="mt-3 flex justify-between items-end">
+                                <p className="text-white/20 text-[8px]">NeoBank International AG</p>
+                                <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-white/60 text-xs hover:text-white transition-colors">
+                                  ↻ Перевернуть
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                           </div>
                         </div>
                       ); })}
