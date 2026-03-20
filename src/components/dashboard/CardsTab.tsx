@@ -409,7 +409,9 @@ const CardsTab = () => {
                   <div className="flex justify-between items-start relative z-10">
                     <div>
                       <span className="text-white/70 text-[10px]">NeoBank</span>
-                      <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+                      <div className="card-chip mt-1" style={{ width: '24px', height: '16px' }}>
+                        <div className="card-chip-lines" />
+                      </div>
                     </div>
                     <card.icon className={`w-5 h-5 text-white/30`} />
                   </div>
