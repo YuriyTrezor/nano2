@@ -393,7 +393,7 @@ const OverviewTab = () => {
                                 <p className="text-white text-xs font-medium card-text-embossed">{card.expiry}</p>
                               </div>
                               <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                                <p className="text-white/50 text-[10px]">CVV ↻</p>
+                                <p className="text-white/50 text-[10px]">CVV</p>
                                 <p className="text-white text-xs font-medium">•••</p>
                               </button>
                             {card.type === "VISA" ? (
@@ -569,7 +569,7 @@ const OverviewTab = () => {
                               <p className="text-white text-xs font-medium card-text-embossed">{card.expiry}</p>
                             </div>
                             <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                              <p className="text-white/50 text-[10px]">CVV ↻</p>
+                              <p className="text-white/50 text-[10px]">CVV</p>
                               <p className="text-white text-xs font-medium">•••</p>
                             </button>
                             {card.type === "VISA" ? (

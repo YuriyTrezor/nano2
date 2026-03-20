@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck,
-  TrendingUp, Globe
+  TrendingUp, Globe, Receipt
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ const mainLinks = [
   { to: "/dashboard/deposits", icon: PiggyBank, label: "Вклады" },
   { to: "/dashboard/credits", icon: Landmark, label: "Кредиты" },
   { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
+  { to: "/dashboard/payments", icon: Receipt, label: "Платежи" },
   { to: "/dashboard/swift-deposit", icon: Globe, label: "Пополнение SWIFT" },
 ];
 
