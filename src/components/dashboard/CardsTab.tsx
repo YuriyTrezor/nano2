@@ -314,7 +314,7 @@ const CardsTab = () => {
                               <p className="text-white text-xs card-text-embossed">{card.exp}</p>
                             </div>
                             <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                              <p className="text-white/50 text-[9px]">CVV ↻</p>
+                              <p className="text-white/50 text-[9px]">CVV</p>
                               <p className="text-white text-xs">•••</p>
                             </button>
                             {card.type === "visa" ? (

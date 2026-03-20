@@ -20,6 +20,7 @@ const mainLinks = [
   { to: "/dashboard/deposits", icon: PiggyBank, label: "Вклады" },
   { to: "/dashboard/credits", icon: Landmark, label: "Кредиты" },
   { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
+  { to: "/dashboard/payments", icon: Receipt, label: "Платежи" },
   { to: "/dashboard/swift-deposit", icon: Globe, label: "Пополнение SWIFT" },
 ];
 
