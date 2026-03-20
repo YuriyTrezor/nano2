@@ -147,3 +147,125 @@
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* Bank Card Effects */
+.card-perspective {
+  perspective: 800px;
+}
+
+.card-flipper {
+  position: relative;
+  width: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.card-flipper.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* Holographic shimmer */
+.card-holographic {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-holographic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    125deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(120, 200, 255, 0.08) 48%,
+    rgba(255, 180, 255, 0.08) 50%,
+    rgba(200, 255, 150, 0.08) 52%,
+    rgba(255, 255, 255, 0.03) 55%,
+    rgba(255, 255, 255, 0) 60%,
+    transparent 100%
+  );
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: translateX(-100%);
+}
+
+.card-holographic:hover::before {
+  opacity: 1;
+  animation: holographic-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes holographic-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+/* Embossed text effect */
+.card-number-embossed {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 0 -0.5px 0 rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.22em;
+}
+
+.card-text-embossed {
+  text-shadow: 0 0.5px 0.5px rgba(0, 0, 0, 0.3), 0 -0.5px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Realistic chip */
+.card-chip {
+  width: 40px;
+  height: 28px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #d4af37 0%, #f5d76e 25%, #c9a835 50%, #f2e08b 75%, #d4af37 100%);
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 0 1px rgba(255,255,255,0.4);
+}
+
+.card-chip::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  border: 1px solid rgba(180, 140, 20, 0.5);
+  border-radius: 3px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.15), transparent);
+}
+
+.card-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  right: 3px;
+  height: 1px;
+  background: rgba(180, 140, 20, 0.4);
+}
+
+.card-chip-lines {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 1px;
+  bottom: 3px;
+  background: rgba(180, 140, 20, 0.4);
+}

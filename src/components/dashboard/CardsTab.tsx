@@ -286,41 +286,69 @@ const CardsTab = () => {
                         )}
                       </div>
                     </div>
-                    {/* Card visual */}
-                    <div className="mt-3">
-                      <div className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02]`}>
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none" />
-                        
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-10 h-6 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded shadow-sm" />
-                          <Wifi className="w-4 h-4 text-white/40 rotate-90" />
-                        </div>
-                        <p className="text-white/60 font-mono text-[10px] mb-0.5 relative z-10">BALANCE</p>
-                        <p className="text-white font-bold text-base mb-1 relative z-10">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
-                        <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
-                          <p className="text-white font-mono text-base tracking-[0.2em] mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
-                        </button>
-                        <div className="flex justify-between items-end relative z-10">
-                          <div>
-                            <p className="text-white/50 text-[9px]">CARDHOLDER</p>
-                            <p className="text-white text-xs">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
+                    {/* Card visual with flip */}
+                    <div className="mt-3 card-perspective">
+                      <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '180px' }}>
+                        {/* Front */}
+                        <div className={`card-front bg-gradient-to-br ${card.gradient} rounded-xl p-4 relative card-holographic transition-transform duration-300 group-hover:scale-[1.02]`}>
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-xl" />
+                          
+                          <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div className="card-chip">
+                              <div className="card-chip-lines" />
+                            </div>
+                            <Wifi className="w-4 h-4 text-white/40 rotate-90" />
                           </div>
-                          <div>
-                            <p className="text-white/50 text-[9px]">EXPIRES</p>
-                            <p className="text-white text-xs">{card.exp}</p>
-                          </div>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                            <p className="text-white/50 text-[9px]">CVV</p>
-                            <p className="text-white text-xs">{cvvVisible[card.name] ? card.cvv : "•••"}</p>
+                          <p className="text-white/60 font-mono text-[10px] mb-0.5 relative z-10 card-text-embossed">BALANCE</p>
+                          <p className="text-white font-bold text-base mb-1 relative z-10">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                          <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
+                            <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
-                          {card.type === "visa" ? (
-                            <p className="text-white font-bold italic text-lg">VISA</p>
-                          ) : (
-                            <span className="flex items-center">
-                              <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
-                              <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
-                            </span>
-                          )}
+                          <div className="flex justify-between items-end relative z-10">
+                            <div>
+                              <p className="text-white/50 text-[9px] card-text-embossed">CARDHOLDER</p>
+                              <p className="text-white text-xs card-text-embossed">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/50 text-[9px] card-text-embossed">EXPIRES</p>
+                              <p className="text-white text-xs card-text-embossed">{card.exp}</p>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
+                              <p className="text-white/50 text-[9px]">CVV ↻</p>
+                              <p className="text-white text-xs">•••</p>
+                            </button>
+                            {card.type === "visa" ? (
+                              <p className="text-white font-bold italic text-lg card-text-embossed">VISA</p>
+                            ) : (
+                              <span className="flex items-center">
+                                <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
+                                <span className="w-5 h-5 rounded-full bg-orange-400 opacity-80" />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Back */}
+                        <div className={`card-back bg-gradient-to-br ${card.gradient} rounded-xl relative overflow-hidden`}>
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none rounded-xl" />
+                          {/* Magnetic stripe */}
+                          <div className="w-full h-10 bg-black/70 mt-5" />
+                          <div className="px-4 mt-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-8 bg-white/10 rounded flex items-center justify-end px-3">
+                                <span className="text-white font-mono text-sm font-bold italic card-text-embossed">{card.cvv}</span>
+                              </div>
+                              <p className="text-white/50 text-[9px] font-mono">CVV2</p>
+                            </div>
+                            <div className="mt-4 space-y-1">
+                              <p className="text-white/30 text-[8px] leading-tight">This card is issued by NeoBank International AG. Unauthorized use is prohibited. If found, please return to the nearest NeoBank branch.</p>
+                            </div>
+                            <div className="mt-3 flex justify-between items-end">
+                              <p className="text-white/20 text-[8px]">AUTHORIZED SIGNATURE</p>
+                              <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-white/60 text-xs hover:text-white transition-colors">
+                                ↻ {t("Перевернуть")}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -381,7 +409,9 @@ const CardsTab = () => {
                   <div className="flex justify-between items-start relative z-10">
                     <div>
                       <span className="text-white/70 text-[10px]">NeoBank</span>
-                      <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+                      <div className="card-chip mt-1" style={{ width: '24px', height: '16px' }}>
+                        <div className="card-chip-lines" />
+                      </div>
                     </div>
                     <card.icon className={`w-5 h-5 text-white/30`} />
                   </div>
