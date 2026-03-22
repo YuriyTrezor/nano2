@@ -14,6 +14,7 @@ import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import ComplianceTab from "@/components/dashboard/ComplianceTab";
 import SwiftDepositTab from "@/components/dashboard/SwiftDepositTab";
 import PaymentsTab from "@/components/dashboard/PaymentsTab";
+import BonusesTab from "@/components/dashboard/BonusesTab";
 import FloatingChat from "@/components/FloatingChat";
 
 
