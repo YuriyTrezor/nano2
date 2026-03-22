@@ -24,14 +24,6 @@ const transliterate = (text: string): string => {
   return text.split('').map(c => map[c] ?? c).join('').toUpperCase();
 };
 
-const paymentServices = [
-  { icon: Phone, label: "Мобильная связь" },
-  { icon: Flame, label: "ЖКХ" },
-  { icon: WifiIcon, label: "Интернет" },
-  { icon: Tv, label: "Телевидение" },
-  { icon: Zap, label: "Электричество" },
-  { icon: FileText, label: "Налоги и штрафы" },
-];
 
 const allCards: Record<string, { name: string; number: string; fullNumber: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
   Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
