@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Phone, Flame, Wifi, Tv, Zap, FileText, Plus, Clock, Trash2, ToggleLeft, ToggleRight, ChevronRight, ChevronLeft, QrCode, AlertTriangle, ScanLine } from "lucide-react";
+import { Phone, Flame, Wifi, Tv, Zap, FileText, Plus, Clock, Trash2, ToggleLeft, ToggleRight, ChevronRight, ChevronLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const providersMap: Record<string, Array<{ name: string; desc: string }>> = {
   "Мобильная связь": [
@@ -80,7 +84,7 @@ const mockAutoPayments: AutoPayment[] = [
   { id: "3", category: "ЖКХ", account: "ЛС 4820193756", amount: "6 240", active: false, nextDate: "05.04.2026" },
 ];
 
-type Step = "categories" | "providers" | "blocked" | "qr";
+type Step = "categories" | "providers" | "blocked" | "addAuto" | "addAutoProvider";
 
 const PaymentsTab = () => {
   const { t } = useLanguage();
@@ -88,7 +92,12 @@ const PaymentsTab = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [autoPayments, setAutoPayments] = useState<AutoPayment[]>(mockAutoPayments);
-  const [showQr, setShowQr] = useState(false);
+
+  // Add auto-payment form state
+  const [addAutoCategory, setAddAutoCategory] = useState<string | null>(null);
+  const [addAutoProvider, setAddAutoProvider] = useState<string | null>(null);
+  const [addAutoAccount, setAddAutoAccount] = useState("");
+  const [addAutoAmount, setAddAutoAmount] = useState("");
 
   const handleCategoryClick = (label: string) => {
     setSelectedCategory(label);
@@ -108,8 +117,12 @@ const PaymentsTab = () => {
     } else if (step === "providers") {
       setStep("categories");
       setSelectedCategory(null);
-    } else if (step === "qr") {
+    } else if (step === "addAutoProvider") {
+      setStep("addAuto");
+      setAddAutoProvider(null);
+    } else if (step === "addAuto") {
       setStep("categories");
+      setAddAutoCategory(null);
     }
   };
 
@@ -125,6 +138,39 @@ const PaymentsTab = () => {
     toast.success("Автоплатёж удалён");
   };
 
+  const handleAddAutoSelectCategory = (label: string) => {
+    setAddAutoCategory(label);
+    setAddAutoProvider(null);
+    setStep("addAutoProvider");
+  };
+
+  const handleAddAutoSelectProvider = (name: string) => {
+    setAddAutoProvider(name);
+  };
+
+  const handleAddAutoSubmit = () => {
+    if (!addAutoCategory || !addAutoProvider || !addAutoAccount || !addAutoAmount) {
+      toast.error("Заполните все поля");
+      return;
+    }
+    const newAp: AutoPayment = {
+      id: Date.now().toString(),
+      category: addAutoCategory,
+      account: addAutoAccount,
+      amount: addAutoAmount,
+      active: true,
+      nextDate: new Date(Date.now() + 30 * 86400000).toLocaleDateString("ru-RU"),
+    };
+    setAutoPayments(prev => [...prev, newAp]);
+    toast.success(`Автоплатёж «${addAutoProvider}» добавлен`);
+    // Reset
+    setAddAutoCategory(null);
+    setAddAutoProvider(null);
+    setAddAutoAccount("");
+    setAddAutoAmount("");
+    setStep("categories");
+  };
+
   const getCategoryIcon = (label: string) => {
     const cat = paymentCategories.find(c => c.label === label);
     return cat ? cat.icon : FileText;
@@ -136,6 +182,7 @@ const PaymentsTab = () => {
   };
 
   const currentProviders = selectedCategory ? providersMap[selectedCategory] || [] : [];
+  const addAutoProviders = addAutoCategory ? providersMap[addAutoCategory] || [] : [];
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -164,23 +211,6 @@ const PaymentsTab = () => {
                 <span className="text-[11px] font-medium text-center leading-tight">{t(cat.label)}</span>
               </button>
             ))}
-          </div>
-
-          {/* QR Payment button */}
-          <div className="mt-4">
-            <button
-              onClick={() => setStep("qr")}
-              className="flex items-center gap-3 w-full p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-all duration-200 active:scale-[0.99]"
-            >
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
-                <QrCode className="w-5 h-5 text-primary" />
-              </div>
-              <div className="text-left flex-1">
-                <p className="text-sm font-medium text-foreground">QR-оплата</p>
-                <p className="text-xs text-muted-foreground">Оплата по QR-коду через СБП</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </button>
           </div>
         </div>
       )}
@@ -264,8 +294,8 @@ const PaymentsTab = () => {
         </div>
       )}
 
-      {/* Step: QR Payment */}
-      {step === "qr" && (
+      {/* Step: Add auto-payment - select category */}
+      {step === "addAuto" && (
         <div className="animate-in fade-in-0 slide-in-from-right-4 duration-200">
           <button
             onClick={handleBack}
@@ -275,39 +305,112 @@ const PaymentsTab = () => {
             {t("Назад")}
           </button>
 
-          <div className="bg-card border border-border rounded-xl p-6 text-center space-y-5">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-              <ScanLine className="w-7 h-7 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-foreground mb-1">QR-оплата через СБП</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Сканируйте QR-код для мгновенной оплаты через Систему быстрых платежей
-              </p>
-            </div>
-
-            {/* Fake QR area */}
-            <div className="mx-auto w-48 h-48 bg-secondary rounded-2xl border-2 border-dashed border-border flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 grid grid-cols-8 grid-rows-8 gap-[2px] p-4 opacity-20">
-                {Array.from({ length: 64 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-foreground rounded-[1px]"
-                    style={{ opacity: Math.random() > 0.4 ? 1 : 0 }}
-                  />
-                ))}
-              </div>
-              <QrCode className="w-16 h-16 text-muted-foreground/40 relative z-10" />
-            </div>
-
-            <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-              <p className="text-xs text-orange-400 leading-relaxed">
-                <AlertTriangle className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
-                Для использования QR-оплаты необходимо подключение карты «МИР» через СБП. 
-                Свяжитесь с вашим менеджером для настройки.
-              </p>
-            </div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{t("Выберите категорию")}</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {paymentCategories.map((cat) => (
+              <button
+                key={cat.label}
+                onClick={() => handleAddAutoSelectCategory(cat.label)}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200 active:scale-[0.97]"
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${cat.color}20` }}
+                >
+                  <cat.icon className="w-5 h-5" style={{ color: cat.color }} />
+                </div>
+                <span className="text-[11px] font-medium text-center leading-tight">{t(cat.label)}</span>
+              </button>
+            ))}
           </div>
+        </div>
+      )}
+
+      {/* Step: Add auto-payment - select provider & fill form */}
+      {step === "addAutoProvider" && addAutoCategory && (
+        <div className="animate-in fade-in-0 slide-in-from-right-4 duration-200">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {t("Назад")}
+          </button>
+
+          <h2 className="text-sm font-semibold text-foreground mb-3">{t(addAutoCategory)}</h2>
+
+          {!addAutoProvider ? (
+            <div className="space-y-1.5">
+              {addAutoProviders.map((prov) => {
+                const CatIcon = getCategoryIcon(addAutoCategory);
+                const catColor = getCategoryColor(addAutoCategory);
+                return (
+                  <button
+                    key={prov.name}
+                    onClick={() => handleAddAutoSelectProvider(prov.name)}
+                    className="flex items-center gap-3 w-full p-3 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-secondary/50 transition-all duration-200 active:scale-[0.99]"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${catColor}15` }}
+                    >
+                      <CatIcon className="w-4 h-4" style={{ color: catColor }} />
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{prov.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{prov.desc}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-xl p-5 space-y-4 animate-in fade-in-0 duration-200">
+              <div className="flex items-center gap-3 mb-2">
+                {(() => {
+                  const CatIcon = getCategoryIcon(addAutoCategory);
+                  const catColor = getCategoryColor(addAutoCategory);
+                  return (
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${catColor}15` }}>
+                      <CatIcon className="w-4 h-4" style={{ color: catColor }} />
+                    </div>
+                  );
+                })()}
+                <div>
+                  <p className="text-sm font-medium text-foreground">{addAutoProvider}</p>
+                  <p className="text-xs text-muted-foreground">{addAutoCategory}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Номер счёта / телефон</label>
+                <Input
+                  value={addAutoAccount}
+                  onChange={e => setAddAutoAccount(e.target.value)}
+                  placeholder="Введите номер"
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Сумма, ₽</label>
+                <Input
+                  value={addAutoAmount}
+                  onChange={e => setAddAutoAmount(e.target.value)}
+                  placeholder="0"
+                  type="number"
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" onClick={() => setAddAutoProvider(null)} className="flex-1">
+                  Назад
+                </Button>
+                <Button onClick={handleAddAutoSubmit} className="flex-1">
+                  Добавить
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -315,13 +418,27 @@ const PaymentsTab = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">{t("Автоплатежи")}</h2>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => {
+              setStep("addAuto");
+              setAddAutoCategory(null);
+              setAddAutoProvider(null);
+              setAddAutoAccount("");
+              setAddAutoAmount("");
+            }}
+          >
             <Plus className="w-3.5 h-3.5" />
             {t("Добавить")}
           </Button>
         </div>
 
         <div className="space-y-2">
+          {autoPayments.length === 0 && (
+            <p className="text-muted-foreground text-sm text-center py-4">Нет автоплатежей</p>
+          )}
           {autoPayments.map((ap) => {
             const Icon = getCategoryIcon(ap.category);
             const color = getCategoryColor(ap.category);
