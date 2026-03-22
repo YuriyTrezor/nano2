@@ -658,17 +658,17 @@ const OverviewTab = () => {
                 </div>
                 <span className="text-foreground text-xs">{t("Перевод")}</span>
               </button>
-              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setTopUpAlert(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setDepositModal(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-primary" />
+                  <Wallet className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-foreground text-xs">{t("Пополнить")}</span>
               </button>
-              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setPayAlert(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Smartphone className="w-4 h-4 text-primary" />
+                  <Receipt className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-foreground text-xs">{t("Оплатить")}</span>
+                <span className="text-foreground text-xs">{t("Платежи")}</span>
               </button>
               <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
