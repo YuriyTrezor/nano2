@@ -1,4 +1,4 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon, Lock, FileWarning } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon, Lock, FileWarning, Receipt, Wallet, Building2 } from "lucide-react";
 import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
