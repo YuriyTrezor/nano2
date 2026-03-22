@@ -244,23 +244,41 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Pay services modal */}
-      {payAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPayAlert(false)}>
+      {/* Deposit modal */}
+      {depositModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setDepositModal(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-foreground text-lg font-bold">Оплата услуг</h2>
-              <button onClick={() => setPayAlert(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+              <h2 className="text-foreground text-lg font-bold">Пополнение счёта</h2>
+              <button onClick={() => setDepositModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {paymentServices.map((svc, i) => (
-                <button key={i} onClick={() => { setPayAlert(false); toast.info("Настройте, пожалуйста, платёжный шлюз МИР для оплаты"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <svc.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-foreground text-xs">{svc.label}</span>
-                </button>
-              ))}
+            <div className="space-y-3">
+              <button
+                onClick={() => { setDepositModal(false); setTopUpAlert(true); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">Пополнение с карты</p>
+                  <p className="text-xs text-muted-foreground">Перевод с банковской карты</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { setDepositModal(false); navigate("/dashboard/swift-deposit"); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">Пополнение через IBAN / SWIFT</p>
+                  <p className="text-xs text-muted-foreground">Международный банковский перевод</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
             </div>
           </div>
         </div>
