@@ -56,6 +56,7 @@ const OverviewTab = () => {
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
+  const [depositModal, setDepositModal] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
