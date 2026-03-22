@@ -1,4 +1,4 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon, Lock, FileWarning } from "lucide-react";
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, Smartphone, CreditCard, Wifi, History, Phone, Flame, WifiIcon, Tv, Zap, FileText, X, AlertTriangle, ChevronLeft, ChevronRight, EyeOff as EyeOffIcon, Lock, FileWarning, Receipt, Wallet, Building2 } from "lucide-react";
 import DiamondIcon3D from "@/components/DiamondIcon3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,14 +24,6 @@ const transliterate = (text: string): string => {
   return text.split('').map(c => map[c] ?? c).join('').toUpperCase();
 };
 
-const paymentServices = [
-  { icon: Phone, label: "Мобильная связь" },
-  { icon: Flame, label: "ЖКХ" },
-  { icon: WifiIcon, label: "Интернет" },
-  { icon: Tv, label: "Телевидение" },
-  { icon: Zap, label: "Электричество" },
-  { icon: FileText, label: "Налоги и штрафы" },
-];
 
 const allCards: Record<string, { name: string; number: string; fullNumber: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
   Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
@@ -56,6 +48,7 @@ const OverviewTab = () => {
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
+  const [depositModal, setDepositModal] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
@@ -243,23 +236,41 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Pay services modal */}
-      {payAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPayAlert(false)}>
+      {/* Deposit modal */}
+      {depositModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setDepositModal(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-foreground text-lg font-bold">Оплата услуг</h2>
-              <button onClick={() => setPayAlert(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+              <h2 className="text-foreground text-lg font-bold">Пополнение счёта</h2>
+              <button onClick={() => setDepositModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {paymentServices.map((svc, i) => (
-                <button key={i} onClick={() => { setPayAlert(false); toast.info("Настройте, пожалуйста, платёжный шлюз МИР для оплаты"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <svc.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-foreground text-xs">{svc.label}</span>
-                </button>
-              ))}
+            <div className="space-y-3">
+              <button
+                onClick={() => { setDepositModal(false); setTopUpAlert(true); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">Пополнение с карты</p>
+                  <p className="text-xs text-muted-foreground">Перевод с банковской карты</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { setDepositModal(false); navigate("/dashboard/swift-deposit"); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">Пополнение через IBAN / SWIFT</p>
+                  <p className="text-xs text-muted-foreground">Международный банковский перевод</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
             </div>
           </div>
         </div>
@@ -467,17 +478,17 @@ const OverviewTab = () => {
                   </div>
                   <span className="text-foreground text-[11px]">{t("Перевод")}</span>
                 </button>
-                <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setTopUpAlert(true); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setDepositModal(true); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-primary" />
+                    <Wallet className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-foreground text-[11px]">{t("Пополнить")}</span>
                 </button>
-                <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setPayAlert(true); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Smartphone className="w-4 h-4 text-primary" />
+                    <Receipt className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-foreground text-[11px]">{t("Оплатить")}</span>
+                  <span className="text-foreground text-[11px]">{t("Платежи")}</span>
                 </button>
                 <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -639,17 +650,17 @@ const OverviewTab = () => {
                 </div>
                 <span className="text-foreground text-xs">{t("Перевод")}</span>
               </button>
-              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setTopUpAlert(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setDepositModal(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-primary" />
+                  <Wallet className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-foreground text-xs">{t("Пополнить")}</span>
               </button>
-              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } setPayAlert(true); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Smartphone className="w-4 h-4 text-primary" />
+                  <Receipt className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-foreground text-xs">{t("Оплатить")}</span>
+                <span className="text-foreground text-xs">{t("Платежи")}</span>
               </button>
               <button onClick={() => navigate("/dashboard/transfers")} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
