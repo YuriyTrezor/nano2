@@ -27,7 +27,7 @@ const BonusesTab = () => {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const totalCashback = mockHistory.reduce((sum, h) => sum + h.amount, 0);
+  const totalCashback = 0;
   const filteredHistory = selectedCategory
     ? mockHistory.filter(h => h.category === selectedCategory)
     : mockHistory;
