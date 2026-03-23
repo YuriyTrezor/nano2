@@ -268,6 +268,7 @@ const OverviewTab = () => {
                 <div className="text-left flex-1">
                   <p className="text-sm font-medium text-foreground">Пополнение через IBAN / SWIFT</p>
                   <p className="text-xs text-muted-foreground">Международный банковский перевод</p>
+                  <p className="text-xs text-orange-400 mt-1">⚠ Обязательно свяжитесь с менеджером перед оплатой</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
