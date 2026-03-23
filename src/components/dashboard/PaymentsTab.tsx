@@ -78,11 +78,7 @@ interface AutoPayment {
   nextDate: string;
 }
 
-const mockAutoPayments: AutoPayment[] = [
-  { id: "1", category: "Мобильная связь", account: "+7 (999) 123-45-67", amount: "500", active: true, nextDate: "25.03.2026" },
-  { id: "2", category: "Интернет", account: "Договор №847291", amount: "890", active: true, nextDate: "01.04.2026" },
-  { id: "3", category: "ЖКХ", account: "ЛС 4820193756", amount: "6 240", active: false, nextDate: "05.04.2026" },
-];
+const mockAutoPayments: AutoPayment[] = [];
 
 type Step = "categories" | "providers" | "blocked" | "addAuto" | "addAutoProvider";
 
@@ -414,67 +410,74 @@ const PaymentsTab = () => {
         </div>
       )}
 
-      {/* Auto payments — always visible */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">{t("Автоплатежи")}</h2>
-        </div>
+      {/* Шаблоны автоплатежей — always visible at bottom */}
+      {step === "categories" && (
+        <div className="border-t border-border pt-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">{t("Шаблоны автоплатежей")}</h2>
+          </div>
 
-        <div className="space-y-2">
-          {autoPayments.length === 0 && (
-            <p className="text-muted-foreground text-sm text-center py-4">Нет автоплатежей</p>
-          )}
-          {autoPayments.map((ap) => {
-            const Icon = getCategoryIcon(ap.category);
-            const color = getCategoryColor(ap.category);
-            return (
-              <div
-                key={ap.id}
-                className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                  ap.active ? "bg-card border-border" : "bg-muted/30 border-border/50 opacity-60"
-                }`}
-              >
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${color}15` }}
-                >
-                  <Icon className="w-4 h-4" style={{ color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{ap.category}</p>
-                  <p className="text-xs text-muted-foreground truncate">{ap.account}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-semibold text-foreground">{ap.amount} ₽</p>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span className="text-[10px]">{ap.nextDate}</span>
+          {autoPayments.length === 0 ? (
+            <div className="bg-card border border-dashed border-border rounded-xl p-6 text-center">
+              <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm">Нет сохранённых шаблонов</p>
+              <p className="text-muted-foreground/60 text-xs mt-1">Шаблоны появятся после настройки автоплатежей</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {autoPayments.map((ap) => {
+                const Icon = getCategoryIcon(ap.category);
+                const color = getCategoryColor(ap.category);
+                return (
+                  <div
+                    key={ap.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                      ap.active ? "bg-card border-border" : "bg-muted/30 border-border/50 opacity-60"
+                    }`}
+                  >
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${color}15` }}
+                    >
+                      <Icon className="w-4 h-4" style={{ color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{ap.category}</p>
+                      <p className="text-xs text-muted-foreground truncate">{ap.account}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-foreground">{ap.amount} ₽</p>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-[10px]">{ap.nextDate}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => toggleAuto(ap.id)}
+                        className="p-1 rounded-md hover:bg-secondary transition-colors"
+                        title={ap.active ? "Отключить" : "Включить"}
+                      >
+                        {ap.active ? (
+                          <ToggleRight className="w-5 h-5 text-primary" />
+                        ) : (
+                          <ToggleLeft className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => deleteAuto(ap.id)}
+                        className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => toggleAuto(ap.id)}
-                    className="p-1 rounded-md hover:bg-secondary transition-colors"
-                    title={ap.active ? "Отключить" : "Включить"}
-                  >
-                    {ap.active ? (
-                      <ToggleRight className="w-5 h-5 text-primary" />
-                    ) : (
-                      <ToggleLeft className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => deleteAuto(ap.id)}
-                    className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

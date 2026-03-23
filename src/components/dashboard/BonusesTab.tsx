@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Gift, Percent, Star, TrendingUp, ChevronRight, Sparkles, ShoppingBag, Utensils, Car, Plane, Pill, Fuel } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Gift, Star, TrendingUp, Sparkles, ShoppingBag, Utensils, Car, Plane, Pill, Fuel, Crown, Gem, Award, ChevronRight } from "lucide-react";
 
 const cashbackCategories = [
   { icon: ShoppingBag, label: "Супермаркеты", percent: 5, color: "hsl(150,60%,45%)" },
@@ -13,40 +11,26 @@ const cashbackCategories = [
   { icon: Pill, label: "Аптеки", percent: 3, color: "hsl(0,60%,50%)" },
 ];
 
-interface BonusHistory {
-  id: string;
-  title: string;
-  amount: number;
-  date: string;
-  category: string;
-}
-
-const mockHistory: BonusHistory[] = [];
+const loyaltyLevels = [
+  { name: "Standard", icon: Star, color: "hsl(210,10%,55%)", minSpend: 0, cashbackBonus: 0, perks: ["Базовый кэшбэк по категориям"] },
+  { name: "Gold", icon: Crown, color: "hsl(45,85%,50%)", minSpend: 5000, cashbackBonus: 1, perks: ["+1% ко всем категориям", "Приоритетная поддержка"] },
+  { name: "Platinum", icon: Gem, color: "hsl(220,15%,65%)", minSpend: 25000, cashbackBonus: 2, perks: ["+2% ко всем категориям", "Персональный менеджер", "Бесплатные переводы"] },
+  { name: "Diamond", icon: Award, color: "hsl(195,80%,55%)", minSpend: 100000, cashbackBonus: 3, perks: ["+3% ко всем категориям", "VIP-обслуживание", "Эксклюзивные предложения", "Кэшбэк без лимита"] },
+];
 
 const BonusesTab = () => {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedLevel, setExpandedLevel] = useState<string | null>(null);
 
   const totalCashback = 0;
-  const filteredHistory = selectedCategory
-    ? mockHistory.filter(h => h.category === selectedCategory)
-    : mockHistory;
-
-  const getCategoryIcon = (label: string) => {
-    const cat = cashbackCategories.find(c => c.label === label);
-    return cat ? cat.icon : Gift;
-  };
-
-  const getCategoryColor = (label: string) => {
-    const cat = cashbackCategories.find(c => c.label === label);
-    return cat ? cat.color : "hsl(210,10%,50%)";
-  };
+  const currentLevel = loyaltyLevels[0]; // Standard by default
 
   return (
     <div className="space-y-6 w-full">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("Бонусы и кэшбэк")}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("Ваши бонусы, категории кэшбэка и история начислений")}</p>
+        <p className="text-muted-foreground text-sm mt-1">{t("Ваши бонусы, категории кэшбэка и программа лояльности")}</p>
       </div>
 
       {/* Total cashback card */}
@@ -98,75 +82,81 @@ const BonusesTab = () => {
         </div>
       </div>
 
-      {/* Bonus info */}
-      <div className="bg-card border border-border rounded-xl p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Star className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">{t("Программа лояльности")}</p>
-            <p className="text-xs text-muted-foreground">{t("Уровень: Стандарт")}</p>
-          </div>
-        </div>
-        <div className="bg-secondary rounded-lg p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">Прогресс до «Gold»</span>
-            <span className="text-xs font-medium text-foreground">2 350 / 5 000 ₽</span>
-          </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: "47%" }} />
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-1.5">
-            Потратьте ещё 2 650 ₽ для повышения уровня
-          </p>
+      {/* Loyalty Program - redesigned as tiered cards */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">{t("Программа лояльности")}</h2>
+        <div className="space-y-2">
+          {loyaltyLevels.map((level, idx) => {
+            const LevelIcon = level.icon;
+            const isCurrent = level.name === currentLevel.name;
+            const isExpanded = expandedLevel === level.name;
+            const isLocked = idx > 0;
+
+            return (
+              <button
+                key={level.name}
+                onClick={() => setExpandedLevel(isExpanded ? null : level.name)}
+                className={`w-full text-left rounded-xl border p-4 transition-all duration-200 ${
+                  isCurrent
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-primary/20"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${level.color}20` }}
+                  >
+                    <LevelIcon className="w-5 h-5" style={{ color: level.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">{level.name}</p>
+                      {isCurrent && (
+                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                          Текущий
+                        </span>
+                      )}
+                      {isLocked && !isCurrent && (
+                        <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                          от {level.minSpend.toLocaleString("ru-RU")} ₽/мес
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      +{level.cashbackBonus}% бонус ко всем категориям
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0 ${
+                      isExpanded ? "rotate-90" : ""
+                    }`}
+                  />
+                </div>
+
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5 animate-in fade-in-0 duration-150">
+                    {level.perks.map((perk, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: level.color }} />
+                        <p className="text-xs text-muted-foreground">{perk}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* History */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">
-            {t("История начислений")}
-            {selectedCategory && (
-              <span className="text-muted-foreground font-normal ml-2">— {selectedCategory}</span>
-            )}
-          </h2>
-          {selectedCategory && (
-            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedCategory(null)}>
-              Все
-            </Button>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          {filteredHistory.length === 0 && (
-            <p className="text-muted-foreground text-sm text-center py-4">Нет начислений</p>
-          )}
-          {filteredHistory.map((h) => {
-            const Icon = getCategoryIcon(h.category);
-            const color = getCategoryColor(h.category);
-            return (
-              <div
-                key={h.id}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card"
-              >
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${color}15` }}
-                >
-                  <Icon className="w-4 h-4" style={{ color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{h.title}</p>
-                  <p className="text-xs text-muted-foreground">{h.category}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-semibold text-primary">+{h.amount.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</p>
-                  <p className="text-[10px] text-muted-foreground">{h.date}</p>
-                </div>
-              </div>
-            );
-          })}
+        <h2 className="text-sm font-semibold text-foreground mb-3">{t("История начислений")}</h2>
+        <div className="bg-card border border-dashed border-border rounded-xl p-6 text-center">
+          <Gift className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-muted-foreground text-sm">Нет начислений</p>
+          <p className="text-muted-foreground/60 text-xs mt-1">Начисления появятся после совершения операций</p>
         </div>
       </div>
     </div>

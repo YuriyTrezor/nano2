@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Globe, Copy, CheckCircle2, Building2, Info, ShieldCheck } from "lucide-react";
+import { ArrowLeftRight, Globe, Copy, CheckCircle2, Building2, Info, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -95,6 +95,19 @@ const SwiftDepositTab = () => {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Manager warning */}
+      <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/30 rounded-2xl p-5 sm:p-6 mb-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-foreground font-semibold mb-2">Обязательно свяжитесь с менеджером</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Перед выполнением SWIFT-перевода обязательно свяжитесь с вашим персональным менеджером для согласования реквизитов и суммы перевода.
+            </p>
+          </div>
         </div>
       </div>
 
