@@ -246,7 +246,7 @@ const OverviewTab = () => {
             </div>
             <div className="space-y-3">
               <button
-                onClick={() => { setDepositModal(false); setTopUpAlert(true); }}
+                onClick={() => { setDepositModal(false); setCardDepositOpen(true); }}
                 className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">

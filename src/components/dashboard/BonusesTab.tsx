@@ -59,6 +59,7 @@ const BonusesTab = () => {
             <p className="text-sm font-medium text-primary-foreground/80">{t("Накопленный кэшбэк")}</p>
           </div>
           <p className="text-3xl font-bold text-primary-foreground">{totalCashback.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</p>
+          <p className="text-xs text-primary-foreground/60 mt-1">{t("Начисления появятся после совершения операций")}</p>
           <div className="flex items-center gap-2 mt-2">
             <TrendingUp className="w-4 h-4 text-primary-foreground/70" />
             <span className="text-xs text-primary-foreground/70">{t("За этот месяц")}</span>

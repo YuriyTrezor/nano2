@@ -418,21 +418,6 @@ const PaymentsTab = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">{t("Автоплатежи")}</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs gap-1.5"
-            onClick={() => {
-              setStep("addAuto");
-              setAddAutoCategory(null);
-              setAddAutoProvider(null);
-              setAddAutoAccount("");
-              setAddAutoAmount("");
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t("Добавить")}
-          </Button>
         </div>
 
         <div className="space-y-2">
