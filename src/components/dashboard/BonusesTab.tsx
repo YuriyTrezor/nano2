@@ -21,20 +21,13 @@ interface BonusHistory {
   category: string;
 }
 
-const mockHistory: BonusHistory[] = [
-  { id: "1", title: "Перекрёсток", amount: 124.5, date: "20.03.2026", category: "Супермаркеты" },
-  { id: "2", title: "Яндекс.Еда", amount: 89.0, date: "19.03.2026", category: "Рестораны" },
-  { id: "3", title: "Лукойл", amount: 67.3, date: "18.03.2026", category: "АЗС" },
-  { id: "4", title: "Метро", amount: 12.0, date: "17.03.2026", category: "Транспорт" },
-  { id: "5", title: "Аэрофлот", amount: 350.0, date: "15.03.2026", category: "Путешествия" },
-  { id: "6", title: "Горздрав", amount: 45.0, date: "14.03.2026", category: "Аптеки" },
-];
+const mockHistory: BonusHistory[] = [];
 
 const BonusesTab = () => {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const totalCashback = mockHistory.reduce((sum, h) => sum + h.amount, 0);
+  const totalCashback = 0;
   const filteredHistory = selectedCategory
     ? mockHistory.filter(h => h.category === selectedCategory)
     : mockHistory;
@@ -50,7 +43,7 @@ const BonusesTab = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("Бонусы и кэшбэк")}</h1>
         <p className="text-muted-foreground text-sm mt-1">{t("Ваши бонусы, категории кэшбэка и история начислений")}</p>
@@ -66,6 +59,7 @@ const BonusesTab = () => {
             <p className="text-sm font-medium text-primary-foreground/80">{t("Накопленный кэшбэк")}</p>
           </div>
           <p className="text-3xl font-bold text-primary-foreground">{totalCashback.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</p>
+          <p className="text-xs text-primary-foreground/60 mt-1">{t("Начисления появятся после совершения операций")}</p>
           <div className="flex items-center gap-2 mt-2">
             <TrendingUp className="w-4 h-4 text-primary-foreground/70" />
             <span className="text-xs text-primary-foreground/70">{t("За этот месяц")}</span>

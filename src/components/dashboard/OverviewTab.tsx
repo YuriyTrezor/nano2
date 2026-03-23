@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
 import CurrencyRatesCompact from "@/components/dashboard/CurrencyRatesCompact";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import {
@@ -49,6 +50,9 @@ const OverviewTab = () => {
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
   const [depositModal, setDepositModal] = useState(false);
+  const [cardDepositOpen, setCardDepositOpen] = useState(false);
+  const [cardDepositNumber, setCardDepositNumber] = useState("");
+  const [cardDepositAmount, setCardDepositAmount] = useState("");
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
@@ -246,7 +250,7 @@ const OverviewTab = () => {
             </div>
             <div className="space-y-3">
               <button
-                onClick={() => { setDepositModal(false); setTopUpAlert(true); }}
+                onClick={() => { setDepositModal(false); setCardDepositOpen(true); }}
                 className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -268,8 +272,58 @@ const OverviewTab = () => {
                 <div className="text-left flex-1">
                   <p className="text-sm font-medium text-foreground">Пополнение через IBAN / SWIFT</p>
                   <p className="text-xs text-muted-foreground">Международный банковский перевод</p>
+                  <p className="text-xs text-orange-400 mt-1">⚠ Обязательно свяжитесь с менеджером перед оплатой</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card deposit form modal */}
+      {cardDepositOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setCardDepositOpen(false)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-foreground text-lg font-bold">Пополнение с карты</h2>
+              <button onClick={() => setCardDepositOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Номер карты отправителя</label>
+                <Input
+                  value={cardDepositNumber}
+                  onChange={e => setCardDepositNumber(e.target.value)}
+                  placeholder="0000 0000 0000 0000"
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Сумма пополнения, ₽</label>
+                <Input
+                  value={cardDepositAmount}
+                  onChange={e => setCardDepositAmount(e.target.value)}
+                  placeholder="0"
+                  type="number"
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                <p className="text-xs text-orange-400">
+                  ⚠ Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером для настройки.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setCardDepositOpen(false);
+                  setCardDepositNumber("");
+                  setCardDepositAmount("");
+                  toast("Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером.");
+                }}
+                className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-sm hover:bg-primary/90 transition-colors"
+              >
+                Пополнить
               </button>
             </div>
           </div>

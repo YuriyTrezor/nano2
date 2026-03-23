@@ -185,7 +185,7 @@ const PaymentsTab = () => {
   const addAutoProviders = addAutoCategory ? providersMap[addAutoCategory] || [] : [];
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("Платежи и автоплатежи")}</h1>
         <p className="text-muted-foreground text-sm mt-1">{t("Оплата услуг и управление автоплатежами")}</p>
@@ -418,21 +418,6 @@ const PaymentsTab = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">{t("Автоплатежи")}</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs gap-1.5"
-            onClick={() => {
-              setStep("addAuto");
-              setAddAutoCategory(null);
-              setAddAutoProvider(null);
-              setAddAutoAccount("");
-              setAddAutoAmount("");
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t("Добавить")}
-          </Button>
         </div>
 
         <div className="space-y-2">
