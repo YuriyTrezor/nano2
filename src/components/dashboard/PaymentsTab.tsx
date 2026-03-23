@@ -185,7 +185,7 @@ const PaymentsTab = () => {
   const addAutoProviders = addAutoCategory ? providersMap[addAutoCategory] || [] : [];
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("Платежи и автоплатежи")}</h1>
         <p className="text-muted-foreground text-sm mt-1">{t("Оплата услуг и управление автоплатежами")}</p>
