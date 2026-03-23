@@ -43,7 +43,7 @@ const BonusesTab = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("Бонусы и кэшбэк")}</h1>
         <p className="text-muted-foreground text-sm mt-1">{t("Ваши бонусы, категории кэшбэка и история начислений")}</p>
