@@ -22,6 +22,7 @@ const mainLinks = [
   { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
   { to: "/dashboard/payments", icon: Receipt, label: "Платежи" },
   { to: "/dashboard/bonuses", icon: Activity, label: "Бонусы" },
+  { to: "/dashboard/investments", icon: BarChart3, label: "Инвестиции" },
   { to: "/dashboard/swift-deposit", icon: Globe, label: "Пополнение SWIFT" },
 ];
 
