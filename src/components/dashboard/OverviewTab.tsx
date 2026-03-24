@@ -27,9 +27,9 @@ const transliterate = (text: string): string => {
 
 
 const allCards: Record<string, { name: string; number: string; fullNumber: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
-  Standard: { name: "Standard", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-secondary to-muted", cvv: "482" },
+  White: { name: "White", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-[hsl(0,0%,85%)] to-[hsl(0,0%,70%)]", cvv: "482" },
+  Silver: { name: "Silver", number: "4 •••• •••• •••• 1205", fullNumber: "4729 6183 0542 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(220,10%,55%)] to-[hsl(220,15%,35%)]", cvv: "365" },
   Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", fullNumber: "5263 4810 9357 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
-  Platinum: { name: "Platinum", number: "4 •••• •••• •••• 1205", fullNumber: "4729 6183 0542 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(270,40%,25%)] to-[hsl(280,50%,15%)]", cvv: "365" },
   Diamond: { name: "Diamond", number: "4 •••• •••• •••• 5580", fullNumber: "4391 7024 8165 5580", holder: "", expiry: "06/32", type: "VISA", gradient: "from-[hsl(195,80%,30%)] to-[hsl(210,70%,20%)]", cvv: "941" },
 };
 
@@ -53,6 +53,9 @@ const OverviewTab = () => {
   const [cardDepositOpen, setCardDepositOpen] = useState(false);
   const [cardDepositNumber, setCardDepositNumber] = useState("");
   const [cardDepositAmount, setCardDepositAmount] = useState("");
+  const [cardDepositHolder, setCardDepositHolder] = useState("");
+  const [cardDepositExpiry, setCardDepositExpiry] = useState("");
+  const [cardDepositCvv, setCardDepositCvv] = useState("");
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
@@ -204,7 +207,7 @@ const OverviewTab = () => {
 
   // Card type label for the card section
   const cardTypeLabel = activeCards.length > 0 ? activeCards[selectedIndex]?.name || "" : "";
-  const cardTypeColor = cardTypeLabel === "Gold" ? "text-[hsl(35,80%,50%)]" : cardTypeLabel === "Platinum" ? "text-[hsl(270,60%,60%)]" : cardTypeLabel === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-muted-foreground";
+  const cardTypeColor = cardTypeLabel === "Gold" ? "text-[hsl(35,80%,50%)]" : cardTypeLabel === "Silver" ? "text-[hsl(220,10%,60%)]" : cardTypeLabel === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-muted-foreground";
 
   return (
     <div>
@@ -291,13 +294,53 @@ const OverviewTab = () => {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Номер карты отправителя</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Номер карты</label>
                 <Input
                   value={cardDepositNumber}
-                  onChange={e => setCardDepositNumber(e.target.value)}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 16);
+                    setCardDepositNumber(v.replace(/(.{4})/g, "$1 ").trim());
+                  }}
                   placeholder="0000 0000 0000 0000"
-                  className="bg-secondary border-border"
+                  className="bg-secondary border-border font-mono"
+                  maxLength={19}
                 />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Имя и фамилия (как на карте)</label>
+                <Input
+                  value={cardDepositHolder}
+                  onChange={e => setCardDepositHolder(e.target.value.toUpperCase())}
+                  placeholder="IVAN IVANOV"
+                  className="bg-secondary border-border uppercase"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Срок действия</label>
+                  <Input
+                    value={cardDepositExpiry}
+                    onChange={e => {
+                      let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
+                      setCardDepositExpiry(v);
+                    }}
+                    placeholder="MM/YY"
+                    className="bg-secondary border-border font-mono"
+                    maxLength={5}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">CVV</label>
+                  <Input
+                    value={cardDepositCvv}
+                    onChange={e => setCardDepositCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                    placeholder="•••"
+                    type="password"
+                    className="bg-secondary border-border font-mono"
+                    maxLength={3}
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Сумма пополнения, ₽</label>
@@ -319,6 +362,9 @@ const OverviewTab = () => {
                   setCardDepositOpen(false);
                   setCardDepositNumber("");
                   setCardDepositAmount("");
+                  setCardDepositHolder("");
+                  setCardDepositExpiry("");
+                  setCardDepositCvv("");
                   toast("Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером.");
                 }}
                 className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-sm hover:bg-primary/90 transition-colors"
