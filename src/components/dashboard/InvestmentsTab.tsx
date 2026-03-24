@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { TrendingUp, TrendingDown, BarChart3, Shield, AlertTriangle, ChevronRight, Lock } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface Investment {
@@ -148,6 +149,34 @@ const InvestmentsTab = () => {
           ))}
         </div>
       )}
+
+      {/* Auto-investment templates */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3">{t("Шаблоны автоинвестирования")}</h3>
+        <div className="space-y-2">
+          {[
+            { name: "Консервативный", desc: "ОФЗ 70% + ETF 30%", risk: "Низкий риск", color: "text-primary" },
+            { name: "Сбалансированный", desc: "Акции 50% + Облигации 30% + ETF 20%", risk: "Средний риск", color: "text-[hsl(35,80%,55%)]" },
+            { name: "Агрессивный", desc: "Акции 80% + ETF 20%", risk: "Высокий риск", color: "text-destructive" },
+          ].map(tmpl => (
+            <button
+              key={tmpl.name}
+              onClick={() => toast.info("Для подключения автоинвестирования необходимо открыть брокерский счёт. Свяжитесь с менеджером.")}
+              className="flex items-center gap-3 w-full p-3 rounded-xl border border-border bg-card hover:border-primary/30 transition-all"
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <BarChart3 className={`w-5 h-5 ${tmpl.color}`} />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">{tmpl.name}</p>
+                <p className="text-xs text-muted-foreground">{tmpl.desc}</p>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${tmpl.color} bg-secondary shrink-0`}>{tmpl.risk}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Info */}
       <div className="bg-card border border-border rounded-xl p-4">

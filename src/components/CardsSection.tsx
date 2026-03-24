@@ -6,27 +6,45 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const cardData = [
   {
-    name: "Standard",
+    name: "White",
     limit: "2 500 000 ₽/мес",
     features: ["Кэшбэк 1%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
     featuresEn: ["1% Cashback", "Contactless payment", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT"],
     extrasEn: ["SWIFT transfers available"],
-    gradient: "from-[hsl(220,15%,25%)] to-[hsl(220,20%,15%)]",
-    borderColor: "hsl(220,15%,30%)",
-    accentColor: "hsl(220,15%,60%)",
-    accentTw: "text-[hsl(220,15%,60%)]",
-    shadowColor: "hsl(220,15%,40%,0.15)",
+    gradient: "from-[hsl(0,0%,85%)] to-[hsl(0,0%,70%)]",
+    borderColor: "hsl(0,0%,40%)",
+    accentColor: "hsl(0,0%,60%)",
+    accentTw: "text-[hsl(0,0%,60%)]",
+    shadowColor: "hsl(0,0%,50%,0.15)",
     icon: CreditCard,
     type: "visa" as const,
-    label: "Standard Card",
+    label: "White Card",
     badge: null,
+    darkText: true,
   },
   {
-    name: "Gold",
+    name: "Silver",
     limit: "5 000 000 ₽/мес",
     features: ["Кэшбэк 3%", "Бесконтактная оплата", "Apple Pay / Google Pay", "Бесплатные переводы"],
     featuresEn: ["3% Cashback", "Contactless payment", "Apple Pay / Google Pay", "Free transfers"],
+    extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
+    extrasEn: ["SWIFT transfers available", "Physical card available"],
+    gradient: "from-[hsl(220,10%,55%)] to-[hsl(220,15%,35%)]",
+    borderColor: "hsl(220,10%,40%)",
+    accentColor: "hsl(220,10%,65%)",
+    accentTw: "text-[hsl(220,10%,65%)]",
+    shadowColor: "hsl(220,10%,50%,0.15)",
+    icon: CreditCard,
+    type: "visa" as const,
+    label: "Silver Card",
+    badge: "Popular",
+  },
+  {
+    name: "Gold",
+    limit: "10 000 000 ₽/мес",
+    features: ["Кэшбэк 5%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
+    featuresEn: ["5% Cashback", "Contactless payment", "Apple Pay / Google Pay"],
     extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
     extrasEn: ["SWIFT transfers available", "Physical card available"],
     gradient: "from-[hsl(35,80%,50%)] to-[hsl(25,90%,40%)]",
@@ -37,23 +55,6 @@ const cardData = [
     icon: Crown,
     type: "mastercard" as const,
     label: "Gold Card",
-    badge: "Popular",
-  },
-  {
-    name: "Platinum",
-    limit: "10 000 000 ₽/мес",
-    features: ["Кэшбэк 5%", "Бесконтактная оплата", "Apple Pay / Google Pay"],
-    featuresEn: ["5% Cashback", "Contactless payment", "Apple Pay / Google Pay"],
-    extras: ["Доступны переводы SWIFT", "Возможность выпуска пластиковой карты"],
-    extrasEn: ["SWIFT transfers available", "Physical card available"],
-    gradient: "from-[hsl(270,60%,50%)] to-[hsl(280,70%,35%)]",
-    borderColor: "hsl(270,40%,35%)",
-    accentColor: "hsl(270,60%,65%)",
-    accentTw: "text-[hsl(270,60%,65%)]",
-    shadowColor: "hsl(270,60%,50%,0.15)",
-    icon: Gem,
-    type: "visa" as const,
-    label: "Platinum Card",
     badge: null,
   },
 ];
@@ -69,33 +70,41 @@ const diamondCard = {
   type: "visa" as const,
 };
 
-const MiniCard = ({ gradient, label, type, icon: Icon }: { gradient: string; label: string; type: "visa" | "mastercard"; icon?: React.ElementType }) => (
-  <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
-    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
-    <div className="absolute top-0 right-0 w-20 h-20 rounded-full border border-white/10 -translate-y-6 translate-x-6" />
-    <div className="flex justify-between items-start relative z-10">
-      <div>
-        <span className="text-white/70 text-[10px]">NeoBank</span>
-        <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+const MiniCard = ({ gradient, label, type, icon: Icon, darkText }: { gradient: string; label: string; type: "visa" | "mastercard"; icon?: React.ElementType; darkText?: boolean }) => {
+  const textColor = darkText ? "text-black" : "text-white";
+  const textOpacity = darkText ? "text-black/70" : "text-white/70";
+  const textOpacityLow = darkText ? "text-black/40" : "text-white/40";
+  const textOpacityMed = darkText ? "text-black/60" : "text-white/60";
+  const textOpacityHigh = darkText ? "text-black/80" : "text-white/80";
+  const borderOpacity = darkText ? "border-black/10" : "border-white/10";
+  return (
+    <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
+      <div className={`absolute inset-0 bg-gradient-to-tr ${darkText ? "from-black/5" : "from-white/5"} to-transparent`} />
+      <div className={`absolute top-0 right-0 w-20 h-20 rounded-full border ${borderOpacity} -translate-y-6 translate-x-6`} />
+      <div className="flex justify-between items-start relative z-10">
+        <div>
+          <span className={`${textOpacity} text-[10px]`}>NeoBank</span>
+          <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+        </div>
+        {Icon ? <Icon className={`w-5 h-5 ${textOpacityLow}`} /> : <Wifi className={`w-4 h-4 ${textOpacityLow} rotate-90`} />}
       </div>
-      {Icon ? <Icon className="w-5 h-5 text-white/30" /> : <Wifi className="w-4 h-4 text-white/20 rotate-90" />}
-    </div>
-    <div className="flex justify-between items-end relative z-10">
-      <div>
-        <p className="text-white/40 font-mono text-sm tracking-wider">{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
-        <p className="text-white/60 text-[10px] mt-1">{label}</p>
+      <div className="flex justify-between items-end relative z-10">
+        <div>
+          <p className={`${textOpacityLow} font-mono text-sm tracking-wider`}>{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
+          <p className={`${textOpacityMed} text-[10px] mt-1`}>{label}</p>
+        </div>
+        <p className={`${textOpacityHigh} font-bold text-sm`}>
+          {type === "visa" ? "VISA" : (
+            <span className="flex">
+              <span className="w-4 h-4 rounded-full bg-red-500 -mr-1.5 opacity-80" />
+              <span className="w-4 h-4 rounded-full bg-orange-400 opacity-80" />
+            </span>
+          )}
+        </p>
       </div>
-      <p className="text-white/80 font-bold text-sm">
-        {type === "visa" ? "VISA" : (
-          <span className="flex">
-            <span className="w-4 h-4 rounded-full bg-red-500 -mr-1.5 opacity-80" />
-            <span className="w-4 h-4 rounded-full bg-orange-400 opacity-80" />
-          </span>
-        )}
-      </p>
     </div>
-  </div>
-);
+  );
+};
 
 const CardsSection = () => {
   const navigate = useNavigate();
@@ -116,7 +125,7 @@ const CardsSection = () => {
               className="bg-card border border-border rounded-2xl p-5 flex flex-col hover:border-primary/30 transition-all"
               style={{ boxShadow: `0 4px 20px ${card.shadowColor}` }}
             >
-              <MiniCard gradient={card.gradient} label={card.label} type={card.type} icon={card.icon} />
+              <MiniCard gradient={card.gradient} label={card.label} type={card.type} icon={card.icon} darkText={(card as any).darkText} />
               <div className="flex items-center gap-2 mt-5">
                 <h3 className="text-lg font-bold text-foreground">{card.name}</h3>
                 {card.badge && (
