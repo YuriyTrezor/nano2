@@ -70,33 +70,41 @@ const diamondCard = {
   type: "visa" as const,
 };
 
-const MiniCard = ({ gradient, label, type, icon: Icon }: { gradient: string; label: string; type: "visa" | "mastercard"; icon?: React.ElementType }) => (
-  <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
-    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
-    <div className="absolute top-0 right-0 w-20 h-20 rounded-full border border-white/10 -translate-y-6 translate-x-6" />
-    <div className="flex justify-between items-start relative z-10">
-      <div>
-        <span className="text-white/70 text-[10px]">NeoBank</span>
-        <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+const MiniCard = ({ gradient, label, type, icon: Icon, darkText }: { gradient: string; label: string; type: "visa" | "mastercard"; icon?: React.ElementType; darkText?: boolean }) => {
+  const textColor = darkText ? "text-black" : "text-white";
+  const textOpacity = darkText ? "text-black/70" : "text-white/70";
+  const textOpacityLow = darkText ? "text-black/40" : "text-white/40";
+  const textOpacityMed = darkText ? "text-black/60" : "text-white/60";
+  const textOpacityHigh = darkText ? "text-black/80" : "text-white/80";
+  const borderOpacity = darkText ? "border-black/10" : "border-white/10";
+  return (
+    <div className={`bg-gradient-to-br ${gradient} rounded-xl p-4 h-36 flex flex-col justify-between relative overflow-hidden`}>
+      <div className={`absolute inset-0 bg-gradient-to-tr ${darkText ? "from-black/5" : "from-white/5"} to-transparent`} />
+      <div className={`absolute top-0 right-0 w-20 h-20 rounded-full border ${borderOpacity} -translate-y-6 translate-x-6`} />
+      <div className="flex justify-between items-start relative z-10">
+        <div>
+          <span className={`${textOpacity} text-[10px]`}>NeoBank</span>
+          <div className="w-6 h-4 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded mt-1" />
+        </div>
+        {Icon ? <Icon className={`w-5 h-5 ${textOpacityLow}`} /> : <Wifi className={`w-4 h-4 ${textOpacityLow} rotate-90`} />}
       </div>
-      {Icon ? <Icon className="w-5 h-5 text-white/30" /> : <Wifi className="w-4 h-4 text-white/20 rotate-90" />}
-    </div>
-    <div className="flex justify-between items-end relative z-10">
-      <div>
-        <p className="text-white/40 font-mono text-sm tracking-wider">{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
-        <p className="text-white/60 text-[10px] mt-1">{label}</p>
+      <div className="flex justify-between items-end relative z-10">
+        <div>
+          <p className={`${textOpacityLow} font-mono text-sm tracking-wider`}>{type === "mastercard" ? "5" : "4"}••• •••• •••• ••••</p>
+          <p className={`${textOpacityMed} text-[10px] mt-1`}>{label}</p>
+        </div>
+        <p className={`${textOpacityHigh} font-bold text-sm`}>
+          {type === "visa" ? "VISA" : (
+            <span className="flex">
+              <span className="w-4 h-4 rounded-full bg-red-500 -mr-1.5 opacity-80" />
+              <span className="w-4 h-4 rounded-full bg-orange-400 opacity-80" />
+            </span>
+          )}
+        </p>
       </div>
-      <p className="text-white/80 font-bold text-sm">
-        {type === "visa" ? "VISA" : (
-          <span className="flex">
-            <span className="w-4 h-4 rounded-full bg-red-500 -mr-1.5 opacity-80" />
-            <span className="w-4 h-4 rounded-full bg-orange-400 opacity-80" />
-          </span>
-        )}
-      </p>
     </div>
-  </div>
-);
+  );
+};
 
 const CardsSection = () => {
   const navigate = useNavigate();
@@ -117,7 +125,7 @@ const CardsSection = () => {
               className="bg-card border border-border rounded-2xl p-5 flex flex-col hover:border-primary/30 transition-all"
               style={{ boxShadow: `0 4px 20px ${card.shadowColor}` }}
             >
-              <MiniCard gradient={card.gradient} label={card.label} type={card.type} icon={card.icon} />
+              <MiniCard gradient={card.gradient} label={card.label} type={card.type} icon={card.icon} darkText={(card as any).darkText} />
               <div className="flex items-center gap-2 mt-5">
                 <h3 className="text-lg font-bold text-foreground">{card.name}</h3>
                 {card.badge && (
