@@ -99,6 +99,8 @@ const TransfersTab = () => {
   useEffect(() => {
     if (searchParams.get("new") === "1") {
       setShowForm(true);
+      const tab = searchParams.get("tab");
+      if (tab === "own" || tab === "bank" || tab === "card") setActiveTab(tab);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
