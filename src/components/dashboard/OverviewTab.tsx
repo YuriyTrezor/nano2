@@ -244,6 +244,59 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Transfer modal */}
+      {transferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setTransferModal(false)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-foreground text-lg font-bold">Перевод</h2>
+              <button onClick={() => setTransferModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => { setTransferModal(false); navigate("/dashboard/transfers?new=1&tab=card"); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">На карту</p>
+                  <p className="text-xs text-muted-foreground">Перевод по номеру карты</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { setTransferModal(false); navigate("/dashboard/transfers?new=1&tab=own"); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <ArrowUpRight className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">Между своими</p>
+                  <p className="text-xs text-muted-foreground">Между картами NeoBank</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { setTransferModal(false); navigate("/dashboard/transfers?new=1&tab=bank"); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">В другой банк</p>
+                  <p className="text-xs text-muted-foreground">По БИК и расчётному счёту</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Deposit modal */}
       {depositModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setDepositModal(false)}>
