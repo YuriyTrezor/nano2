@@ -257,6 +257,11 @@ const CardsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeCards.map((card, idx) => {
               const isCardBlocked = blockedCards.includes(card.name);
+              const isDark = (card as any).darkText === true;
+              const txt = isDark ? "text-black" : "text-white";
+              const txtMid = isDark ? "text-black/60" : "text-white/60";
+              const txtLow = isDark ? "text-black/50" : "text-white/50";
+              const txtFaint = isDark ? "text-black/40" : "text-white/40";
               return (
               <div
                 key={card.name}
@@ -298,28 +303,28 @@ const CardsTab = () => {
                             <div className="card-chip">
                               <div className="card-chip-lines" />
                             </div>
-                            <Wifi className="w-4 h-4 text-white/40 rotate-90" />
+                             <Wifi className={`w-4 h-4 ${txtFaint} rotate-90`} />
                           </div>
-                          <p className="text-white/60 font-mono text-[10px] mb-0.5 relative z-10 card-text-embossed">BALANCE</p>
-                          <p className="text-white font-bold text-base mb-1 relative z-10">₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                          <p className={`${txtMid} font-mono text-[10px] mb-0.5 relative z-10 card-text-embossed`}>BALANCE</p>
+                          <p className={`${txt} font-bold text-base mb-1 relative z-10`}>₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
-                            <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
+                            <p className={`${txt} font-mono text-base card-number-embossed mb-3`}>{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
                           <div className="flex justify-between items-end relative z-10">
                             <div>
-                              <p className="text-white/50 text-[9px] card-text-embossed">CARDHOLDER</p>
-                              <p className="text-white text-xs card-text-embossed">{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
+                              <p className={`${txtLow} text-[9px] card-text-embossed`}>CARDHOLDER</p>
+                              <p className={`${txt} text-xs card-text-embossed`}>{transliterate(`${user?.user_metadata?.display_name || user?.email?.split("@")[0] || ""}${user?.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : ""}`)}</p>
                             </div>
                             <div>
-                              <p className="text-white/50 text-[9px] card-text-embossed">EXPIRES</p>
-                              <p className="text-white text-xs card-text-embossed">{card.exp}</p>
+                              <p className={`${txtLow} text-[9px] card-text-embossed`}>EXPIRES</p>
+                              <p className={`${txt} text-xs card-text-embossed`}>{card.exp}</p>
                             </div>
                             <button onClick={(e) => { e.stopPropagation(); toggleCvv(card.name); }} className="text-left">
-                              <p className="text-white/50 text-[9px]">CVV</p>
-                              <p className="text-white text-xs">•••</p>
+                              <p className={`${txtLow} text-[9px]`}>CVV</p>
+                              <p className={`${txt} text-xs`}>•••</p>
                             </button>
                             {card.type === "visa" ? (
-                              <p className="text-white font-bold italic text-lg card-text-embossed">VISA</p>
+                              <p className={`${txt} font-bold italic text-lg card-text-embossed`}>VISA</p>
                             ) : (
                               <span className="flex items-center">
                                 <span className="w-5 h-5 rounded-full bg-red-500 -mr-2 opacity-80" />
