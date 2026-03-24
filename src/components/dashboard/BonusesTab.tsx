@@ -12,9 +12,9 @@ const cashbackCategories = [
 ];
 
 const loyaltyLevels = [
-  { name: "Standard", icon: Star, color: "hsl(210,10%,55%)", minSpend: 0, cashbackBonus: 0, perks: ["Базовый кэшбэк по категориям"] },
-  { name: "Gold", icon: Crown, color: "hsl(45,85%,50%)", minSpend: 5000, cashbackBonus: 1, perks: ["+1% ко всем категориям", "Приоритетная поддержка"] },
-  { name: "Platinum", icon: Gem, color: "hsl(220,15%,65%)", minSpend: 25000, cashbackBonus: 2, perks: ["+2% ко всем категориям", "Персональный менеджер", "Бесплатные переводы"] },
+  { name: "White", icon: Star, color: "hsl(0,0%,65%)", minSpend: 0, cashbackBonus: 0, perks: ["Базовый кэшбэк по категориям"] },
+  { name: "Silver", icon: Star, color: "hsl(220,10%,60%)", minSpend: 5000, cashbackBonus: 1, perks: ["+1% ко всем категориям", "Приоритетная поддержка"] },
+  { name: "Gold", icon: Crown, color: "hsl(45,85%,50%)", minSpend: 25000, cashbackBonus: 2, perks: ["+2% ко всем категориям", "Персональный менеджер", "Бесплатные переводы"] },
   { name: "Diamond", icon: Award, color: "hsl(195,80%,55%)", minSpend: 100000, cashbackBonus: 3, perks: ["+3% ко всем категориям", "VIP-обслуживание", "Эксклюзивные предложения", "Кэшбэк без лимита"] },
 ];
 
