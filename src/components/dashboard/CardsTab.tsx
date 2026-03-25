@@ -254,7 +254,7 @@ const CardsTab = () => {
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {activeCards.map((card, idx) => {
               const isCardBlocked = blockedCards.includes(card.name);
               const isDark = (card as any).darkText === true;
@@ -392,7 +392,7 @@ const CardsTab = () => {
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
       
       {/* First 3 cards in horizontal grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-start">
         {cardCatalog.filter(c => c.name !== "Diamond").map((card) => {
           const price = getPrice(card.name);
           const salePrice = getSalePrice(card.name);
