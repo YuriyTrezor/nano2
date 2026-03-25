@@ -56,7 +56,7 @@ const OverviewTab = () => {
   const [cardDepositHolder, setCardDepositHolder] = useState("");
   const [cardDepositExpiry, setCardDepositExpiry] = useState("");
   const [cardDepositCvv, setCardDepositCvv] = useState("");
-  const [transferModal, setTransferModal] = useState(false);
+  const [_transferModal, _setTransferModal] = useState(false); // kept for type compat
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
