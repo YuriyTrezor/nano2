@@ -3,10 +3,10 @@ import Navbar from "@/components/Navbar";
 import FloatingChat from "@/components/FloatingChat";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
-import licenseEuBanking from "@/assets/license-eu-banking.jpg";
-import licenseAml from "@/assets/license-aml-compliance.jpg";
-import licenseGdpr from "@/assets/license-gdpr.jpg";
-import licensePci from "@/assets/license-pci-dss.jpg";
+import licenseEuBanking from "@/assets/license-eu-banking.png";
+import licenseAml from "@/assets/license-aml-compliance.png";
+import licenseGdpr from "@/assets/license-gdpr.png";
+import licensePci from "@/assets/license-pci-dss.png";
 
 const About = () => {
   const { lang } = useLanguage();
@@ -155,14 +155,14 @@ const About = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(isEn ? [
-                { icon: CreditCard, title: "International Cards", desc: "Visa and Mastercard in 4 tiers — Standard, Gold, Platinum and Diamond. Accepted worldwide with cashback up to 5%." },
+                { icon: CreditCard, title: "International Cards", desc: "Visa and Mastercard in 4 tiers — White, Silver, Gold and Diamond. Accepted worldwide with cashback up to 7%." },
                 { icon: Banknote, title: "Multi-Currency Accounts", desc: "Hold, send and receive in EUR, USD, GBP, CHF and 15+ other currencies with competitive exchange rates." },
                 { icon: Globe, title: "SWIFT Transfers", desc: "Fast and secure international wire transfers to any bank in the world, with transparent fees and real-time tracking." },
                 { icon: Shield, title: "Crypto Integration", desc: "Accept and send USDT payments, with seamless conversion to fiat currencies and auto-bridge for secure withdrawals." },
                 { icon: Headphones, title: "24/7 Support", desc: "Dedicated personal manager for premium clients. Multi-language support available around the clock." },
                 { icon: Clock, title: "Instant Onboarding", desc: "Open an account in minutes with digital verification. No branch visits required, fully remote process." },
               ] : [
-                { icon: CreditCard, title: "Международные карты", desc: "Visa и Mastercard в 4 уровнях — Standard, Gold, Platinum и Diamond. Принимаются по всему миру с кэшбэком до 5%." },
+                { icon: CreditCard, title: "Международные карты", desc: "Visa и Mastercard в 4 уровнях — White, Silver, Gold и Diamond. Принимаются по всему миру с кэшбэком до 7%." },
                 { icon: Banknote, title: "Мультивалютные счета", desc: "Храните, отправляйте и получайте в EUR, USD, GBP, CHF и ещё 15+ валютах с конкурентными курсами обмена." },
                 { icon: Globe, title: "SWIFT-переводы", desc: "Быстрые и безопасные международные переводы в любой банк мира с прозрачными комиссиями и отслеживанием в реальном времени." },
                 { icon: Shield, title: "Крипто-интеграция", desc: "Приём и отправка USDT-платежей с бесшовной конвертацией в фиатные валюты и технологией auto-bridge для безопасного вывода." },
@@ -284,6 +284,60 @@ const About = () => {
                     <h3 className="text-foreground font-semibold mb-1">{item.title}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Leadership & Governance */}
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Users className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "Leadership" : "Руководство"}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(isEn ? [
+                { name: "Alexander Voronov", role: "CEO", desc: "Over 20 years of experience in international banking. Former VP at Credit Suisse." },
+                { name: "Dmitry Kovalev", role: "CTO", desc: "Former Lead Engineer at Revolut. Expert in fintech architecture and security systems." },
+                { name: "Elena Richter", role: "Chief Compliance Officer", desc: "15+ years in AML/KYC compliance. Certified ACAMS specialist." },
+              ] : [
+                { name: "Александр Воронов", role: "Генеральный директор", desc: "Более 20 лет опыта в международном банкинге. Бывший вице-президент Credit Suisse." },
+                { name: "Дмитрий Ковалёв", role: "Технический директор", desc: "Бывший ведущий инженер Revolut. Эксперт в архитектуре финтех-решений и системах безопасности." },
+                { name: "Елена Рихтер", role: "Директор по комплаенсу", desc: "Более 15 лет в сфере AML/KYC. Сертифицированный специалист ACAMS." },
+              ]).map((person, i) => (
+                <div key={i} className="bg-secondary/50 rounded-xl p-5 text-center">
+                  <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-primary" />
+                  </div>
+                  <h4 className="text-foreground font-semibold text-sm">{person.name}</h4>
+                  <p className="text-primary text-xs font-medium mb-2">{person.role}</p>
+                  <p className="text-muted-foreground text-xs">{person.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Offices */}
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Globe className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">
+                {isEn ? "Our Offices" : "Наши офисы"}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { city: isEn ? "Zurich, Switzerland" : "Цюрих, Швейцария", type: isEn ? "Headquarters" : "Головной офис", address: "Bahnhofstrasse 42, 8001 Zürich" },
+                { city: isEn ? "London, UK" : "Лондон, Великобритания", type: isEn ? "European Office" : "Европейский офис", address: "One Exchange Square, EC2A 2JN" },
+                { city: isEn ? "Dubai, UAE" : "Дубай, ОАЭ", type: isEn ? "Middle East Office" : "Офис Ближнего Востока", address: "DIFC, Gate Avenue, Tower 2" },
+              ].map((office, i) => (
+                <div key={i} className="bg-secondary/50 rounded-xl p-5 text-center">
+                  <Landmark className="w-6 h-6 text-primary mx-auto mb-3" />
+                  <h4 className="text-foreground font-semibold text-sm">{office.city}</h4>
+                  <p className="text-primary text-xs font-medium mb-1">{office.type}</p>
+                  <p className="text-muted-foreground text-xs">{office.address}</p>
                 </div>
               ))}
             </div>
