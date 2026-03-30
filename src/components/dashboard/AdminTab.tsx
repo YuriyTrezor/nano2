@@ -41,9 +41,9 @@ interface Client {
 }
 
 const DEFAULT_CARD_PRICES: Record<string, string> = {
-  Standard: "14 999 ₽",
-  Gold: "24 999 ₽",
-  Platinum: "49 999 ₽",
+  White: "14 999 ₽",
+  Silver: "24 999 ₽",
+  Gold: "49 999 ₽",
   Diamond: "99 999 ₽",
 };
 
@@ -615,9 +615,9 @@ const AdminTab = () => {
                 <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
                   <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Standard">Standard</SelectItem>
+                    <SelectItem value="White">White</SelectItem>
+                    <SelectItem value="Silver">Silver</SelectItem>
                     <SelectItem value="Gold">Gold</SelectItem>
-                    <SelectItem value="Platinum">Platinum</SelectItem>
                     <SelectItem value="Diamond">Diamond</SelectItem>
                   </SelectContent>
                 </Select>
@@ -634,7 +634,7 @@ const AdminTab = () => {
                     return (
                       <div key={c} className="p-3 bg-secondary rounded-lg">
                         <div className="flex items-center justify-between">
-                          <span className={`text-sm font-bold ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Platinum" ? "text-[hsl(270,60%,50%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
+                          <span className={`text-sm font-bold ${c === "Gold" ? "text-[hsl(35,80%,50%)]" : c === "Silver" ? "text-[hsl(210,20%,70%)]" : c === "Diamond" ? "text-[hsl(195,80%,60%)]" : "text-foreground"}`}>{c}</span>
                           <button
                             onClick={() => handleToggleCardBlock(cardAssign.index, c)}
                             className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${isCardBlocked ? 'bg-destructive/20 text-destructive' : 'bg-primary/20 text-primary'}`}
@@ -657,7 +657,7 @@ const AdminTab = () => {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Цены карт — {priceDialog !== null ? clients[priceDialog.index]?.name : ""}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            {["Standard", "Gold", "Platinum", "Diamond"].map(cardType => (
+            {["White", "Silver", "Gold", "Diamond"].map(cardType => (
               <div key={cardType} className="p-3 bg-secondary rounded-lg space-y-2">
                 <p className="text-foreground font-medium text-sm">{cardType}</p>
                 <div className="grid grid-cols-2 gap-2">
