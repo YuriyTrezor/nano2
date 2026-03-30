@@ -930,7 +930,7 @@ const AdminTab = () => {
                       {client.cards.map(c => {
                         const isCardBlocked = client.blockedCards.includes(c);
                         return (
-                          <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isCardBlocked ? "bg-destructive/20 text-destructive line-through" : c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Platinum" ? "bg-[hsl(270,60%,50%)]/20 text-[hsl(270,60%,50%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
+                          <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isCardBlocked ? "bg-destructive/20 text-destructive line-through" : c === "Gold" ? "bg-[hsl(35,80%,50%)]/20 text-[hsl(35,80%,50%)]" : c === "Silver" ? "bg-[hsl(210,20%,70%)]/20 text-[hsl(210,20%,70%)]" : c === "Diamond" ? "bg-[hsl(195,80%,60%)]/20 text-[hsl(195,80%,60%)]" : "bg-muted text-muted-foreground"}`}>{c}</span>
                         );
                       })}
                       {client.cards.length === 0 && <span className="text-muted-foreground text-[10px]">—</span>}
