@@ -71,7 +71,7 @@ const AdminTab = () => {
   const [sortAsc, setSortAsc] = useState(true);
   const [priceDialog, setPriceDialog] = useState<{ index: number; prices: Record<string, string> } | null>(null);
   const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
-  const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string } | null>(null);
+  const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string; created_at: string } | null>(null);
   const [passwordDialog, setPasswordDialog] = useState<{ index: number; password: string } | null>(null);
   const [compliancePriceDialog, setCompliancePriceDialog] = useState<{
     assisted_price: string;
@@ -437,9 +437,14 @@ const AdminTab = () => {
       return;
     }
 
+    const updateData: any = { title: editTx.title, amount };
+    if (editTx.created_at) {
+      updateData.created_at = new Date(editTx.created_at).toISOString();
+    }
+
     const { error } = await supabase
       .from("transactions")
-      .update({ title: editTx.title, amount } as any)
+      .update(updateData)
       .eq("id", editTx.txId);
 
     if (error) {
@@ -451,7 +456,7 @@ const AdminTab = () => {
       setTxViewDialog({
         ...txViewDialog,
         transactions: txViewDialog.transactions.map(tx =>
-          tx.id === editTx.txId ? { ...tx, title: editTx.title, amount } : tx
+          tx.id === editTx.txId ? { ...tx, title: editTx.title, amount, created_at: editTx.created_at ? new Date(editTx.created_at).toISOString() : tx.created_at } : tx
         ),
       });
     }
@@ -741,7 +746,7 @@ const AdminTab = () => {
                   {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
                 </p>
                 <button
-                  onClick={() => setEditTx({ txId: tx.id, title: tx.title, amount: String(tx.amount) })}
+                  onClick={() => setEditTx({ txId: tx.id, title: tx.title, amount: String(tx.amount), created_at: new Date(tx.created_at).toISOString().slice(0, 16) })}
                   className="p-1.5 text-muted-foreground hover:text-foreground"
                   title="Редактировать"
                 >
@@ -765,6 +770,10 @@ const AdminTab = () => {
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Сумма</Label>
               <Input type="number" value={editTx?.amount ?? ""} onChange={e => setEditTx(prev => prev ? { ...prev, amount: e.target.value } : null)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Дата и время</Label>
+              <Input type="datetime-local" value={editTx?.created_at ?? ""} onChange={e => setEditTx(prev => prev ? { ...prev, created_at: e.target.value } : null)} />
             </div>
           </div>
           <DialogFooter>
