@@ -614,10 +614,12 @@ const AdminTab = () => {
       {/* Card management dialog */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Управление картами — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Карта клиента — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
           <div className="space-y-5">
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Добавить карту</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">
+                У клиента может быть только одна карта. Выбор новой карты заменит текущую, баланс сохранится.
+              </Label>
               <div className="flex gap-2">
                 <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
                   <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
@@ -628,13 +630,13 @@ const AdminTab = () => {
                     <SelectItem value="Diamond">Diamond</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={handleAssignCard} disabled={!cardAssign?.type} size="sm">{t("Добавить")}</Button>
+                <Button onClick={handleAssignCard} disabled={!cardAssign?.type} size="sm">Установить</Button>
               </div>
             </div>
 
             {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
+                <p className="text-xs text-muted-foreground mb-2">Текущая карта:</p>
                 <div className="space-y-3">
                   {clients[cardAssign.index].cards.map(c => {
                     const isCardBlocked = clients[cardAssign.index].blockedCards.includes(c);
