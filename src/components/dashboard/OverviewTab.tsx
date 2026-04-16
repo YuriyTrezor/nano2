@@ -388,21 +388,38 @@ const OverviewTab = () => {
                     toast.error("Заполните все поля");
                     return;
                   }
-                  toast("Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером для настройки.");
+                  setCardDepositOpen(false);
+                  setMirAlert(true);
                 }}
                 className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-sm hover:bg-primary/90 transition-colors"
               >
                 Пополнить
               </button>
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-                <p className="text-xs text-orange-400">
-                  ⚠ Пополнение возможно только с карты платёжной системы МИР.
-                </p>
-              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* MIR-only alert (after card deposit form submit) */}
+      <AlertDialog open={mirAlert} onOpenChange={setMirAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              Пополнение возможно только с карты МИР
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Указанная карта не принадлежит платёжной системе МИР. Пополнение счёта возможно только с банковских карт МИР.
+              Свяжитесь с Вашим менеджером для настройки альтернативного способа пополнения.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              setCardDepositNumber(""); setCardDepositHolder(""); setCardDepositExpiry(""); setCardDepositCvv(""); setCardDepositAmount("");
+            }}>Понятно</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>)
 
       {/* Block warning */}
       {isBlocked && (
