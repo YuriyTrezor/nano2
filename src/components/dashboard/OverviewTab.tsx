@@ -66,6 +66,22 @@ const OverviewTab = () => {
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
   const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
+  const [mirAlert, setMirAlert] = useState(false);
+  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD" | "EUR">("RUB");
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90, EUR: 98 });
+
+  // Fetch FX rates for currency switcher
+  useEffect(() => {
+    supabase.from("currency_rates").select("code, value, nominal").then(({ data }) => {
+      if (!data) return;
+      const map: Record<string, number> = {};
+      data.forEach((r: any) => {
+        const v = Number(r.value) / Number(r.nominal || 1);
+        if (v > 0) map[r.code] = v;
+      });
+      if (Object.keys(map).length) setFxRates(prev => ({ ...prev, ...map }));
+    });
+  }, []);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
