@@ -471,11 +471,29 @@ const OverviewTab = () => {
                   : "bg-gradient-to-r from-primary/80 to-primary"
           }`}>
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
-                  {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
+                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
+                  {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
+                {/* Currency switcher */}
+                {!isBlocked && (
+                  <div className="flex gap-1 mt-3">
+                    {(["RUB", "USD", "EUR"] as const).map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setDisplayCurrency(c)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                          displayCurrency === c
+                            ? "bg-primary-foreground text-primary"
+                            : "bg-primary-foreground/15 text-primary-foreground/80 hover:bg-primary-foreground/25"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && !documentRequested && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
@@ -497,7 +515,7 @@ const OverviewTab = () => {
                   </div>
                 )}
               </div>
-              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity`}>
+              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0`}>
                 {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
