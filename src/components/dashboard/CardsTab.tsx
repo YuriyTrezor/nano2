@@ -262,7 +262,7 @@ const CardsTab = () => {
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start auto-rows-min">
             {activeCards.map((card, idx) => {
               const isCardBlocked = isProfileBlocked || blockedCards.includes(card.name);
               // If user has only one card, show full balance on it
@@ -316,7 +316,7 @@ const CardsTab = () => {
                              <Wifi className={`w-4 h-4 ${txtFaint} rotate-90`} />
                           </div>
                           <p className={`${txtMid} font-mono text-[10px] mb-0.5 relative z-10 card-text-embossed`}>BALANCE</p>
-                          <p className={`${txt} font-bold text-base mb-1 relative z-10`}>₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                          <p className={`${txt} font-bold text-base mb-1 relative z-10`}>₽ {balanceForCard.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                             <p className={`${txt} font-mono text-base card-number-embossed mb-3`}>{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
