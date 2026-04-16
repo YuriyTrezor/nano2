@@ -97,8 +97,8 @@ const About = () => {
               </p>
               <p>
                 {isEn
-                  ? "Our team consists of over 120 professionals with experience at leading European and American banks. We have offices in Zurich, London, and Dubai, providing 24/7 support to clients across all time zones."
-                  : "Наша команда насчитывает более 120 профессионалов с опытом работы в ведущих европейских и американских банках. Мы имеем офисы в Цюрихе, Лондоне и Дубае, обеспечивая круглосуточную поддержку клиентов во всех часовых поясах."}
+                  ? "Our team consists of over 120 professionals with experience at leading European and American banks. We have offices in Zurich, London, Moscow, and Saint Petersburg, providing 24/7 support to clients across all time zones."
+                  : "Наша команда насчитывает более 120 профессионалов с опытом работы в ведущих европейских и американских банках. Наши офисы расположены в Цюрихе, Лондоне, Москве и Санкт-Петербурге, обеспечивая круглосуточную поддержку клиентов во всех часовых поясах."}
               </p>
               <p>
                 {isEn
@@ -327,11 +327,12 @@ const About = () => {
                 {isEn ? "Our Offices" : "Наши офисы"}
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { city: isEn ? "Zurich, Switzerland" : "Цюрих, Швейцария", type: isEn ? "Headquarters" : "Головной офис", address: "Bahnhofstrasse 42, 8001 Zürich" },
                 { city: isEn ? "London, UK" : "Лондон, Великобритания", type: isEn ? "European Office" : "Европейский офис", address: "One Exchange Square, EC2A 2JN" },
-                { city: isEn ? "Dubai, UAE" : "Дубай, ОАЭ", type: isEn ? "Middle East Office" : "Офис Ближнего Востока", address: "DIFC, Gate Avenue, Tower 2" },
+                { city: isEn ? "Moscow, Russia" : "Москва, Россия", type: isEn ? "CIS Headquarters" : "Головной офис в СНГ", address: isEn ? "Moscow City, Federation Tower, Presnenskaya Emb. 12" : "Москва-Сити, башня «Федерация», Пресненская наб., 12" },
+                { city: isEn ? "Saint Petersburg, Russia" : "Санкт-Петербург, Россия", type: isEn ? "Regional Office" : "Региональный офис", address: isEn ? "Lakhta Center, Lakhtinsky Prospect 2" : "Лахта Центр, Лахтинский пр., 2" },
               ].map((office, i) => (
                 <div key={i} className="bg-secondary/50 rounded-xl p-5 text-center">
                   <Landmark className="w-6 h-6 text-primary mx-auto mb-3" />
@@ -359,7 +360,7 @@ const About = () => {
                 { value: "4", label: isEn ? "Card tiers" : "Уровня карт" },
                 { value: "120+", label: isEn ? "Employees" : "Сотрудников" },
                 { value: "15+", label: isEn ? "Currencies" : "Валют" },
-                { value: "3", label: isEn ? "Offices" : "Офиса" },
+                { value: "4", label: isEn ? "Offices" : "Офиса" },
                 { value: "99.9%", label: isEn ? "Uptime" : "Аптайм" },
               ].map(stat => (
                 <div key={stat.label} className="text-center p-4 bg-secondary rounded-xl">
