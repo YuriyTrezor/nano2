@@ -78,10 +78,17 @@ interface AutoPayment {
   nextDate: string;
 }
 
-const defaultTemplates: AutoPayment[] = [
-  { id: "tpl-1", category: "Мобильная связь", account: "+7 (900) ***-**-00", amount: "500", active: true, nextDate: "25.04.2026" },
-  { id: "tpl-2", category: "ЖКХ", account: "Лицевой счёт •••4521", amount: "8 500", active: true, nextDate: "01.04.2026" },
-  { id: "tpl-3", category: "Интернет", account: "Договор •••7890", amount: "990", active: false, nextDate: "15.04.2026" },
+interface Template {
+  id: string;
+  category: string;
+  provider: string;
+  account: string;
+}
+
+const defaultTemplates: Template[] = [
+  { id: "tpl-1", category: "Мобильная связь", provider: "МТС", account: "+7 (900) ***-**-00" },
+  { id: "tpl-2", category: "ЖКХ", provider: "МосОблЕИРЦ", account: "Лицевой счёт •••4521" },
+  { id: "tpl-3", category: "Интернет", provider: "Ростелеком", account: "Договор •••7890" },
 ];
 
 const mockAutoPayments: AutoPayment[] = [];
@@ -423,17 +430,24 @@ const PaymentsTab = () => {
             <h2 className="text-sm font-semibold text-foreground">{t("Шаблоны автоплатежей")}</h2>
           </div>
 
+          <p className="text-xs text-muted-foreground mb-3">{t("Готовые шаблоны для быстрой настройки автоплатежа. Нажмите, чтобы открыть форму с предзаполненными данными.")}</p>
+
           <div className="space-y-2">
-            {/* Default templates */}
-            {defaultTemplates.map((ap) => {
-              const Icon = getCategoryIcon(ap.category);
-              const color = getCategoryColor(ap.category);
+            {/* Default templates — clickable, prefill the add-auto form */}
+            {defaultTemplates.map((tpl) => {
+              const Icon = getCategoryIcon(tpl.category);
+              const color = getCategoryColor(tpl.category);
               return (
-                <div
-                  key={ap.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                    ap.active ? "bg-card border-border" : "bg-muted/30 border-border/50 opacity-60"
-                  }`}
+                <button
+                  key={tpl.id}
+                  onClick={() => {
+                    setAddAutoCategory(tpl.category);
+                    setAddAutoProvider(tpl.provider);
+                    setAddAutoAccount(tpl.account);
+                    setAddAutoAmount("");
+                    setStep("addAutoProvider");
+                  }}
+                  className="flex items-center gap-3 w-full p-3 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-secondary/50 transition-all duration-200 active:scale-[0.99] text-left"
                 >
                   <div
                     className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
@@ -442,17 +456,14 @@ const PaymentsTab = () => {
                     <Icon className="w-4 h-4" style={{ color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{ap.category}</p>
-                    <p className="text-xs text-muted-foreground truncate">{ap.account}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{tpl.provider}</p>
+                    <p className="text-xs text-muted-foreground truncate">{tpl.category} · {tpl.account}</p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-foreground">{ap.amount} ₽</p>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span className="text-[10px]">{ap.nextDate}</span>
-                    </div>
-                  </div>
-                </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium text-primary bg-primary/10 shrink-0">
+                    {t("Шаблон")}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </button>
               );
             })}
 

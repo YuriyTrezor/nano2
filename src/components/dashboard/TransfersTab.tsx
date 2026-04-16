@@ -249,28 +249,76 @@ const TransfersTab = () => {
 
   const availableCards = userCards.filter(c => !blockedCards.includes(c));
 
+  const openTransferType = (type: TransferType) => {
+    if (documentRequested) { setDocAlert(true); return; }
+    if (isBlocked) { setBlockedAlert(true); return; }
+    if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
+    setActiveTab(type);
+    setShowForm(true);
+  };
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Переводы</h1>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Переводы</h1>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
+        </p>
+      </div>
+
+      {/* Tinkoff-style: large tiles to choose transfer type */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <button
+          onClick={() => openTransferType("card")}
+          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+            <CreditCard className="w-5 h-5 text-primary" />
           </div>
-          <p className="text-muted-foreground text-sm">
-            Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
-          </p>
-        </div>
-        <div>
-          <Button onClick={() => {
-            if (documentRequested) { setDocAlert(true); return; }
-            if (isBlocked) { setBlockedAlert(true); return; }
-            if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
-            setShowForm(true);
-          }} className="gap-2 w-full sm:w-auto">
-            <CreditCard className="w-4 h-4" /> Новый перевод
-          </Button>
-        </div>
+          <div>
+            <p className="text-foreground text-sm font-semibold">На карту</p>
+            <p className="text-muted-foreground text-xs">По номеру карты</p>
+          </div>
+        </button>
+        <button
+          onClick={() => openTransferType("own")}
+          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+            <ArrowRightLeft className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-foreground text-sm font-semibold">Между своими</p>
+            <p className="text-muted-foreground text-xs">Перевод между картами</p>
+          </div>
+        </button>
+        <button
+          onClick={() => openTransferType("bank")}
+          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-foreground text-sm font-semibold">В другой банк</p>
+            <p className="text-muted-foreground text-xs">По реквизитам</p>
+          </div>
+        </button>
+        <button
+          onClick={() => openTransferType("card")}
+          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Search className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-foreground text-sm font-semibold">По телефону</p>
+            <p className="text-muted-foreground text-xs">СБП и контакты</p>
+          </div>
+        </button>
       </div>
 
       {/* Blocked alert */}

@@ -66,6 +66,22 @@ const OverviewTab = () => {
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
   const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
+  const [mirAlert, setMirAlert] = useState(false);
+  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD" | "EUR">("RUB");
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90, EUR: 98 });
+
+  // Fetch FX rates for currency switcher
+  useEffect(() => {
+    supabase.from("currency_rates").select("code, value, nominal").then(({ data }) => {
+      if (!data) return;
+      const map: Record<string, number> = {};
+      data.forEach((r: any) => {
+        const v = Number(r.value) / Number(r.nominal || 1);
+        if (v > 0) map[r.code] = v;
+      });
+      if (Object.keys(map).length) setFxRates(prev => ({ ...prev, ...map }));
+    });
+  }, []);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
@@ -90,7 +106,17 @@ const OverviewTab = () => {
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
+  // Convert to display currency
+  const currencySymbol = displayCurrency === "RUB" ? "₽" : displayCurrency === "USD" ? "$" : "€";
+  const convertedBalance = displayCurrency === "RUB"
+    ? balance
+    : balance / (fxRates[displayCurrency] || 1);
+  const convertedBalanceFormatted = convertedBalance.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // If user has only one card, that card holds the FULL balance.
+  // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
+    if (userCards.length === 1) return balance;
     return transactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -362,21 +388,38 @@ const OverviewTab = () => {
                     toast.error("Заполните все поля");
                     return;
                   }
-                  toast("Пополнение возможно только с карты МИР. Свяжитесь с Вашим менеджером для настройки.");
+                  setCardDepositOpen(false);
+                  setMirAlert(true);
                 }}
                 className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-sm hover:bg-primary/90 transition-colors"
               >
                 Пополнить
               </button>
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-                <p className="text-xs text-orange-400">
-                  ⚠ Пополнение возможно только с карты платёжной системы МИР.
-                </p>
-              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* MIR-only alert (after card deposit form submit) */}
+      <AlertDialog open={mirAlert} onOpenChange={setMirAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              Пополнение возможно только с карты МИР
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Указанная карта не принадлежит платёжной системе МИР. Пополнение счёта возможно только с банковских карт МИР.
+              Свяжитесь с Вашим менеджером для настройки альтернативного способа пополнения.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              setCardDepositNumber(""); setCardDepositHolder(""); setCardDepositExpiry(""); setCardDepositCvv(""); setCardDepositAmount("");
+            }}>Понятно</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Block warning */}
       {isBlocked && (
@@ -428,11 +471,29 @@ const OverviewTab = () => {
                   : "bg-gradient-to-r from-primary/80 to-primary"
           }`}>
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
-                  {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
+                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
+                  {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
+                {/* Currency switcher */}
+                {!isBlocked && (
+                  <div className="flex gap-1 mt-3">
+                    {(["RUB", "USD", "EUR"] as const).map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setDisplayCurrency(c)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                          displayCurrency === c
+                            ? "bg-primary-foreground text-primary"
+                            : "bg-primary-foreground/15 text-primary-foreground/80 hover:bg-primary-foreground/25"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && !documentRequested && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
@@ -454,7 +515,7 @@ const OverviewTab = () => {
                   </div>
                 )}
               </div>
-              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity`}>
+              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0`}>
                 {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
@@ -472,7 +533,7 @@ const OverviewTab = () => {
                   <div ref={emblaRef} className="overflow-hidden rounded-xl">
                     <div className="flex">
                       {activeCards.map((card, i) => {
-                        const isCardBlocked = blockedCards.includes(card.name);
+                        const isCardBlocked = isBlocked || blockedCards.includes(card.name);
                         return (
                         <div key={i} className="min-w-0 shrink-0 grow-0 basis-full card-perspective">
                           <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '180px' }}>
@@ -648,7 +709,7 @@ const OverviewTab = () => {
                 <div ref={emblaRef} className="overflow-hidden rounded-xl">
                   <div className="flex">
                     {activeCards.map((card, i) => {
-                      const isCardBlocked = blockedCards.includes(card.name);
+                      const isCardBlocked = isBlocked || blockedCards.includes(card.name);
                       return (
                       <div key={i} className="min-w-0 shrink-0 grow-0 basis-full card-perspective">
                         <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '200px' }}>

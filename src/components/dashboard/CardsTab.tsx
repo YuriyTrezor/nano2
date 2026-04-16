@@ -144,10 +144,12 @@ const CardsTab = () => {
   const [blockedAlert, setBlockedAlert] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
+  const [isProfileBlocked, setIsProfileBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cvvVisible, setCvvVisible] = useState<Record<string, boolean>>({});
   const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [cardBalances, setCardBalances] = useState<Record<string, number>>({});
+  const [totalBalance, setTotalBalance] = useState(0);
   const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
 
   const toggleCvv = (cardName: string) => {
@@ -171,13 +173,14 @@ const CardsTab = () => {
     const fetchCards = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("cards, card_prices, blocked_cards")
+        .select("cards, card_prices, blocked_cards, is_blocked")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setUserCards((data as any).cards ?? []);
         setCardPrices((data as any).card_prices ?? null);
         setBlockedCards((data as any).blocked_cards ?? []);
+        setIsProfileBlocked((data as any).is_blocked ?? false);
       }
 
       const txData = await fetchAllUserTransactions<{ amount: number; card_name: string }>(
@@ -186,11 +189,15 @@ const CardsTab = () => {
       );
       if (txData) {
         const balances: Record<string, number> = {};
+        let total = 0;
         txData.forEach(tx => {
           const cn = tx.card_name || "";
-          balances[cn] = (balances[cn] || 0) + Number(tx.amount);
+          const amt = Number(tx.amount);
+          balances[cn] = (balances[cn] || 0) + amt;
+          total += amt;
         });
         setCardBalances(balances);
+        setTotalBalance(total);
       }
 
       setLoading(false);
@@ -208,6 +215,7 @@ const CardsTab = () => {
         const updated = payload.new as any;
         setUserCards(updated.cards ?? []);
         setBlockedCards(updated.blocked_cards ?? []);
+        setIsProfileBlocked(updated.is_blocked ?? false);
       })
       .subscribe();
 
@@ -254,9 +262,11 @@ const CardsTab = () => {
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start auto-rows-min">
             {activeCards.map((card, idx) => {
-              const isCardBlocked = blockedCards.includes(card.name);
+              const isCardBlocked = isProfileBlocked || blockedCards.includes(card.name);
+              // If user has only one card, show full balance on it
+              const balanceForCard = activeCards.length === 1 ? totalBalance : (cardBalances[card.name] || 0);
               const isDark = (card as any).darkText === true;
               const txt = isDark ? "text-black" : "text-white";
               const txtMid = isDark ? "text-black/60" : "text-white/60";
@@ -306,7 +316,7 @@ const CardsTab = () => {
                              <Wifi className={`w-4 h-4 ${txtFaint} rotate-90`} />
                           </div>
                           <p className={`${txtMid} font-mono text-[10px] mb-0.5 relative z-10 card-text-embossed`}>BALANCE</p>
-                          <p className={`${txt} font-bold text-base mb-1 relative z-10`}>₽ {(cardBalances[card.name] || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
+                          <p className={`${txt} font-bold text-base mb-1 relative z-10`}>₽ {balanceForCard.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                             <p className={`${txt} font-mono text-base card-number-embossed mb-3`}>{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
