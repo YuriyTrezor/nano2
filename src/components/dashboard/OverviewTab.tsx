@@ -533,7 +533,7 @@ const OverviewTab = () => {
                   <div ref={emblaRef} className="overflow-hidden rounded-xl">
                     <div className="flex">
                       {activeCards.map((card, i) => {
-                        const isCardBlocked = blockedCards.includes(card.name);
+                        const isCardBlocked = isBlocked || blockedCards.includes(card.name);
                         return (
                         <div key={i} className="min-w-0 shrink-0 grow-0 basis-full card-perspective">
                           <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '180px' }}>
@@ -709,7 +709,7 @@ const OverviewTab = () => {
                 <div ref={emblaRef} className="overflow-hidden rounded-xl">
                   <div className="flex">
                     {activeCards.map((card, i) => {
-                      const isCardBlocked = blockedCards.includes(card.name);
+                      const isCardBlocked = isBlocked || blockedCards.includes(card.name);
                       return (
                       <div key={i} className="min-w-0 shrink-0 grow-0 basis-full card-perspective">
                         <div className={`card-flipper ${cvvVisible[card.name] ? 'flipped' : ''}`} style={{ minHeight: '200px' }}>
