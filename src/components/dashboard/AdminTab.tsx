@@ -362,16 +362,18 @@ const AdminTab = () => {
   const handleAssignCard = async () => {
     if (!cardAssign) return;
     const client = clients[cardAssign.index];
-    const newCards = client.cards.includes(cardAssign.type)
-      ? client.cards
-      : [...client.cards, cardAssign.type];
+    // Принцип одной карты: новая карта заменяет предыдущую. Баланс единый (общие транзакции).
+    const newCards = [cardAssign.type];
+    const newBlocked: string[] = [];
 
-    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, cards: newCards } : c));
+    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, cards: newCards, blockedCards: newBlocked } : c));
     if (client.userId) {
-      await supabase.from("profiles").update({ cards: newCards } as any).eq("user_id", client.userId);
+      await supabase.from("profiles").update({ cards: newCards, blocked_cards: newBlocked } as any).eq("user_id", client.userId);
+      // Переносим все транзакции клиента на новую карту, чтобы баланс был единым
+      await supabase.from("transactions").update({ card_name: cardAssign.type } as any).eq("user_id", client.userId);
     }
     setCardAssign(null);
-    toast({ title: t("Информация"), description: `Карта ${cardAssign.type} добавлена — ${client.name}` });
+    toast({ title: t("Информация"), description: `Карта клиента ${client.name} установлена: ${cardAssign.type}` });
   };
 
   const handleSavePrices = async () => {
