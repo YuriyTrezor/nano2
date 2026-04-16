@@ -419,7 +419,7 @@ const OverviewTab = () => {
             }}>Понятно</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>)
+      </AlertDialog>
 
       {/* Block warning */}
       {isBlocked && (
