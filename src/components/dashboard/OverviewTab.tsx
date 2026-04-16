@@ -106,7 +106,17 @@ const OverviewTab = () => {
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
 
+  // Convert to display currency
+  const currencySymbol = displayCurrency === "RUB" ? "₽" : displayCurrency === "USD" ? "$" : "€";
+  const convertedBalance = displayCurrency === "RUB"
+    ? balance
+    : balance / (fxRates[displayCurrency] || 1);
+  const convertedBalanceFormatted = convertedBalance.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // If user has only one card, that card holds the FULL balance.
+  // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
+    if (userCards.length === 1) return balance;
     return transactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
