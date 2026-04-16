@@ -362,16 +362,18 @@ const AdminTab = () => {
   const handleAssignCard = async () => {
     if (!cardAssign) return;
     const client = clients[cardAssign.index];
-    const newCards = client.cards.includes(cardAssign.type)
-      ? client.cards
-      : [...client.cards, cardAssign.type];
+    // Принцип одной карты: новая карта заменяет предыдущую. Баланс единый (общие транзакции).
+    const newCards = [cardAssign.type];
+    const newBlocked: string[] = [];
 
-    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, cards: newCards } : c));
+    setClients(prev => prev.map((c, i) => i === cardAssign.index ? { ...c, cards: newCards, blockedCards: newBlocked } : c));
     if (client.userId) {
-      await supabase.from("profiles").update({ cards: newCards } as any).eq("user_id", client.userId);
+      await supabase.from("profiles").update({ cards: newCards, blocked_cards: newBlocked } as any).eq("user_id", client.userId);
+      // Переносим все транзакции клиента на новую карту, чтобы баланс был единым
+      await supabase.from("transactions").update({ card_name: cardAssign.type } as any).eq("user_id", client.userId);
     }
     setCardAssign(null);
-    toast({ title: t("Информация"), description: `Карта ${cardAssign.type} добавлена — ${client.name}` });
+    toast({ title: t("Информация"), description: `Карта клиента ${client.name} установлена: ${cardAssign.type}` });
   };
 
   const handleSavePrices = async () => {
@@ -612,10 +614,12 @@ const AdminTab = () => {
       {/* Card management dialog */}
       <Dialog open={!!cardAssign} onOpenChange={open => !open && setCardAssign(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Управление картами — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Карта клиента — {cardAssign !== null ? clients[cardAssign.index]?.name : ""}</DialogTitle></DialogHeader>
           <div className="space-y-5">
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Добавить карту</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">
+                У клиента может быть только одна карта. Выбор новой карты заменит текущую, баланс сохранится.
+              </Label>
               <div className="flex gap-2">
                 <Select value={cardAssign?.type ?? ""} onValueChange={val => setCardAssign(prev => prev ? { ...prev, type: val } : null)}>
                   <SelectTrigger><SelectValue placeholder="Выберите тип карты" /></SelectTrigger>
@@ -626,13 +630,13 @@ const AdminTab = () => {
                     <SelectItem value="Diamond">Diamond</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={handleAssignCard} disabled={!cardAssign?.type} size="sm">{t("Добавить")}</Button>
+                <Button onClick={handleAssignCard} disabled={!cardAssign?.type} size="sm">Установить</Button>
               </div>
             </div>
 
             {cardAssign && clients[cardAssign.index]?.cards.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Текущие карты:</p>
+                <p className="text-xs text-muted-foreground mb-2">Текущая карта:</p>
                 <div className="space-y-3">
                   {clients[cardAssign.index].cards.map(c => {
                     const isCardBlocked = clients[cardAssign.index].blockedCards.includes(c);
