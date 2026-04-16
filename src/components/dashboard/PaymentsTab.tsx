@@ -78,10 +78,17 @@ interface AutoPayment {
   nextDate: string;
 }
 
-const defaultTemplates: AutoPayment[] = [
-  { id: "tpl-1", category: "Мобильная связь", account: "+7 (900) ***-**-00", amount: "500", active: true, nextDate: "25.04.2026" },
-  { id: "tpl-2", category: "ЖКХ", account: "Лицевой счёт •••4521", amount: "8 500", active: true, nextDate: "01.04.2026" },
-  { id: "tpl-3", category: "Интернет", account: "Договор •••7890", amount: "990", active: false, nextDate: "15.04.2026" },
+interface Template {
+  id: string;
+  category: string;
+  provider: string;
+  account: string;
+}
+
+const defaultTemplates: Template[] = [
+  { id: "tpl-1", category: "Мобильная связь", provider: "МТС", account: "+7 (900) ***-**-00" },
+  { id: "tpl-2", category: "ЖКХ", provider: "МосОблЕИРЦ", account: "Лицевой счёт •••4521" },
+  { id: "tpl-3", category: "Интернет", provider: "Ростелеком", account: "Договор •••7890" },
 ];
 
 const mockAutoPayments: AutoPayment[] = [];
