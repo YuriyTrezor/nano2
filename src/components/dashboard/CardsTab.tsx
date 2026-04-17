@@ -273,10 +273,10 @@ const CardsTab = () => {
               const txtLow = isDark ? "text-black/50" : "text-white/50";
               const txtFaint = isDark ? "text-black/40" : "text-white/40";
               return (
-              <div key={card.name} className="h-full">
+              <div key={card.name} className="h-full flex">
               <Popover>
                 <PopoverTrigger asChild>
-                   <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group h-full flex flex-col ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
+                   <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group h-full w-full flex flex-col ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
                         {card.name === "Diamond" ? (
