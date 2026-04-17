@@ -104,13 +104,22 @@ const OverviewTab = () => {
   // Total balance = sum of ALL transactions for the user
   const balance = transactions
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
-  const balanceFormatted = balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 });
+  const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
+    if (currency === "RUB") return balance;
+    return balance / (fxRates[currency] || 1);
+  };
+  const getCurrencySymbol = (currency: "RUB" | "USD" | "EUR") => {
+    if (currency === "RUB") return "₽";
+    if (currency === "USD") return "$";
+    return "€";
+  };
+  const formatCurrencyAmount = (currency: "RUB" | "USD" | "EUR") => {
+    const amount = convertBalance(currency);
+    return `${getCurrencySymbol(currency)} ${amount.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
-  // Convert to display currency
-  const currencySymbol = displayCurrency === "RUB" ? "₽" : displayCurrency === "USD" ? "$" : "€";
-  const convertedBalance = displayCurrency === "RUB"
-    ? balance
-    : balance / (fxRates[displayCurrency] || 1);
+  const currencySymbol = getCurrencySymbol(displayCurrency);
+  const convertedBalance = convertBalance(displayCurrency);
   const convertedBalanceFormatted = convertedBalance.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // If user has only one card, that card holds the FULL balance.
@@ -494,6 +503,11 @@ const OverviewTab = () => {
                     ))}
                   </div>
                 )}
+                {!isBlocked && displayCurrency !== "RUB" && !balanceHidden && (
+                  <p className="text-primary-foreground/70 text-xs mt-2">
+                    1 {displayCurrency} ≈ {(fxRates[displayCurrency] || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽
+                  </p>
+                )}
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && !documentRequested && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
@@ -837,17 +851,30 @@ const OverviewTab = () => {
           {/* Accounts */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Мои счета")}</h3>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${isBlocked ? "bg-destructive text-destructive-foreground" : "bg-destructive text-destructive-foreground"}`}>RUB</div>
-                <div>
-                  <p className="text-foreground text-sm font-medium">{t("Общий счёт")}</p>
-                  <p className="text-muted-foreground text-xs">RUB</p>
-                </div>
-              </div>
-              <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-foreground"}`}>
-                {balanceHidden ? "••••••" : `₽ ${balanceFormatted}`}
-              </p>
+            <div className="space-y-3">
+              {(["RUB", "USD", "EUR"] as const).map((currency) => {
+                const selected = displayCurrency === currency;
+                return (
+                  <button
+                    key={currency}
+                    onClick={() => setDisplayCurrency(currency)}
+                    className={`w-full rounded-xl border px-3 py-3 flex items-center justify-between text-left transition-colors ${selected ? "border-primary bg-primary/10" : "border-border hover:bg-secondary/50"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${selected ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
+                        {currency}
+                      </div>
+                      <div>
+                        <p className="text-foreground text-sm font-medium">{currency === "RUB" ? t("Общий счёт") : `${currency} счёт`}</p>
+                        <p className="text-muted-foreground text-xs">{currency === "RUB" ? "Основная валюта" : "Конвертация по текущему курсу"}</p>
+                      </div>
+                    </div>
+                    <p className={`text-sm font-medium ${selected ? "text-primary" : isBlocked ? "text-destructive" : "text-foreground"}`}>
+                      {balanceHidden ? "••••••" : formatCurrencyAmount(currency)}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
           {/* Currency Rates */}

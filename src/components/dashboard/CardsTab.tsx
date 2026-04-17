@@ -262,8 +262,8 @@ const CardsTab = () => {
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start auto-rows-min">
-            {activeCards.map((card, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeCards.map((card) => {
               const isCardBlocked = isProfileBlocked || blockedCards.includes(card.name);
               // If user has only one card, show full balance on it
               const balanceForCard = activeCards.length === 1 ? totalBalance : (cardBalances[card.name] || 0);
@@ -273,12 +273,10 @@ const CardsTab = () => {
               const txtLow = isDark ? "text-black/50" : "text-white/50";
               const txtFaint = isDark ? "text-black/40" : "text-white/40";
               return (
-              <div
-                key={card.name}
-              >
+              <div key={card.name} className="h-full">
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
+                   <div className={`bg-card border rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all group h-full flex flex-col ${isCardBlocked ? "border-destructive/50 opacity-75" : "border-border"}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
                         {card.name === "Diamond" ? (
@@ -368,7 +366,7 @@ const CardsTab = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-auto pt-3 flex items-center justify-between">
                       <span className="text-muted-foreground text-xs">{card.name} • {card.limit}</span>
                     </div>
                   </div>
@@ -402,14 +400,14 @@ const CardsTab = () => {
       <p className="text-muted-foreground text-sm mb-6">Условия</p>
       
       {/* First 3 cards in horizontal grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-stretch">
         {cardCatalog.filter(c => c.name !== "Diamond").map((card) => {
           const price = getPrice(card.name);
           const salePrice = getSalePrice(card.name);
           const buyLabel = salePrice || price;
           
           return (
-            <div key={card.name} className="relative overflow-hidden rounded-2xl border flex flex-col" style={{ borderColor: card.borderColor + '4D' }}>
+            <div key={card.name} className="relative overflow-hidden rounded-2xl border flex flex-col h-full" style={{ borderColor: card.borderColor + '4D' }}>
               <div className={`absolute inset-0 bg-gradient-to-br ${card.bgSection}`} />
               <div className="relative z-10 p-5 flex flex-col flex-1">
                 {userCards.includes(card.name) && (

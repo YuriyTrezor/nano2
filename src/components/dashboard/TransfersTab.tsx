@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, ArrowRightLeft, Building2, X, Lock, FileWarning } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, Phone, X, Lock, FileWarning } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -13,16 +13,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-
-type TransferType = "card" | "own" | "bank";
+type TransferType = "card" | "sbp" | "bank" | "phone";
 
 const tabs: { key: TransferType; label: string; icon: React.ReactNode }[] = [
   { key: "card", label: "На карту", icon: <CreditCard className="w-4 h-4" /> },
-  { key: "own", label: "Между своими", icon: <ArrowRightLeft className="w-4 h-4" /> },
+  { key: "sbp", label: "СБП", icon: <Smartphone className="w-4 h-4" /> },
   { key: "bank", label: "В другой банк", icon: <Building2 className="w-4 h-4" /> },
+  { key: "phone", label: "По телефону", icon: <Phone className="w-4 h-4" /> },
 ];
 
 interface Transaction {
@@ -40,6 +37,7 @@ const TransfersTab = () => {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<TransferType>("card");
   const [cardNumber, setCardNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -58,11 +56,8 @@ const TransfersTab = () => {
   const [documentRequested, setDocumentRequested] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
 
-  // Own cards transfer
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
-  const [fromCard, setFromCard] = useState("");
-  const [toCard, setToCard] = useState("");
 
   // Total balance = sum of ALL transactions for the user
   const balance = transactions
@@ -100,7 +95,7 @@ const TransfersTab = () => {
     if (searchParams.get("new") === "1") {
       setShowForm(true);
       const tab = searchParams.get("tab");
-      if (tab === "own" || tab === "bank" || tab === "card") setActiveTab(tab);
+      if (tab === "sbp" || tab === "bank" || tab === "card" || tab === "phone") setActiveTab(tab);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -116,76 +111,13 @@ const TransfersTab = () => {
       toast.error("Введите корректную сумму");
       return;
     }
-    // Own cards transfer
-    if (activeTab === "own") {
-      if (!fromCard || !toCard) {
-        toast.error("Выберите карты для перевода");
-        return;
-      }
-      if (fromCard === toCard) {
-        toast.error("Выберите разные карты");
-        return;
-      }
-      if (blockedCards.includes(fromCard)) {
-        toast.error(`Карта ${fromCard} заблокирована`);
-        return;
-      }
-      if (blockedCards.includes(toCard)) {
-        toast.error(`Карта ${toCard} заблокирована`);
-        return;
-      }
-
-      // Check fromCard balance specifically
-      const fromCardBalance = transactions
-        .filter(tx => tx.card_name === fromCard)
-        .reduce((s, tx) => s + Number(tx.amount), 0);
-      if (sum > fromCardBalance) {
-        toast.error(`Недостаточно средств на карте ${fromCard}`);
-        return;
-      }
-
-      // Internal transfer — two transactions that cancel each other out
-      const { error: transferError } = await supabase.from("transactions").insert([
-        {
-          user_id: user.id,
-          title: `Перевод ${fromCard} → ${toCard}`,
-          category: "Внутренний перевод",
-          amount: -sum,
-          card_name: fromCard,
-        },
-        {
-          user_id: user.id,
-          title: `Перевод ${fromCard} → ${toCard}`,
-          category: "Внутренний перевод",
-          amount: sum,
-          card_name: toCard,
-        },
-      ]);
-
-      if (transferError) {
-        toast.error("Ошибка при переводе");
-        return;
-      }
-
-      // Refresh transactions
-      try {
-        const refreshed = await fetchAllUserTransactions<Transaction>(user.id);
-        setTransactions(refreshed);
-      } catch (error) {
-        console.error("Failed to refresh transactions:", error);
-      }
-
-      toast.success(`Перевод ${sum.toLocaleString("ru-RU")} ₽ с ${fromCard} на ${toCard} выполнен`);
-      setAmount("");
-      setFromCard("");
-      setToCard("");
-      setShowForm(false);
+    if (sum > balance) {
+      toast.error("Недостаточно средств на счёте");
       return;
     }
 
-    // External transfers - check total balance
-    if (sum > balance) {
-      toast.error("Недостаточно средств на счёте");
+    if (availableCards.length === 0) {
+      toast.error("Нет активной карты для списания");
       return;
     }
 
@@ -193,25 +125,42 @@ const TransfersTab = () => {
       toast.error("Заполните реквизиты банка");
       return;
     }
-    if (activeTab !== "bank" && !cardNumber.trim()) {
+    if (activeTab === "card" && !cardNumber.trim()) {
       toast.error("Введите номер карты");
+      return;
+    }
+    if ((activeTab === "sbp" || activeTab === "phone") && !phoneNumber.trim()) {
+      toast.error("Введите номер телефона");
+      return;
+    }
+    if (activeTab === "sbp" && !bankName.trim()) {
+      toast.error("Укажите банк получателя");
       return;
     }
 
     let title = "";
-    if (activeTab === "bank") {
-      title = `Перевод → ${bankName || "Другой банк"} (${bankAccount.slice(-4)})`;
+    let category = "Перевод";
+    if (activeTab === "card") {
+      const last4 = cardNumber.replace(/\D/g, "").slice(-4);
+      title = `Перевод на карту ••${last4}`;
+      category = "Перевод на карту";
+    } else if (activeTab === "sbp") {
+      title = `СБП → ${recipientName || phoneNumber}`;
+      category = "СБП";
+    } else if (activeTab === "phone") {
+      title = `Перевод по телефону → ${recipientName || phoneNumber}`;
+      category = "Перевод по телефону";
     } else {
-      title = `Перевод → ${cardNumber}`;
+      title = `Перевод → ${bankName || "Другой банк"} (${bankAccount.slice(-4)})`;
+      category = "Межбанковский перевод";
     }
 
-    // External transfer — deduct from first available card
     const defaultCard = availableCards.length > 0 ? availableCards[0] : "";
 
     const { data, error } = await supabase.from("transactions").insert({
       user_id: user.id,
       title,
-      category: activeTab === "bank" ? "Межбанковский перевод" : "Перевод",
+      category,
       amount: -sum,
       card_name: defaultCard,
     }).select("id, title, category, amount, card_name, created_at").single();
@@ -225,6 +174,7 @@ const TransfersTab = () => {
 
     toast.success(`Перевод на сумму ${sum.toLocaleString("ru-RU")} ₽ выполнен`);
     setCardNumber("");
+    setPhoneNumber("");
     setRecipientName("");
     setAmount("");
     setBankBik("");
@@ -284,15 +234,15 @@ const TransfersTab = () => {
           </div>
         </button>
         <button
-          onClick={() => openTransferType("own")}
+          onClick={() => openTransferType("sbp")}
           className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
         >
           <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
-            <ArrowRightLeft className="w-5 h-5 text-primary" />
+            <Smartphone className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-foreground text-sm font-semibold">Между своими</p>
-            <p className="text-muted-foreground text-xs">Перевод между картами</p>
+            <p className="text-foreground text-sm font-semibold">СБП</p>
+            <p className="text-muted-foreground text-xs">По номеру телефона</p>
           </div>
         </button>
         <button
@@ -308,15 +258,15 @@ const TransfersTab = () => {
           </div>
         </button>
         <button
-          onClick={() => openTransferType("card")}
+          onClick={() => openTransferType("phone")}
           className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
         >
           <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Search className="w-5 h-5 text-primary" />
+            <Phone className="w-5 h-5 text-primary" />
           </div>
           <div>
             <p className="text-foreground text-sm font-semibold">По телефону</p>
-            <p className="text-muted-foreground text-xs">СБП и контакты</p>
+            <p className="text-muted-foreground text-xs">Перевод по контакту</p>
           </div>
         </button>
       </div>
@@ -398,44 +348,7 @@ const TransfersTab = () => {
 
             {/* Form fields */}
             <div className="space-y-4">
-              {activeTab === "own" ? (
-                <>
-                  {availableCards.length < 2 ? (
-                    <div className="text-center py-4">
-                      <p className="text-muted-foreground text-sm">Для перевода между своими картами необходимо иметь минимум 2 активные карты.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="text-muted-foreground text-xs mb-1 block">Карта списания</label>
-                        <Select value={fromCard} onValueChange={setFromCard}>
-                          <SelectTrigger className="bg-secondary border-border">
-                            <SelectValue placeholder="Выберите карту" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCards.map(c => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-muted-foreground text-xs mb-1 block">Карта зачисления</label>
-                        <Select value={toCard} onValueChange={setToCard}>
-                          <SelectTrigger className="bg-secondary border-border">
-                            <SelectValue placeholder="Выберите карту" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCards.filter(c => c !== fromCard).map(c => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : activeTab === "bank" ? (
+              {activeTab === "bank" ? (
                 <>
                   <div>
                     <label className="text-muted-foreground text-xs mb-1 block">Наименование банка</label>
@@ -454,22 +367,46 @@ const TransfersTab = () => {
                     <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
                   </div>
                 </>
+              ) : activeTab === "sbp" ? (
+                <>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Номер телефона</label>
+                    <Input placeholder="+7 (999) 123-45-67" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Банк получателя</label>
+                    <Input placeholder="Например: Т-Банк" value={bankName} onChange={e => setBankName(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">ФИО получателя</label>
+                    <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                </>
+              ) : activeTab === "phone" ? (
+                <>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Номер телефона</label>
+                    <Input placeholder="+7 (999) 123-45-67" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-muted-foreground text-xs mb-1 block">Имя получателя</label>
+                    <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                </>
               ) : (
                 <>
                   <Input placeholder="Номер карты" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="bg-secondary border-border" />
                   <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
                 </>
               )}
-              {(activeTab !== "own" || availableCards.length >= 2) && (
-                <>
-                  <Input placeholder="Сумма ₽" value={amount} onChange={e => setAmount(e.target.value)} className="bg-secondary border-border" type="number" />
-                  <div>
-                    <Button onClick={handleSubmit} className="w-full h-12 text-base font-semibold">
-                      Отправить
-                    </Button>
-                  </div>
-                </>
-              )}
+              <>
+                <Input placeholder="Сумма ₽" value={amount} onChange={e => setAmount(e.target.value)} className="bg-secondary border-border" type="number" />
+                <div>
+                  <Button onClick={handleSubmit} className="w-full h-12 text-base font-semibold">
+                    Отправить
+                  </Button>
+                </div>
+              </>
             </div>
           </div>
         </div>
