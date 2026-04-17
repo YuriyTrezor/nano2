@@ -262,7 +262,7 @@ const CardsTab = () => {
       ) : activeCards.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-foreground font-semibold text-lg mb-4">Ваши карты ({activeCards.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch auto-rows-fr">
             {activeCards.map((card) => {
               const isCardBlocked = isProfileBlocked || blockedCards.includes(card.name);
               // If user has only one card, show full balance on it
