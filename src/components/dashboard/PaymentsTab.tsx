@@ -100,6 +100,7 @@ const PaymentsTab = () => {
   const [step, setStep] = useState<Step>("categories");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [autoPayments, setAutoPayments] = useState<AutoPayment[]>(mockAutoPayments);
 
   // Add auto-payment form state
@@ -109,6 +110,7 @@ const PaymentsTab = () => {
   const [addAutoAmount, setAddAutoAmount] = useState("");
 
   const handleCategoryClick = (label: string) => {
+    setSelectedTemplate(null);
     setSelectedCategory(label);
     setSelectedProvider(null);
     setStep("providers");
@@ -127,8 +129,17 @@ const PaymentsTab = () => {
       setStep("categories");
       setSelectedCategory(null);
     } else if (step === "addAutoProvider") {
-      setStep("addAuto");
-      setAddAutoProvider(null);
+      if (selectedTemplate) {
+        setSelectedTemplate(null);
+        setAddAutoCategory(null);
+        setAddAutoProvider(null);
+        setAddAutoAccount("");
+        setAddAutoAmount("");
+        setStep("categories");
+      } else {
+        setStep("addAuto");
+        setAddAutoProvider(null);
+      }
     } else if (step === "addAuto") {
       setStep("categories");
       setAddAutoCategory(null);
@@ -148,24 +159,27 @@ const PaymentsTab = () => {
   };
 
   const handleAddAutoSelectCategory = (label: string) => {
+    setSelectedTemplate(null);
     setAddAutoCategory(label);
     setAddAutoProvider(null);
     setStep("addAutoProvider");
   };
 
   const handleAddAutoSelectProvider = (name: string) => {
+    setSelectedTemplate(null);
     setAddAutoProvider(name);
   };
 
   const handleAddAutoSubmit = () => {
-    if (!addAutoCategory || !addAutoProvider || !addAutoAccount || !addAutoAmount) {
+    const accountValue = selectedTemplate?.account || addAutoAccount;
+    if (!addAutoCategory || !addAutoProvider || !accountValue || !addAutoAmount) {
       toast.error("Заполните все поля");
       return;
     }
     const newAp: AutoPayment = {
       id: Date.now().toString(),
       category: addAutoCategory,
-      account: addAutoAccount,
+      account: accountValue,
       amount: addAutoAmount,
       active: true,
       nextDate: new Date(Date.now() + 30 * 86400000).toLocaleDateString("ru-RU"),
@@ -177,6 +191,7 @@ const PaymentsTab = () => {
     setAddAutoProvider(null);
     setAddAutoAccount("");
     setAddAutoAmount("");
+    setSelectedTemplate(null);
     setStep("categories");
   };
 
@@ -391,15 +406,25 @@ const PaymentsTab = () => {
                   <p className="text-xs text-muted-foreground">{addAutoCategory}</p>
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Номер счёта / телефон</label>
-                <Input
-                  value={addAutoAccount}
-                  onChange={e => setAddAutoAccount(e.target.value)}
-                  placeholder="Введите номер"
-                  className="bg-secondary border-border"
-                />
-              </div>
+              {selectedTemplate ? (
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Счётчик / номер</label>
+                  <div className="rounded-xl border border-border bg-secondary px-3 py-3">
+                    <p className="text-sm font-medium text-foreground">{addAutoAccount}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Предзаполнено из шаблона</p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Номер счёта / телефон</label>
+                  <Input
+                    value={addAutoAccount}
+                    onChange={e => setAddAutoAccount(e.target.value)}
+                    placeholder="Введите номер"
+                    className="bg-secondary border-border"
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Сумма, ₽</label>
                 <Input
@@ -441,6 +466,7 @@ const PaymentsTab = () => {
                 <button
                   key={tpl.id}
                   onClick={() => {
+                    setSelectedTemplate(tpl);
                     setAddAutoCategory(tpl.category);
                     setAddAutoProvider(tpl.provider);
                     setAddAutoAccount(tpl.account);
