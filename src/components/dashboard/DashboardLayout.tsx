@@ -491,6 +491,59 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <span className="text-[10px] font-medium">{t(link.label)}</span>
             </NavLink>
           ))}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px] text-muted-foreground">
+                <Menu className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{t("Ещё")}</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="bg-card border-border rounded-t-2xl max-h-[85vh] overflow-y-auto p-0">
+              <SheetHeader className="p-5 border-b border-border text-left">
+                <SheetTitle className="text-foreground">{t("Меню")}</SheetTitle>
+              </SheetHeader>
+              <div className="p-3 grid grid-cols-3 gap-2">
+                {moreMenuLinks.map((link) => (
+                  <button
+                    key={link.to}
+                    onClick={() => { setMobileMenuOpen(false); navigate(link.to); }}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <link.icon className="w-6 h-6 text-primary" />
+                    <span className="text-[11px] text-foreground text-center leading-tight">{t(link.label)}</span>
+                  </button>
+                ))}
+              </div>
+              {adminMoreLinks.length > 0 && (
+                <>
+                  <div className="px-5 pt-4 pb-2 text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                    {t("Администрирование")}
+                  </div>
+                  <div className="p-3 pt-0 grid grid-cols-3 gap-2">
+                    {adminMoreLinks.map((link) => (
+                      <button
+                        key={link.to}
+                        onClick={() => { setMobileMenuOpen(false); navigate(link.to); }}
+                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                      >
+                        <link.icon className="w-6 h-6 text-orange-400" />
+                        <span className="text-[11px] text-orange-300 text-center leading-tight">{t(link.label)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="p-4 border-t border-border mt-2">
+                <button
+                  onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                  className="flex items-center justify-center gap-2 w-full px-3 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t("Выйти")}
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>
