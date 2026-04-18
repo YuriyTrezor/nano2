@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
   Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck,
-  TrendingUp, Globe, Receipt, BarChart3
+  TrendingUp, Globe, Receipt, BarChart3, Menu
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 
 const mainLinks = [
@@ -187,14 +188,34 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
   const initials = displayName.substring(0, 2).toUpperCase();
 
-  // Mobile tabs — conditionally include admin
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Mobile bottom tabs — keep 4 most-used + "More" sheet
   const mobileTabLinks = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
     { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
     { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
-    ...(isAdmin ? [{ to: "/dashboard/admin", icon: Shield, label: "Админ" }] : []),
-    { to: "/dashboard/settings", icon: Settings, label: "Ещё" },
+    { to: "/dashboard/payments", icon: Receipt, label: "Платежи" },
   ];
+
+  // All sections shown in the "More" sheet
+  const moreMenuLinks = [
+    { to: "/dashboard/deposits", icon: PiggyBank, label: "Вклады" },
+    { to: "/dashboard/credits", icon: Landmark, label: "Кредиты" },
+    { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
+    { to: "/dashboard/bonuses", icon: Activity, label: "Бонусы" },
+    { to: "/dashboard/investments", icon: BarChart3, label: "Инвестиции" },
+    { to: "/dashboard/verification", icon: ShieldCheck, label: "Верификация" },
+    { to: "/dashboard/compliance", icon: Shield, label: "Комплаенс" },
+    { to: "/dashboard/settings", icon: Settings, label: "Настройки" },
+    { to: "/support", icon: HelpCircle, label: "Поддержка" },
+  ];
+
+  const adminMoreLinks = isAdmin ? [
+    { to: "/dashboard/admin", icon: Shield, label: "Админ-панель" },
+    { to: "/dashboard/support", icon: MessageSquare, label: "Обращения" },
+    { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации" },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -470,6 +491,59 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <span className="text-[10px] font-medium">{t(link.label)}</span>
             </NavLink>
           ))}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px] text-muted-foreground">
+                <Menu className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{t("Ещё")}</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="bg-card border-border rounded-t-2xl max-h-[85vh] overflow-y-auto p-0">
+              <SheetHeader className="p-5 border-b border-border text-left">
+                <SheetTitle className="text-foreground">{t("Меню")}</SheetTitle>
+              </SheetHeader>
+              <div className="p-3 grid grid-cols-3 gap-2">
+                {moreMenuLinks.map((link) => (
+                  <button
+                    key={link.to}
+                    onClick={() => { setMobileMenuOpen(false); navigate(link.to); }}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <link.icon className="w-6 h-6 text-primary" />
+                    <span className="text-[11px] text-foreground text-center leading-tight">{t(link.label)}</span>
+                  </button>
+                ))}
+              </div>
+              {adminMoreLinks.length > 0 && (
+                <>
+                  <div className="px-5 pt-4 pb-2 text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                    {t("Администрирование")}
+                  </div>
+                  <div className="p-3 pt-0 grid grid-cols-3 gap-2">
+                    {adminMoreLinks.map((link) => (
+                      <button
+                        key={link.to}
+                        onClick={() => { setMobileMenuOpen(false); navigate(link.to); }}
+                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                      >
+                        <link.icon className="w-6 h-6 text-orange-400" />
+                        <span className="text-[11px] text-orange-300 text-center leading-tight">{t(link.label)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="p-4 border-t border-border mt-2">
+                <button
+                  onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                  className="flex items-center justify-center gap-2 w-full px-3 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t("Выйти")}
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>
