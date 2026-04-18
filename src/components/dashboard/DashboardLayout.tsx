@@ -188,14 +188,34 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
   const initials = displayName.substring(0, 2).toUpperCase();
 
-  // Mobile tabs — conditionally include admin
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Mobile bottom tabs — keep 4 most-used + "More" sheet
   const mobileTabLinks = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
     { to: "/dashboard/transfers", icon: ArrowLeftRight, label: "Переводы" },
     { to: "/dashboard/cards", icon: CreditCard, label: "Карты" },
-    ...(isAdmin ? [{ to: "/dashboard/admin", icon: Shield, label: "Админ" }] : []),
-    { to: "/dashboard/settings", icon: Settings, label: "Ещё" },
+    { to: "/dashboard/payments", icon: Receipt, label: "Платежи" },
   ];
+
+  // All sections shown in the "More" sheet
+  const moreMenuLinks = [
+    { to: "/dashboard/deposits", icon: PiggyBank, label: "Вклады" },
+    { to: "/dashboard/credits", icon: Landmark, label: "Кредиты" },
+    { to: "/dashboard/rates", icon: TrendingUp, label: "Курс валют" },
+    { to: "/dashboard/bonuses", icon: Activity, label: "Бонусы" },
+    { to: "/dashboard/investments", icon: BarChart3, label: "Инвестиции" },
+    { to: "/dashboard/verification", icon: ShieldCheck, label: "Верификация" },
+    { to: "/dashboard/compliance", icon: Shield, label: "Комплаенс" },
+    { to: "/dashboard/settings", icon: Settings, label: "Настройки" },
+    { to: "/support", icon: HelpCircle, label: "Поддержка" },
+  ];
+
+  const adminMoreLinks = isAdmin ? [
+    { to: "/dashboard/admin", icon: Shield, label: "Админ-панель" },
+    { to: "/dashboard/support", icon: MessageSquare, label: "Обращения" },
+    { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации" },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-background flex">
