@@ -87,7 +87,24 @@ const HeroSection = () => {
             </Button>
           </a>
         </div>
-        <div className="relative flex justify-center lg:justify-end mt-8 lg:mt-0">
+        {/* Mobile: stacked vertically; Desktop: overlapped */}
+        <div className="flex flex-col items-center gap-4 sm:hidden mt-2">
+          <BankCard
+            variant="dark"
+            number="4111  ••••  ••••  1111"
+            holder="ALEX IVANOV"
+            expiry="12/28"
+            type="visa"
+          />
+          <BankCard
+            variant="blue"
+            number="5142  ••••  ••••  2563"
+            holder="ALEX IVANOV"
+            expiry="09/28"
+            type="mastercard"
+          />
+        </div>
+        <div className="hidden sm:flex relative justify-center lg:justify-end mt-8 lg:mt-0 min-h-[300px]">
           <BankCard
             variant="dark"
             number="4111  ••••  ••••  1111"
@@ -102,7 +119,7 @@ const HeroSection = () => {
             holder="ALEX IVANOV"
             expiry="09/28"
             type="mastercard"
-            className="absolute top-16 sm:top-20 left-4 sm:left-10 lg:left-0 z-20"
+            className="absolute top-20 left-10 lg:left-0 z-20"
           />
         </div>
       </div>
