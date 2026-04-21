@@ -94,7 +94,7 @@ const TransfersTab = () => {
     if (searchParams.get("new") === "1") {
       setShowForm(true);
       const tab = searchParams.get("tab");
-      if (tab === "sbp" || tab === "bank" || tab === "card" || tab === "phone") setActiveTab(tab);
+      if (tab === "sbp" || tab === "bank" || tab === "card") setActiveTab(tab);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -128,7 +128,7 @@ const TransfersTab = () => {
       toast.error("Введите номер карты");
       return;
     }
-    if ((activeTab === "sbp" || activeTab === "phone") && !phoneNumber.trim()) {
+    if (activeTab === "sbp" && !phoneNumber.trim()) {
       toast.error("Введите номер телефона");
       return;
     }
@@ -144,11 +144,13 @@ const TransfersTab = () => {
       title = `Перевод на карту ••${last4}`;
       category = "Перевод на карту";
     } else if (activeTab === "sbp") {
-      title = `СБП → ${recipientName || phoneNumber}`;
+      const parts = [
+        `тел. ${phoneNumber}`,
+        bankName ? `банк: ${bankName}` : null,
+        recipientName ? `получатель: ${recipientName}` : null,
+      ].filter(Boolean);
+      title = `СБП (по телефону) — ${parts.join(", ")}`;
       category = "СБП";
-    } else if (activeTab === "phone") {
-      title = `Перевод по телефону → ${recipientName || phoneNumber}`;
-      category = "Перевод по телефону";
     } else {
       title = `Перевод → ${bankName || "Другой банк"} (${bankAccount.slice(-4)})`;
       category = "Межбанковский перевод";
