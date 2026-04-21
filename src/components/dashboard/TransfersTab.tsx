@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, Phone, X, Lock, FileWarning } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, X, Lock, FileWarning } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -13,13 +13,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-type TransferType = "card" | "sbp" | "bank" | "phone";
+type TransferType = "card" | "sbp" | "bank";
 
 const tabs: { key: TransferType; label: string; icon: React.ReactNode }[] = [
   { key: "card", label: "На карту", icon: <CreditCard className="w-4 h-4" /> },
-  { key: "sbp", label: "СБП", icon: <Smartphone className="w-4 h-4" /> },
+  { key: "sbp", label: "СБП (по телефону)", icon: <Smartphone className="w-4 h-4" /> },
   { key: "bank", label: "В другой банк", icon: <Building2 className="w-4 h-4" /> },
-  { key: "phone", label: "По телефону", icon: <Phone className="w-4 h-4" /> },
 ];
 
 interface Transaction {
