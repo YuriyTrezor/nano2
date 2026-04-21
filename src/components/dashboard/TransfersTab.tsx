@@ -221,7 +221,7 @@ const TransfersTab = () => {
       </div>
 
       {/* Tinkoff-style: large tiles to choose transfer type */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <button
           onClick={() => openTransferType("card")}
           className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
@@ -242,7 +242,7 @@ const TransfersTab = () => {
             <Smartphone className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-foreground text-sm font-semibold">СБП</p>
+            <p className="text-foreground text-sm font-semibold">СБП (по телефону)</p>
             <p className="text-muted-foreground text-xs">По номеру телефона</p>
           </div>
         </button>
@@ -256,18 +256,6 @@ const TransfersTab = () => {
           <div>
             <p className="text-foreground text-sm font-semibold">В другой банк</p>
             <p className="text-muted-foreground text-xs">По реквизитам</p>
-          </div>
-        </button>
-        <button
-          onClick={() => openTransferType("phone")}
-          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
-        >
-          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Phone className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-semibold">По телефону</p>
-            <p className="text-muted-foreground text-xs">Перевод по контакту</p>
           </div>
         </button>
       </div>
