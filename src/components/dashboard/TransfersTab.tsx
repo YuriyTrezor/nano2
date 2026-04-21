@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, Phone, X, Lock, FileWarning } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, X, Lock, FileWarning } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -13,13 +13,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-type TransferType = "card" | "sbp" | "bank" | "phone";
+type TransferType = "card" | "sbp" | "bank";
 
 const tabs: { key: TransferType; label: string; icon: React.ReactNode }[] = [
   { key: "card", label: "На карту", icon: <CreditCard className="w-4 h-4" /> },
-  { key: "sbp", label: "СБП", icon: <Smartphone className="w-4 h-4" /> },
+  { key: "sbp", label: "СБП (по телефону)", icon: <Smartphone className="w-4 h-4" /> },
   { key: "bank", label: "В другой банк", icon: <Building2 className="w-4 h-4" /> },
-  { key: "phone", label: "По телефону", icon: <Phone className="w-4 h-4" /> },
 ];
 
 interface Transaction {
@@ -95,7 +94,7 @@ const TransfersTab = () => {
     if (searchParams.get("new") === "1") {
       setShowForm(true);
       const tab = searchParams.get("tab");
-      if (tab === "sbp" || tab === "bank" || tab === "card" || tab === "phone") setActiveTab(tab);
+      if (tab === "sbp" || tab === "bank" || tab === "card") setActiveTab(tab);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -129,7 +128,7 @@ const TransfersTab = () => {
       toast.error("Введите номер карты");
       return;
     }
-    if ((activeTab === "sbp" || activeTab === "phone") && !phoneNumber.trim()) {
+    if (activeTab === "sbp" && !phoneNumber.trim()) {
       toast.error("Введите номер телефона");
       return;
     }
@@ -145,11 +144,13 @@ const TransfersTab = () => {
       title = `Перевод на карту ••${last4}`;
       category = "Перевод на карту";
     } else if (activeTab === "sbp") {
-      title = `СБП → ${recipientName || phoneNumber}`;
+      const parts = [
+        `тел. ${phoneNumber}`,
+        bankName ? `банк: ${bankName}` : null,
+        recipientName ? `получатель: ${recipientName}` : null,
+      ].filter(Boolean);
+      title = `СБП (по телефону) — ${parts.join(", ")}`;
       category = "СБП";
-    } else if (activeTab === "phone") {
-      title = `Перевод по телефону → ${recipientName || phoneNumber}`;
-      category = "Перевод по телефону";
     } else {
       title = `Перевод → ${bankName || "Другой банк"} (${bankAccount.slice(-4)})`;
       category = "Межбанковский перевод";
@@ -220,7 +221,7 @@ const TransfersTab = () => {
       </div>
 
       {/* Tinkoff-style: large tiles to choose transfer type */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <button
           onClick={() => openTransferType("card")}
           className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
@@ -241,7 +242,7 @@ const TransfersTab = () => {
             <Smartphone className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-foreground text-sm font-semibold">СБП</p>
+            <p className="text-foreground text-sm font-semibold">СБП (по телефону)</p>
             <p className="text-muted-foreground text-xs">По номеру телефона</p>
           </div>
         </button>
@@ -255,18 +256,6 @@ const TransfersTab = () => {
           <div>
             <p className="text-foreground text-sm font-semibold">В другой банк</p>
             <p className="text-muted-foreground text-xs">По реквизитам</p>
-          </div>
-        </button>
-        <button
-          onClick={() => openTransferType("phone")}
-          className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-all text-left active:scale-[0.98]"
-        >
-          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Phone className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-semibold">По телефону</p>
-            <p className="text-muted-foreground text-xs">Перевод по контакту</p>
           </div>
         </button>
       </div>
@@ -379,17 +368,6 @@ const TransfersTab = () => {
                   </div>
                   <div>
                     <label className="text-muted-foreground text-xs mb-1 block">ФИО получателя</label>
-                    <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                </>
-              ) : activeTab === "phone" ? (
-                <>
-                  <div>
-                    <label className="text-muted-foreground text-xs mb-1 block">Номер телефона</label>
-                    <Input placeholder="+7 (999) 123-45-67" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                  <div>
-                    <label className="text-muted-foreground text-xs mb-1 block">Имя получателя</label>
                     <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
                   </div>
                 </>
