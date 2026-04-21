@@ -344,8 +344,8 @@ const SupportTab = () => {
     const file = e.target.files?.[0];
     if (!file || !selectedTicket || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Файл слишком большой (макс. 5 МБ)", variant: "destructive" });
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Файл слишком большой (макс. 20 МБ)", variant: "destructive" });
       return;
     }
 
