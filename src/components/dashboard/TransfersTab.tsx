@@ -371,17 +371,6 @@ const TransfersTab = () => {
                     <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
                   </div>
                 </>
-              ) : activeTab === "phone" ? (
-                <>
-                  <div>
-                    <label className="text-muted-foreground text-xs mb-1 block">Номер телефона</label>
-                    <Input placeholder="+7 (999) 123-45-67" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                  <div>
-                    <label className="text-muted-foreground text-xs mb-1 block">Имя получателя</label>
-                    <Input placeholder="Имя получателя" value={recipientName} onChange={e => setRecipientName(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                </>
               ) : (
                 <>
                   <Input placeholder="Номер карты" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="bg-secondary border-border" />
