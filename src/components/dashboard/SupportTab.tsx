@@ -601,7 +601,7 @@ const SupportTab = () => {
                   ref={fileInputRef}
                   onChange={handleFileUpload}
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                  accept="*/*"
                 />
                 <Button
                   variant="ghost"
