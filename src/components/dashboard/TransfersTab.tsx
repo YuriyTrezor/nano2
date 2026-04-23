@@ -106,6 +106,7 @@ const TransfersTab = () => {
     if (documentRequested) { setDocAlert(true); return; }
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
+    if (availableCards.length === 0) { setNoCardAlert(true); return; }
 
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!amount.trim() || isNaN(sum) || sum <= 0) {
@@ -114,11 +115,6 @@ const TransfersTab = () => {
     }
     if (sum > balance) {
       toast.error("Недостаточно средств на счёте");
-      return;
-    }
-
-    if (availableCards.length === 0) {
-      toast.error("Нет активной карты для списания");
       return;
     }
 
@@ -206,6 +202,7 @@ const TransfersTab = () => {
     if (documentRequested) { setDocAlert(true); return; }
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
+    if (availableCards.length === 0) { setNoCardAlert(true); return; }
     setActiveTab(type);
     setShowForm(true);
   };
