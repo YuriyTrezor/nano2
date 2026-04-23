@@ -110,6 +110,7 @@ const TransfersTab = () => {
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
     if (availableCards.length === 0) { setNoCardAlert(true); return; }
+    if (limitExceeded) { setLimitAlert(true); return; }
 
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!amount.trim() || isNaN(sum) || sum <= 0) {
@@ -206,6 +207,7 @@ const TransfersTab = () => {
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
     if (availableCards.length === 0) { setNoCardAlert(true); return; }
+    if (limitExceeded) { setLimitAlert(true); return; }
     setActiveTab(type);
     setShowForm(true);
   };
