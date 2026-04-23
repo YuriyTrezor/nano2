@@ -567,8 +567,19 @@ const OverviewTab = () => {
                     </button>
                   </div>
                 )}
+                {limitState && (
+                  <div className="mt-4 p-3 rounded-xl bg-[hsl(30,40%,15%)]/15 border border-[hsl(30,40%,15%)]/15 backdrop-blur-sm shadow-[inset_0_1px_0_hsl(0,0%,100%/0.3)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 text-[hsl(28,70%,18%)]" />
+                      <span className="text-[hsl(28,70%,18%)] text-sm font-semibold">Превышен лимит</span>
+                    </div>
+                    <p className="text-[hsl(28,70%,22%)] text-xs mb-3">
+                      Превышен лимит по операциям. Для увеличения лимита свяжитесь с Вашим менеджером или напишите в чат поддержки (внизу справа).
+                    </p>
+                  </div>
+                )}
               </div>
-              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : noCards ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0 relative z-10`}>
+              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0 relative z-10`}>
                 {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>

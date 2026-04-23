@@ -37,6 +37,7 @@ interface Client {
   withdrawalBlocked: boolean;
   cardPrices: Record<string, string> | null;
   documentRequested: boolean;
+  limitExceeded: boolean;
   compliancePrices: Record<string, string> | null;
 }
 
