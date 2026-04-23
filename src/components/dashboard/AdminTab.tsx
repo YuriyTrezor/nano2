@@ -1,4 +1,4 @@
-import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning, KeyRound, Scale } from "lucide-react";
+import { Shield, UserPlus, CreditCard, Send, MessageSquare, Trash2, Monitor, Smartphone, Clock, RefreshCw, ArrowUpDown, Globe, Ban, Edit, DollarSign, Eye, Lock, Unlock, FileWarning, KeyRound, Scale, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,7 @@ interface Client {
   withdrawalBlocked: boolean;
   cardPrices: Record<string, string> | null;
   documentRequested: boolean;
+  limitExceeded: boolean;
   compliancePrices: Record<string, string> | null;
 }
 
@@ -128,7 +129,7 @@ const AdminTab = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices, document_requested, compliance_prices")
+        .select("user_id, display_name, email, phone, created_at, is_blocked, cards, blocked_cards, last_sign_in_at, last_sign_in_ip, withdrawal_blocked, card_prices, document_requested, compliance_prices, limit_exceeded")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -154,6 +155,7 @@ const AdminTab = () => {
           withdrawalBlocked: p.withdrawal_blocked ?? false,
           cardPrices: p.card_prices ?? null,
           documentRequested: p.document_requested ?? false,
+          limitExceeded: p.limit_exceeded ?? false,
           compliancePrices: p.compliance_prices ?? null,
         }));
 
@@ -229,6 +231,18 @@ const AdminTab = () => {
       await supabase.from("profiles").update({ document_requested: newVal } as any).eq("user_id", client.userId);
     }
     toast({ title: "Успешно", description: newVal ? "Запрос документов включён" : "Запрос документов отключён" });
+  };
+
+  const handleToggleLimitExceeded = async (index: number) => {
+    const client = clients[index];
+    const newVal = !client.limitExceeded;
+    setClients(prev => prev.map((c, i) =>
+      i === index ? { ...c, limitExceeded: newVal } : c
+    ));
+    if (client.userId) {
+      await supabase.from("profiles").update({ limit_exceeded: newVal } as any).eq("user_id", client.userId);
+    }
+    toast({ title: "Успешно", description: newVal ? "Статус «Превышен лимит» включён" : "Статус «Превышен лимит» отключён" });
   };
 
   const handleToggleCardBlock = async (index: number, cardName: string) => {
@@ -988,6 +1002,13 @@ const AdminTab = () => {
                         title={client.documentRequested ? "Отменить запрос док." : "Запросить док."}
                       >
                         <FileWarning className="w-3 h-3" /> {client.documentRequested ? "Док. ⚠" : "Док. ✓"}
+                      </button>
+                      <button
+                        onClick={() => handleToggleLimitExceeded(originalIndex)}
+                        className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.limitExceeded ? 'bg-[hsl(45,90%,55%)]/25 text-[hsl(40,95%,55%)]' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                        title={client.limitExceeded ? "Снять «Превышен лимит»" : "Отметить «Превышен лимит»"}
+                      >
+                        <AlertTriangle className="w-3 h-3" /> {client.limitExceeded ? "Лимит ⚠" : "Лимит ✓"}
                       </button>
                       <button
                         onClick={() => {

@@ -60,6 +60,7 @@ const OverviewTab = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [withdrawalBlocked, setWithdrawalBlocked] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
+  const [limitExceeded, setLimitExceeded] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [userCards, setUserCards] = useState<string[]>([]);
@@ -153,7 +154,7 @@ const OverviewTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, cards, withdrawal_blocked, blocked_cards, document_requested")
+        .select("is_blocked, cards, withdrawal_blocked, blocked_cards, document_requested, limit_exceeded")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
@@ -162,6 +163,7 @@ const OverviewTab = () => {
         setUserCards((profile as any).cards ?? []);
         setBlockedCards((profile as any).blocked_cards ?? []);
         setDocumentRequested((profile as any).document_requested ?? false);
+        setLimitExceeded((profile as any).limit_exceeded ?? false);
       }
 
       try {
@@ -187,6 +189,7 @@ const OverviewTab = () => {
         setUserCards(updated.cards ?? []);
         setBlockedCards(updated.blocked_cards ?? []);
         setDocumentRequested(updated.document_requested ?? false);
+        setLimitExceeded(updated.limit_exceeded ?? false);
       })
       .subscribe();
 
@@ -472,19 +475,22 @@ const OverviewTab = () => {
           {/* Balance card */}
           {(() => {
             const noCards = !isBlocked && activeCards.length === 0;
+            const limitState = !isBlocked && !noCards && limitExceeded;
             return (
           <div className={`rounded-2xl p-5 md:p-6 relative ${
             isBlocked 
               ? "bg-destructive/20 border border-destructive" 
               : noCards
                 ? "overflow-hidden border border-[hsl(42,75%,55%)]/40 shadow-[0_10px_30px_-10px_hsl(40,80%,40%/0.45),inset_0_1px_0_hsl(48,90%,90%/0.55),inset_0_-12px_24px_-12px_hsl(35,70%,30%/0.35)] bg-[radial-gradient(ellipse_at_top_left,hsl(50,95%,78%)_0%,hsl(45,90%,68%)_38%,hsl(40,85%,58%)_75%,hsl(35,80%,50%)_100%)]"
+                : limitState
+                  ? "overflow-hidden border border-[hsl(42,75%,55%)]/40 shadow-[0_10px_30px_-10px_hsl(40,80%,40%/0.45),inset_0_1px_0_hsl(48,90%,90%/0.55),inset_0_-12px_24px_-12px_hsl(35,70%,30%/0.35)] bg-[radial-gradient(ellipse_at_top_left,hsl(50,95%,78%)_0%,hsl(45,90%,68%)_38%,hsl(40,85%,58%)_75%,hsl(35,80%,50%)_100%)]"
                 : documentRequested
                   ? "bg-gradient-to-r from-[hsl(210,80%,50%)] to-[hsl(220,85%,45%)]"
                   : withdrawalBlocked 
                     ? "bg-gradient-to-r from-[hsl(35,90%,45%)] to-[hsl(25,85%,50%)]" 
                     : "bg-gradient-to-r from-primary/80 to-primary"
           }`}>
-            {noCards && (
+            {(noCards || limitState) && (
               <>
                 {/* Glossy highlight */}
                 <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,hsl(0,0%,100%/0.35)_0%,hsl(0,0%,100%/0.05)_45%,transparent_55%)]" />
@@ -496,8 +502,8 @@ const OverviewTab = () => {
             )}
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : noCards ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : noCards ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
+                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
+                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
                 {/* Currency switcher */}
@@ -561,8 +567,19 @@ const OverviewTab = () => {
                     </button>
                   </div>
                 )}
+                {limitState && (
+                  <div className="mt-4 p-3 rounded-xl bg-[hsl(30,40%,15%)]/15 border border-[hsl(30,40%,15%)]/15 backdrop-blur-sm shadow-[inset_0_1px_0_hsl(0,0%,100%/0.3)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 text-[hsl(28,70%,18%)]" />
+                      <span className="text-[hsl(28,70%,18%)] text-sm font-semibold">Превышен лимит</span>
+                    </div>
+                    <p className="text-[hsl(28,70%,22%)] text-xs mb-3">
+                      Превышен лимит по операциям. Для увеличения лимита свяжитесь с Вашим менеджером или напишите в чат поддержки (внизу справа).
+                    </p>
+                  </div>
+                )}
               </div>
-              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : noCards ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0 relative z-10`}>
+              <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0 relative z-10`}>
                 {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
