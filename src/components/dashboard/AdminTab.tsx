@@ -315,10 +315,7 @@ const AdminTab = () => {
       toast({ title: "Ошибка", description: "Введите корректную сумму", variant: "destructive" });
       return;
     }
-    if (!txDialog.cardName) {
-      toast({ title: "Ошибка", description: "Выберите карту", variant: "destructive" });
-      return;
-    }
+    // Карта не обязательна — допускается зачисление/списание прямо на счёт без карты
 
     const client = clients[txDialog.index];
     const finalAmount = txDialog.mode === "add" ? amount : -amount;
@@ -563,9 +560,10 @@ const AdminTab = () => {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Карта</Label>
-              <Select value={txDialog?.cardName ?? ""} onValueChange={val => setTxDialog(prev => prev ? { ...prev, cardName: val } : null)}>
-                <SelectTrigger><SelectValue placeholder="Выберите карту" /></SelectTrigger>
+              <Select value={txDialog?.cardName || "__none__"} onValueChange={val => setTxDialog(prev => prev ? { ...prev, cardName: val === "__none__" ? "" : val } : null)}>
+                <SelectTrigger><SelectValue placeholder="Без карты (на счёт)" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">Без карты (на счёт)</SelectItem>
                   {txDialog && clients[txDialog.index]?.cards.map(c => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}

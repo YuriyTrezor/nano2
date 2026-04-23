@@ -1,4 +1,5 @@
 import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, X, Lock, FileWarning } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -54,6 +55,7 @@ const TransfersTab = () => {
   const [withdrawalAlert, setWithdrawalAlert] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
+  const [noCardAlert, setNoCardAlert] = useState(false);
 
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
@@ -104,6 +106,7 @@ const TransfersTab = () => {
     if (documentRequested) { setDocAlert(true); return; }
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
+    if (availableCards.length === 0) { setNoCardAlert(true); return; }
 
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!amount.trim() || isNaN(sum) || sum <= 0) {
@@ -112,11 +115,6 @@ const TransfersTab = () => {
     }
     if (sum > balance) {
       toast.error("Недостаточно средств на счёте");
-      return;
-    }
-
-    if (availableCards.length === 0) {
-      toast.error("Нет активной карты для списания");
       return;
     }
 
@@ -204,6 +202,7 @@ const TransfersTab = () => {
     if (documentRequested) { setDocAlert(true); return; }
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
+    if (availableCards.length === 0) { setNoCardAlert(true); return; }
     setActiveTab(type);
     setShowForm(true);
   };
@@ -302,6 +301,25 @@ const TransfersTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* No card alert */}
+      <AlertDialog open={noCardAlert} onOpenChange={setNoCardAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" /> Требуется оформление карты
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для перевода средств необходимо оформить карту. Перейдите в раздел «Карты», чтобы выбрать и заказать подходящий тариф.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogAction asChild>
+              <Link to="/dashboard/cards">Перейти к картам</Link>
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
