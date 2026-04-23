@@ -69,8 +69,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) {
-      // Track login IP
-      supabase.functions.invoke("track-login").catch(() => {});
+      // Track login IP (fire-and-forget, never block login)
+      try {
+        Promise.resolve(supabase.functions.invoke("track-login")).catch(() => {});
+      } catch {
+        // ignore
+      }
     }
     return { error };
   };
