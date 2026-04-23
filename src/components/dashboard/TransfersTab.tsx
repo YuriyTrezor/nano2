@@ -55,6 +55,7 @@ const TransfersTab = () => {
   const [withdrawalAlert, setWithdrawalAlert] = useState(false);
   const [documentRequested, setDocumentRequested] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
+  const [noCardAlert, setNoCardAlert] = useState(false);
 
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
