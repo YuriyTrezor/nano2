@@ -283,6 +283,21 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Limit exceeded alert */}
+      <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[hsl(38,92%,50%)]">
+              <AlertTriangle className="w-5 h-5" /> Превышен лимит
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для перевода требуется настроить лимиты. Пожалуйста, свяжитесь с Вашим менеджером или напишите в чат поддержки (внизу справа).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Transfer — direct navigate, no modal */}
 
       {/* Deposit modal */}
