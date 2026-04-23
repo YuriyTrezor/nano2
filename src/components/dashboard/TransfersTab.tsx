@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, X, Lock, FileWarning } from "lucide-react";
+import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Search, CreditCard, Building2, Smartphone, X, Lock, FileWarning, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,8 @@ const TransfersTab = () => {
   const [documentRequested, setDocumentRequested] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
   const [noCardAlert, setNoCardAlert] = useState(false);
+  const [limitExceeded, setLimitExceeded] = useState(false);
+  const [limitAlert, setLimitAlert] = useState(false);
 
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
@@ -70,7 +72,7 @@ const TransfersTab = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_blocked, withdrawal_blocked, document_requested, cards, blocked_cards")
+        .select("is_blocked, withdrawal_blocked, document_requested, cards, blocked_cards, limit_exceeded")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
@@ -79,6 +81,7 @@ const TransfersTab = () => {
         setDocumentRequested((profile as any).document_requested ?? false);
         setUserCards((profile as any).cards ?? []);
         setBlockedCards((profile as any).blocked_cards ?? []);
+        setLimitExceeded((profile as any).limit_exceeded ?? false);
       }
 
       try {
@@ -107,6 +110,7 @@ const TransfersTab = () => {
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
     if (availableCards.length === 0) { setNoCardAlert(true); return; }
+    if (limitExceeded) { setLimitAlert(true); return; }
 
     const sum = parseFloat(amount.replace(/\s/g, ""));
     if (!amount.trim() || isNaN(sum) || sum <= 0) {
@@ -203,6 +207,7 @@ const TransfersTab = () => {
     if (isBlocked) { setBlockedAlert(true); return; }
     if (withdrawalBlocked) { setWithdrawalAlert(true); return; }
     if (availableCards.length === 0) { setNoCardAlert(true); return; }
+    if (limitExceeded) { setLimitAlert(true); return; }
     setActiveTab(type);
     setShowForm(true);
   };
@@ -320,6 +325,21 @@ const TransfersTab = () => {
               <Link to="/dashboard/cards">Перейти к картам</Link>
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Limit exceeded alert */}
+      <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[hsl(38,92%,50%)]">
+              <AlertTriangle className="w-5 h-5" /> Превышен лимит
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для перевода требуется настроить лимиты. Пожалуйста, свяжитесь с Вашим менеджером или напишите в чат поддержки (внизу справа).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
