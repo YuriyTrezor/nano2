@@ -328,6 +328,21 @@ const TransfersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Limit exceeded alert */}
+      <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[hsl(38,92%,50%)]">
+              <AlertTriangle className="w-5 h-5" /> Превышен лимит
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для перевода требуется настроить лимиты. Пожалуйста, свяжитесь с Вашим менеджером или напишите в чат поддержки (внизу справа).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction>OK</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
           <div
