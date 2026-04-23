@@ -4,6 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import neobankLogo from "@/assets/neobank-logo.png";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const { lang, toggleLang, t } = useLanguage();
@@ -24,14 +25,20 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <a href="/" className="flex items-center">
+          <Link to="/" className="flex items-center">
             <img src={neobankLogo} alt="NeoBank" className="h-9 rounded-md opacity-90 brightness-90" />
-          </a>
+          </Link>
           <div className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
-              <a key={item.href} href={item.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                {item.label}
-              </a>
+              item.href.startsWith("/#") ? (
+                <a key={item.href} href={item.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                  {item.label}
+                </a>
+              ) : (
+                <Link key={item.href} to={item.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                  {item.label}
+                </Link>
+              )
             ))}
           </div>
         </div>
@@ -50,12 +57,12 @@ const Navbar = () => {
               EN
             </button>
           </div>
-          <a href="/auth" className="hidden sm:block">
+          <Link to="/auth" className="hidden sm:block">
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 text-xs sm:text-sm">
               {t("Войти в личный кабинет")}
               <ArrowRight className="w-4 h-4" />
             </Button>
-          </a>
+          </Link>
 
           {/* Mobile hamburger */}
           <Sheet open={open} onOpenChange={setOpen}>
@@ -76,14 +83,25 @@ const Navbar = () => {
 
               <div className="flex-1 overflow-y-auto p-3 space-y-1">
                 {navItems.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
-                  >
-                    {item.label}
-                  </a>
+                  item.href.startsWith("/#") ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  )
                 ))}
               </div>
 
@@ -102,12 +120,12 @@ const Navbar = () => {
                     EN
                   </button>
                 </div>
-                <a href="/auth" onClick={() => setOpen(false)} className="block">
+                <Link to="/auth" onClick={() => setOpen(false)} className="block">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
                     {t("Войти в личный кабинет")}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
-                </a>
+                </Link>
               </div>
             </SheetContent>
           </Sheet>
