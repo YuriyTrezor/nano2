@@ -477,17 +477,27 @@ const OverviewTab = () => {
             isBlocked 
               ? "bg-destructive/20 border border-destructive" 
               : noCards
-                ? "bg-gradient-to-r from-[hsl(45,95%,50%)] to-[hsl(38,95%,55%)]"
+                ? "overflow-hidden border border-[hsl(42,75%,55%)]/40 shadow-[0_10px_30px_-10px_hsl(40,80%,40%/0.45),inset_0_1px_0_hsl(48,90%,90%/0.55),inset_0_-12px_24px_-12px_hsl(35,70%,30%/0.35)] bg-[radial-gradient(ellipse_at_top_left,hsl(50,95%,78%)_0%,hsl(45,90%,68%)_38%,hsl(40,85%,58%)_75%,hsl(35,80%,50%)_100%)]"
                 : documentRequested
                   ? "bg-gradient-to-r from-[hsl(210,80%,50%)] to-[hsl(220,85%,45%)]"
                   : withdrawalBlocked 
                     ? "bg-gradient-to-r from-[hsl(35,90%,45%)] to-[hsl(25,85%,50%)]" 
                     : "bg-gradient-to-r from-primary/80 to-primary"
           }`}>
+            {noCards && (
+              <>
+                {/* Glossy highlight */}
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,hsl(0,0%,100%/0.35)_0%,hsl(0,0%,100%/0.05)_45%,transparent_55%)]" />
+                {/* Soft glow blob */}
+                <div className="pointer-events-none absolute -top-16 -right-10 w-56 h-56 rounded-full bg-[radial-gradient(circle,hsl(50,100%,85%/0.55)_0%,transparent_70%)] blur-2xl" />
+                {/* Bottom shadow rim for depth */}
+                <div className="pointer-events-none absolute inset-x-4 bottom-0 h-3 rounded-b-2xl bg-[radial-gradient(ellipse_at_center,hsl(30,60%,20%/0.35)_0%,transparent_70%)] blur-md" />
+              </>
+            )}
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
-                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : "text-primary-foreground"}`}>
+                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : noCards ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
+                <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : noCards ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
                 {/* Currency switcher */}
