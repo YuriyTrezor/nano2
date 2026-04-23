@@ -874,7 +874,7 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Быстрые действия")}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (documentRequested) { setDocAlert(true); return; } if (limitExceeded) { setLimitAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Send className="w-4 h-4 text-primary" />
                 </div>
