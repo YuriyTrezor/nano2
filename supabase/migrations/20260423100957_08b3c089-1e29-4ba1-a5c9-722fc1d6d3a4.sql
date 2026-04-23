@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS limit_exceeded boolean NOT NULL DEFAULT false;

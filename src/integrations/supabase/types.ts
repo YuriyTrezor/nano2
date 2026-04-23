@@ -115,6 +115,7 @@ export type Database = {
           is_blocked: boolean
           last_sign_in_at: string | null
           last_sign_in_ip: string | null
+          limit_exceeded: boolean
           phone: string | null
           updated_at: string
           user_id: string
@@ -133,6 +134,7 @@ export type Database = {
           is_blocked?: boolean
           last_sign_in_at?: string | null
           last_sign_in_ip?: string | null
+          limit_exceeded?: boolean
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -151,6 +153,7 @@ export type Database = {
           is_blocked?: boolean
           last_sign_in_at?: string | null
           last_sign_in_ip?: string | null
+          limit_exceeded?: boolean
           phone?: string | null
           updated_at?: string
           user_id?: string
