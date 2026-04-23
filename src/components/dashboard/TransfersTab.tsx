@@ -304,6 +304,25 @@ const TransfersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* No card alert */}
+      <AlertDialog open={noCardAlert} onOpenChange={setNoCardAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" /> Требуется оформление карты
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Для перевода средств необходимо оформить карту. Перейдите в раздел «Карты», чтобы выбрать и заказать подходящий тариф.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogAction asChild>
+              <Link to="/dashboard/cards">Перейти к картам</Link>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
           <div
