@@ -83,14 +83,25 @@ const Navbar = () => {
 
               <div className="flex-1 overflow-y-auto p-3 space-y-1">
                 {navItems.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
-                  >
-                    {item.label}
-                  </a>
+                  item.href.startsWith("/#") ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-3 py-3 rounded-lg text-base text-foreground hover:bg-secondary transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  )
                 ))}
               </div>
 
@@ -109,12 +120,12 @@ const Navbar = () => {
                     EN
                   </button>
                 </div>
-                <a href="/auth" onClick={() => setOpen(false)} className="block">
+                <Link to="/auth" onClick={() => setOpen(false)} className="block">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
                     {t("Войти в личный кабинет")}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
-                </a>
+                </Link>
               </div>
             </SheetContent>
           </Sheet>
