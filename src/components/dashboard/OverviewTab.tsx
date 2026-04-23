@@ -470,14 +470,19 @@ const OverviewTab = () => {
         {/* Left column */}
         <div className="flex-1 min-w-0 space-y-6">
           {/* Balance card */}
+          {(() => {
+            const noCards = !isBlocked && activeCards.length === 0;
+            return (
           <div className={`rounded-2xl p-5 md:p-6 relative ${
             isBlocked 
               ? "bg-destructive/20 border border-destructive" 
-              : documentRequested
-                ? "bg-gradient-to-r from-[hsl(210,80%,50%)] to-[hsl(220,85%,45%)]"
-                : withdrawalBlocked 
-                  ? "bg-gradient-to-r from-[hsl(35,90%,45%)] to-[hsl(25,85%,50%)]" 
-                  : "bg-gradient-to-r from-primary/80 to-primary"
+              : noCards
+                ? "bg-gradient-to-r from-[hsl(45,95%,50%)] to-[hsl(38,95%,55%)]"
+                : documentRequested
+                  ? "bg-gradient-to-r from-[hsl(210,80%,50%)] to-[hsl(220,85%,45%)]"
+                  : withdrawalBlocked 
+                    ? "bg-gradient-to-r from-[hsl(35,90%,45%)] to-[hsl(25,85%,50%)]" 
+                    : "bg-gradient-to-r from-primary/80 to-primary"
           }`}>
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
@@ -528,12 +533,32 @@ const OverviewTab = () => {
                     <span className="text-primary-foreground/90 text-xs">Для вывода необходимо приобрести карту. Свяжитесь с Вашим менеджером или напишите в чат (внизу справа).</span>
                   </div>
                 )}
+                {noCards && (
+                  <div className="mt-4 p-3 rounded-xl bg-black/20 border border-black/10">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCard className="w-4 h-4 text-primary-foreground" />
+                      <span className="text-primary-foreground text-sm font-semibold">Требуется оформление карты</span>
+                    </div>
+                    <p className="text-primary-foreground/90 text-xs mb-3">
+                      Для перевода средств необходимо оформить карту. Перейдите в раздел «Карты», чтобы выбрать и заказать подходящий тариф.
+                    </p>
+                    <button
+                      onClick={() => navigate("/dashboard/cards")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      Перейти к картам
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
               <button onClick={toggleBalanceHidden} className={`${isBlocked ? "text-destructive/60" : "text-primary-foreground/60"} hover:opacity-80 transition-opacity shrink-0`}>
                 {balanceHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
+            );
+          })()}
 
           {/* Card on mobile */}
           {activeCards.length > 0 ? (
