@@ -29,7 +29,7 @@ const transliterate = (text: string): string => {
 const allCards: Record<string, { name: string; number: string; fullNumber: string; holder: string; expiry: string; type: string; gradient: string; cvv: string }> = {
   White: { name: "White", number: "4 •••• •••• •••• 3891", fullNumber: "4118 2735 6491 3891", holder: "", expiry: "02/30", type: "VISA", gradient: "from-[hsl(0,0%,85%)] to-[hsl(0,0%,70%)]", cvv: "482" },
   Silver: { name: "Silver", number: "4 •••• •••• •••• 1205", fullNumber: "4729 6183 0542 1205", holder: "", expiry: "11/31", type: "VISA", gradient: "from-[hsl(220,10%,55%)] to-[hsl(220,15%,35%)]", cvv: "365" },
-  Gold: { name: "Gold", number: "5 •••• •••• •••• 7742", fullNumber: "5263 4810 9357 7742", holder: "", expiry: "08/29", type: "MC", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
+  Gold: { name: "Gold", number: "4 •••• •••• •••• 3702", fullNumber: "4118 2735 6492 3702", holder: "", expiry: "08/29", type: "VISA", gradient: "from-[hsl(35,80%,30%)] to-[hsl(25,70%,20%)]", cvv: "719" },
   Diamond: { name: "Diamond", number: "4 •••• •••• •••• 5580", fullNumber: "4391 7024 8165 5580", holder: "", expiry: "06/32", type: "VISA", gradient: "from-[hsl(195,80%,30%)] to-[hsl(210,70%,20%)]", cvv: "941" },
 };
 
