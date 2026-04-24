@@ -14,6 +14,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isPreviewEnvironment = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes("lovableproject.com") || hostname.includes("id-preview--");
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -28,6 +33,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("role", "admin")
       .maybeSingle();
     setIsAdmin(!!data);
+  };
+
+  const trackLogin = () => {
+    try {
+      Promise.resolve(supabase.functions.invoke("track-login")).catch(() => {});
+    } catch {
+      // ignore
+    }
+  };
+
+  const signInFromPreviewFallback = async (email: string, password: string) => {
+    const { data, error } = await supabase.functions.invoke("preview-password-login", {
+      body: { email, password },
+    });
+
+    if (error) {
+      return { error };
+    }
+
+    const sessionData = data?.session;
+
+    if (!sessionData?.access_token || !sessionData?.refresh_token) {
+      return { error: new Error("Не удалось получить сессию") };
+    }
+
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: sessionData.access_token,
+      refresh_token: sessionData.refresh_token,
+    });
+
+    return { error: sessionError };
   };
 
   useEffect(() => {
@@ -67,16 +103,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) {
-      // Track login IP (fire-and-forget, never block login)
-      try {
-        Promise.resolve(supabase.functions.invoke("track-login")).catch(() => {});
-      } catch {
-        // ignore
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error && isPreviewEnvironment() && /failed to fetch/i.test(error.message)) {
+        const fallbackResult = await signInFromPreviewFallback(email, password);
+        if (!fallbackResult.error) {
+          trackLogin();
+        }
+        return fallbackResult;
       }
+
+      if (!error) {
+        trackLogin();
+      }
+
+      return { error };
+    } catch (error) {
+      if (isPreviewEnvironment()) {
+        const fallbackResult = await signInFromPreviewFallback(email, password);
+        if (!fallbackResult.error) {
+          trackLogin();
+        }
+        return fallbackResult;
+      }
+
+      return { error };
     }
-    return { error };
   };
 
   const signOut = async () => {
