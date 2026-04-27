@@ -31,6 +31,42 @@
   <meta name="twitter:title" content="NeoBank - твой надежный банк">
   <meta property="og:description" content="Международные переводы и виртуальные карты за 5 минут. Без границ и блокировок. SWIFT реквизиты">
   <meta name="twitter:description" content="Международные переводы и виртуальные карты за 5 минут. Без границ и блокировок. SWIFT реквизиты">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script>
+    // Aggressive cleanup of any leftover service workers / caches that
+    // were preventing many users from logging in. Runs BEFORE React loads.
+    (function () {
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            var hadSW = regs && regs.length > 0;
+            regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+            if (hadSW) {
+              try { sessionStorage.setItem('__sw_cleared__', '1'); } catch (e) {}
+            }
+          }).catch(function () {});
+        }
+      } catch (e) {}
+      try {
+        if (typeof caches !== 'undefined' && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+          }).catch(function () {});
+        }
+      } catch (e) {}
+      // One-time hard reload right after killing a stuck SW so the user
+      // gets the fresh build instead of the cached shell.
+      try {
+        if (sessionStorage.getItem('__sw_cleared__') === '1' &&
+            !sessionStorage.getItem('__sw_reloaded__')) {
+          sessionStorage.setItem('__sw_reloaded__', '1');
+          setTimeout(function () { window.location.reload(); }, 50);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
   <body>

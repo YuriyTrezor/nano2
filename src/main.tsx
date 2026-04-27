@@ -2,19 +2,30 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Unregister any previously installed service worker and clear its caches.
-// The SW was caching index.html / JS, which caused stale builds and broken
-// logins for many users. We disable it until a safer strategy is in place.
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((regs) => {
-    regs.forEach((reg) => reg.unregister().catch(() => {}));
-  }).catch(() => {});
-
-  if (typeof caches !== 'undefined') {
-    caches.keys().then((keys) => {
-      keys.forEach((key) => caches.delete(key).catch(() => {}));
-    }).catch(() => {});
-  }
-}
+// Belt-and-suspenders: kill any service worker / cache that may still be
+// alive after the inline cleanup in index.html ran. This protects users in
+// regions (RU, etc.) where ISPs / browsers cache aggressively.
+(async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+    }
+  } catch {}
+  try {
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => {})));
+    }
+  } catch {}
+  // Best-effort: clear any leftover Supabase auth artifacts in legacy keys
+  // that could conflict with the current session storage.
+  try {
+    const legacyKeys = ['supabase.auth.token'];
+    legacyKeys.forEach((k) => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+  } catch {}
+})();
 
 createRoot(document.getElementById("root")!).render(<App />);
