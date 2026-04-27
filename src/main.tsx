@@ -2,17 +2,19 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-const isPreviewEnvironment =
-  window.location.hostname.includes("lovableproject.com") ||
-  window.location.hostname.includes("id-preview--");
+// Unregister any previously installed service worker and clear its caches.
+// The SW was caching index.html / JS, which caused stale builds and broken
+// logins for many users. We disable it until a safer strategy is in place.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister().catch(() => {}));
+  }).catch(() => {});
 
-// Register Service Worker
-if ('serviceWorker' in navigator && !isPreviewEnvironment) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed silently
-    });
-  });
+  if (typeof caches !== 'undefined') {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key).catch(() => {}));
+    }).catch(() => {});
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
