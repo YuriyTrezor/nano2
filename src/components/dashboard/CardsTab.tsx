@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
+import OrderCardDialog from "./OrderCardDialog";
 
 
 
@@ -151,6 +152,7 @@ const CardsTab = () => {
   const [cardBalances, setCardBalances] = useState<Record<string, number>>({});
   const [totalBalance, setTotalBalance] = useState(0);
   const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
+  const [orderCardName, setOrderCardName] = useState<string | null>(null);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
@@ -375,7 +377,7 @@ const CardsTab = () => {
                   <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
                     <RotateCcw className="w-4 h-4 text-muted-foreground" /> Перевыпустить
                   </button>
-                  <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
+                  <button onClick={() => setOrderCardName(card.name)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
                     <CardIcon className="w-4 h-4 text-muted-foreground" /> Заказать пластиковую
                   </button>
                   <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-secondary transition-colors">
@@ -569,6 +571,12 @@ const CardsTab = () => {
           </div>
         );
       })()}
+
+      <OrderCardDialog
+        open={!!orderCardName}
+        onOpenChange={(v) => !v && setOrderCardName(null)}
+        cardName={orderCardName ?? ""}
+      />
     </div>
   );
 };
