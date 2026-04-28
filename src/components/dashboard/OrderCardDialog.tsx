@@ -49,7 +49,7 @@ const OrderCardDialog = ({ open, onOpenChange, cardName }: OrderCardDialogProps)
     city: "",
     postalCode: "",
     addressLine: "",
-    deliveryService: "",
+    deliveryService: "neobank",
     deliveryType: "courier",
     pickupPoint: "",
     comment: "",
