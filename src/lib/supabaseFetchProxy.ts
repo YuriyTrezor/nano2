@@ -1,60 +1,117 @@
 /**
- * Fetch fallback for regions where Supabase API (*.supabase.co) is blocked,
- * e.g. Russia, where many ISPs block Supabase domains and users see
- * "Failed to fetch" / "TypeError: Load failed" on auth and REST calls.
+ * Multi-proxy fetch fallback for Supabase requests.
  *
- * Strategy: monkey-patch window.fetch. For requests that target the
- * Supabase URL, try the direct call first; if it fails with a network
- * error (no response received), retry through a public CORS proxy.
+ * Why: in some regions (notably RU) ISPs block *.supabase.co directly,
+ * and even some popular CORS proxies are blocked too. So we:
+ *   1. Race the direct request against a short timeout.
+ *   2. If it fails / times out, race ALL known CORS proxies in parallel
+ *      — whichever responds first wins.
+ *   3. Remember the winning route for the rest of the session to avoid
+ *      paying the timeout penalty on every call.
  *
- * Headers are preserved (Authorization, apikey, etc.), so RLS and auth
- * keep working transparently.
+ * All original headers (Authorization, apikey, content-type, ...) are
+ * preserved, so Supabase auth + RLS keep working transparently.
  */
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
-// Public CORS proxies that simply forward the request, including headers
-// and method. We try them in order; the first one that returns a response
-// wins. These are community-run mirrors — fine as a regional fallback.
-const PROXIES = [
-  // corsproxy.io passes through method, headers and body
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  // allorigins as a secondary fallback (raw passthrough)
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+// Public CORS proxies that forward method, headers and body.
+// Order doesn't matter much — we race them in parallel.
+const PROXIES: Array<(url: string) => string> = [
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+  (url) => `https://cors.eu.org/${url}`,
+  (url) => `https://proxy.cors.sh/${url}`,
 ];
 
-let proxyMode = false; // once a proxy works, stick with it for the session
+// Once we know the direct route works (or doesn't), remember it.
+type Route = "direct" | "proxy";
+let preferredRoute: Route | null = null;
 
-const isSupabaseUrl = (url: string) => {
-  if (!SUPABASE_URL) return false;
-  return url.startsWith(SUPABASE_URL);
-};
-
-const isNetworkError = (err: unknown) => {
-  if (!(err instanceof TypeError)) return false;
-  const msg = err.message || "";
-  return /failed to fetch|load failed|networkerror|fetch failed/i.test(msg);
-};
-
-const tryProxies = async (input: string, init?: RequestInit) => {
-  let lastErr: unknown = new Error("All proxies failed");
-  for (const build of PROXIES) {
-    try {
-      const proxied = build(input);
-      const res = await originalFetch(proxied, init);
-      if (res.ok || (res.status >= 200 && res.status < 500)) {
-        proxyMode = true;
-        return res;
-      }
-      lastErr = new Error(`Proxy returned ${res.status}`);
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr;
-};
+// Direct-call timeout. Real Supabase responses usually return well under
+// 2s; if we wait longer it's almost certainly a block.
+const DIRECT_TIMEOUT_MS = 3500;
 
 const originalFetch = window.fetch.bind(window);
+
+const isSupabaseUrl = (url: string) => !!SUPABASE_URL && url.startsWith(SUPABASE_URL);
+
+const withTimeout = async (
+  promise: Promise<Response>,
+  ms: number,
+  controller: AbortController,
+): Promise<Response> => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<Response>((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error("timeout"));
+        }, ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+// Race all proxies — first successful response wins; cancel the rest.
+const raceProxies = async (url: string, init: RequestInit | undefined): Promise<Response> => {
+  const controllers = PROXIES.map(() => new AbortController());
+
+  const attempts = PROXIES.map(async (build, i) => {
+    const proxied = build(url);
+    const proxyInit: RequestInit = {
+      ...(init || {}),
+      signal: controllers[i].signal,
+    };
+    const res = await originalFetch(proxied, proxyInit);
+    // Treat 5xx from the proxy itself as a failure so another proxy can win.
+    if (res.status >= 500) throw new Error(`proxy ${i} -> ${res.status}`);
+    return { res, i };
+  });
+
+  // Manual Promise.any so we don't depend on ES2021 lib target.
+  return new Promise<Response>((resolve, reject) => {
+    let remaining = attempts.length;
+    const errors: unknown[] = [];
+    attempts.forEach((p, i) => {
+      p.then(({ res }) => {
+        controllers.forEach((c, idx) => {
+          if (idx !== i) c.abort();
+        });
+        preferredRoute = "proxy";
+        resolve(res);
+      }).catch((e) => {
+        errors.push(e);
+        remaining -= 1;
+        if (remaining === 0) {
+          reject(
+            new Error(
+              "All Supabase fallbacks failed. Likely a network block. " +
+                errors.map((x) => (x instanceof Error ? x.message : String(x))).join(" | "),
+            ),
+          );
+        }
+      });
+    });
+  });
+};
+
+const tryDirect = async (url: string, init: RequestInit | undefined): Promise<Response> => {
+  const controller = new AbortController();
+  // Respect any existing signal from the caller.
+  const callerSignal = init?.signal;
+  if (callerSignal) {
+    if (callerSignal.aborted) controller.abort();
+    else callerSignal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+  const directInit: RequestInit = { ...(init || {}), signal: controller.signal };
+  return withTimeout(originalFetch(url, directInit), DIRECT_TIMEOUT_MS, controller);
+};
 
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url =
@@ -68,35 +125,39 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     return originalFetch(input as any, init);
   }
 
-  // Merge init from Request object if needed
+  // Normalize: if caller passed a Request object, materialize init so we
+  // can reuse it for both direct and proxy attempts.
   let finalInit = init;
   if (input instanceof Request && !init) {
+    const method = input.method;
     finalInit = {
-      method: input.method,
+      method,
       headers: input.headers,
-      body: input.method !== "GET" && input.method !== "HEAD" ? await input.clone().arrayBuffer() : undefined,
+      body:
+        method !== "GET" && method !== "HEAD"
+          ? await input.clone().arrayBuffer()
+          : undefined,
       credentials: input.credentials,
       mode: input.mode,
     };
   }
 
-  // If we already know the direct route is blocked, go straight to proxy
-  if (proxyMode) {
+  // If we already learned the proxy route works, use it first.
+  if (preferredRoute === "proxy") {
     try {
-      return await tryProxies(url, finalInit);
+      return await raceProxies(url, finalInit);
     } catch {
-      // fall through to direct as a last resort
+      // last-resort: try direct once more
     }
   }
 
   try {
-    return await originalFetch(url, finalInit);
-  } catch (err) {
-    if (isNetworkError(err)) {
-      // Likely blocked by ISP (RU). Try CORS proxies.
-      return tryProxies(url, finalInit);
-    }
-    throw err;
+    const res = await tryDirect(url, finalInit);
+    preferredRoute = "direct";
+    return res;
+  } catch {
+    // Direct failed (timeout, DNS block, TLS, CORS, anything) — race proxies.
+    return raceProxies(url, finalInit);
   }
 };
 
