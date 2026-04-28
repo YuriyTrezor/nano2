@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Truck, MapPin, User, Clock, Check, Package, Loader2 } from "lucide-react";
+import { Truck, MapPin, User, Clock, Check, Package, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   cardName: string;
@@ -29,6 +30,7 @@ const CardOrdersHistory = ({ cardName }: Props) => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +50,19 @@ const CardOrdersHistory = ({ cardName }: Props) => {
     return () => { active = false; };
   }, [user, cardName]);
 
+  const handleCancel = async (id: string) => {
+    if (!confirm("Отменить доставку карты?")) return;
+    setCancellingId(id);
+    const { error } = await supabase.from("card_orders").delete().eq("id", id);
+    setCancellingId(null);
+    if (error) {
+      toast.error("Не удалось отменить заявку");
+      return;
+    }
+    setOrders((prev) => prev.filter((o) => o.id !== id));
+    toast.success("Заявка на доставку отменена");
+  };
+
   if (loading) return <div className="text-xs text-muted-foreground py-2">Загрузка…</div>;
   if (orders.length === 0) return null;
 
@@ -64,7 +79,20 @@ const CardOrdersHistory = ({ cardName }: Props) => {
               <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.color}`}>
                 <StatusIcon className="w-3 h-3" /> {status.label}
               </span>
-              <span className="text-[10px] text-muted-foreground">{date}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{date}</span>
+                {o.status !== "delivered" && o.status !== "cancelled" && (
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(o.id)}
+                    disabled={cancellingId === o.id}
+                    aria-label="Отменить доставку"
+                    className="p-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                  >
+                    {cancellingId === o.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-1 text-[11px]">
               <div className="flex items-start gap-1.5">

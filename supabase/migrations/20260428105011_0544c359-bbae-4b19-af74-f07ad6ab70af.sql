@@ -1,0 +1,1 @@
+CREATE POLICY "Users delete own card orders" ON public.card_orders FOR DELETE TO authenticated USING (auth.uid() = user_id);
