@@ -19,11 +19,78 @@ const isPreviewEnvironment = () => {
   return hostname.includes("lovableproject.com") || hostname.includes("id-preview--");
 };
 
+const getProjectRef = () => {
+  try {
+    const url = new URL(import.meta.env.VITE_SUPABASE_URL as string);
+    return url.hostname.split(".")[0] ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const clearStoredAuthState = () => {
+  if (typeof window === "undefined") return;
+
+  const projectRef = getProjectRef();
+  const knownKeys = [
+    "supabase.auth.token",
+    projectRef ? `sb-${projectRef}-auth-token` : null,
+    projectRef ? `sb-${projectRef}-auth-token-code-verifier` : null,
+  ].filter(Boolean) as string[];
+
+  [window.localStorage, window.sessionStorage].forEach((storage) => {
+    knownKeys.forEach((key) => {
+      try {
+        storage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    });
+
+    if (!projectRef) return;
+
+    for (let index = storage.length - 1; index >= 0; index -= 1) {
+      const key = storage.key(index);
+      if (!key || !key.includes(projectRef) || !key.includes("auth-token")) continue;
+
+      try {
+        storage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    }
+  });
+};
+
+const isStaleSessionError = (error: unknown) => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
+
+  return /refresh token|refresh_token_not_found|invalid refresh token/i.test(message);
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const applySession = (nextSession: Session | null) => {
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (nextSession?.user) {
+      setTimeout(() => checkAdmin(nextSession.user.id), 0);
+    } else {
+      setIsAdmin(false);
+    }
+
+    setLoading(false);
+  };
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase
@@ -58,33 +125,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: new Error("Не удалось получить сессию") };
     }
 
-    const { error: sessionError } = await supabase.auth.setSession({
+    const { data: sessionDataResult, error: sessionError } = await supabase.auth.setSession({
       access_token: sessionData.access_token,
       refresh_token: sessionData.refresh_token,
     });
+
+    if (!sessionError) {
+      applySession(sessionDataResult.session);
+    }
 
     return { error: sessionError };
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => checkAdmin(session.user.id), 0);
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
+      applySession(session);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error && isStaleSessionError(error)) {
+        clearStoredAuthState();
+        applySession(null);
+        return;
       }
-      setLoading(false);
+
+      applySession(session);
     });
 
     return () => subscription.unsubscribe();
@@ -104,7 +169,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error && isStaleSessionError(error)) {
+        clearStoredAuthState();
+
+        const retryResult = await supabase.auth.signInWithPassword({ email, password });
+        if (!retryResult.error) {
+          applySession(retryResult.data.session);
+          trackLogin();
+        }
+
+        return { error: retryResult.error };
+      }
 
       if (error && isPreviewEnvironment() && /failed to fetch/i.test(error.message)) {
         const fallbackResult = await signInFromPreviewFallback(email, password);
@@ -115,11 +192,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!error) {
+        applySession(data.session);
         trackLogin();
       }
 
       return { error };
     } catch (error) {
+      if (isStaleSessionError(error)) {
+        clearStoredAuthState();
+
+        const retryResult = await supabase.auth.signInWithPassword({ email, password });
+        if (!retryResult.error) {
+          applySession(retryResult.data.session);
+          trackLogin();
+        }
+
+        return { error: retryResult.error };
+      }
+
       if (isPreviewEnvironment()) {
         const fallbackResult = await signInFromPreviewFallback(email, password);
         if (!fallbackResult.error) {
