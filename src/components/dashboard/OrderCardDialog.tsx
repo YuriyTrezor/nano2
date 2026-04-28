@@ -248,25 +248,44 @@ const OrderCardDialog = ({ open, onOpenChange, cardName }: OrderCardDialogProps)
                   <div>
                     <Label className="text-xs mb-2 block">Служба доставки</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {DELIVERY_SERVICES.filter(s => s.types.includes(form.deliveryType)).map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => upd("deliveryService", s.id)}
-                          className={`relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
-                            form.deliveryService === s.id ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/40"
-                          }`}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-br ${s.color} opacity-60`} />
-                          <div className="relative">
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-foreground text-sm">{s.name}</span>
-                              {form.deliveryService === s.id && <Check className="w-4 h-4 text-primary" />}
+                      {DELIVERY_SERVICES.filter(s => s.types.includes(form.deliveryType)).map(s => {
+                        const selected = form.deliveryService === s.id;
+                        const featured = (s as any).featured;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => upd("deliveryService", s.id)}
+                            className={`relative overflow-hidden rounded-xl border p-3 text-left transition-all ${featured ? "sm:col-span-2" : ""} ${
+                              selected ? "border-primary ring-2 ring-primary/40" : featured ? "border-primary/60 hover:border-primary" : "border-border hover:border-primary/40"
+                            }`}
+                          >
+                            <div className={`absolute inset-0 bg-gradient-to-br ${s.color} ${featured ? "opacity-90" : "opacity-60"}`} />
+                            {featured && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-pulse pointer-events-none" />}
+                            <div className="relative flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5">
+                                {featured && (
+                                  <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                                    <Truck className="w-4 h-4 text-primary" />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`font-semibold text-foreground ${featured ? "text-sm" : "text-sm"}`}>{s.name}</span>
+                                    {featured && (
+                                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-primary text-primary-foreground">
+                                        Рекомендуем
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className={`text-[11px] mt-0.5 ${featured ? "text-foreground/70" : "text-muted-foreground"}`}>{s.desc}</p>
+                                </div>
+                              </div>
+                              {selected && <Check className="w-5 h-5 text-primary shrink-0" />}
                             </div>
-                            <p className="text-[11px] text-muted-foreground mt-1">{s.desc}</p>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
