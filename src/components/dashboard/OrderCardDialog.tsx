@@ -14,6 +14,7 @@ interface OrderCardDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   cardName: string;
+  onSubmitted?: () => void;
 }
 
 const DELIVERY_SERVICES = [
@@ -33,7 +34,7 @@ const STEPS = [
   { id: 4, label: "Подтверждение", icon: Check },
 ];
 
-const OrderCardDialog = ({ open, onOpenChange, cardName }: OrderCardDialogProps) => {
+const OrderCardDialog = ({ open, onOpenChange, cardName, onSubmitted }: OrderCardDialogProps) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +118,7 @@ const OrderCardDialog = ({ open, onOpenChange, cardName }: OrderCardDialogProps)
       return;
     }
     setSuccess(true);
+    onSubmitted?.();
   };
 
   const selectedService = DELIVERY_SERVICES.find(s => s.id === form.deliveryService);
