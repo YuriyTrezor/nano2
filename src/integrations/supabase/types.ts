@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_orders: {
+        Row: {
+          address_line: string
+          card_name: string
+          city: string
+          comment: string | null
+          country: string
+          created_at: string
+          delivery_service: string
+          delivery_type: string
+          email: string | null
+          full_name: string
+          id: string
+          passport: string | null
+          phone: string
+          pickup_point: string | null
+          postal_code: string | null
+          region: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line: string
+          card_name: string
+          city: string
+          comment?: string | null
+          country?: string
+          created_at?: string
+          delivery_service: string
+          delivery_type?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          passport?: string | null
+          phone: string
+          pickup_point?: string | null
+          postal_code?: string | null
+          region?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line?: string
+          card_name?: string
+          city?: string
+          comment?: string | null
+          country?: string
+          created_at?: string
+          delivery_service?: string
+          delivery_type?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          passport?: string | null
+          phone?: string
+          pickup_point?: string | null
+          postal_code?: string | null
+          region?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_settings: {
         Row: {
           assisted_price: string
