@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import OrderCardDialog from "./OrderCardDialog";
+import CardOrdersHistory from "./CardOrdersHistory";
 
 
 
@@ -153,6 +154,7 @@ const CardsTab = () => {
   const [totalBalance, setTotalBalance] = useState(0);
   const [cardPrices, setCardPrices] = useState<Record<string, string> | null>(null);
   const [orderCardName, setOrderCardName] = useState<string | null>(null);
+  const [ordersRefreshKey, setOrdersRefreshKey] = useState(0);
 
   const toggleCvv = (cardName: string) => {
     setCvvVisible(prev => ({ ...prev, [cardName]: !prev[cardName] }));
@@ -373,7 +375,7 @@ const CardsTab = () => {
                     </div>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-1.5 bg-popover border border-border" align="center">
+                <PopoverContent className="w-72 p-1.5 bg-popover border border-border max-h-[70vh] overflow-y-auto" align="center">
                   <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors">
                     <RotateCcw className="w-4 h-4 text-muted-foreground" /> Перевыпустить
                   </button>
@@ -383,6 +385,9 @@ const CardsTab = () => {
                   <button onClick={() => handleCardAction()} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-secondary transition-colors">
                     <ShieldOff className="w-4 h-4" /> Заблокировать
                   </button>
+                  <div className="px-1.5 pb-1">
+                    <CardOrdersHistory key={`${card.name}-${ordersRefreshKey}`} cardName={card.name} />
+                  </div>
                 </PopoverContent>
               </Popover>
               </div>
@@ -576,6 +581,7 @@ const CardsTab = () => {
         open={!!orderCardName}
         onOpenChange={(v) => !v && setOrderCardName(null)}
         cardName={orderCardName ?? ""}
+        onSubmitted={() => setOrdersRefreshKey(k => k + 1)}
       />
     </div>
   );
