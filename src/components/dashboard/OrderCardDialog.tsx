@@ -17,12 +17,13 @@ interface OrderCardDialogProps {
 }
 
 const DELIVERY_SERVICES = [
-  { id: "cdek", name: "СДЭК", desc: "1–4 дня • от 350 ₽", color: "from-emerald-500/20 to-emerald-700/10", types: ["courier", "pickup"] },
-  { id: "boxberry", name: "Boxberry", desc: "2–5 дней • от 290 ₽", color: "from-orange-500/20 to-orange-700/10", types: ["courier", "pickup"] },
-  { id: "post", name: "Почта России", desc: "3–10 дней • от 200 ₽", color: "from-blue-500/20 to-blue-700/10", types: ["courier", "pickup"] },
-  { id: "yandex", name: "Яндекс Доставка", desc: "В день заказа • от 450 ₽", color: "from-yellow-500/20 to-yellow-700/10", types: ["courier"] },
-  { id: "dpd", name: "DPD", desc: "1–3 дня • от 400 ₽", color: "from-red-500/20 to-red-700/10", types: ["courier", "pickup"] },
-  { id: "5post", name: "5Post (Пятёрочка)", desc: "2–5 дней • от 199 ₽", color: "from-rose-500/20 to-rose-700/10", types: ["pickup"] },
+  { id: "neobank", name: "Курьерская доставка NeoBank", desc: "1–2 дня • Бесплатно", color: "from-primary/30 to-primary/10", types: ["courier"], featured: true },
+  { id: "cdek", name: "СДЭК", desc: "1–4 дня • от 1 050 ₽", color: "from-emerald-500/20 to-emerald-700/10", types: ["courier", "pickup"] },
+  { id: "boxberry", name: "Boxberry", desc: "2–5 дней • от 870 ₽", color: "from-orange-500/20 to-orange-700/10", types: ["courier", "pickup"] },
+  { id: "post", name: "Почта России", desc: "3–10 дней • от 600 ₽", color: "from-blue-500/20 to-blue-700/10", types: ["courier", "pickup"] },
+  { id: "yandex", name: "Яндекс Доставка", desc: "В день заказа • от 1 350 ₽", color: "from-yellow-500/20 to-yellow-700/10", types: ["courier"] },
+  { id: "dpd", name: "DPD", desc: "1–3 дня • от 1 200 ₽", color: "from-red-500/20 to-red-700/10", types: ["courier", "pickup"] },
+  { id: "5post", name: "5Post (Пятёрочка)", desc: "2–5 дней • от 597 ₽", color: "from-rose-500/20 to-rose-700/10", types: ["pickup"] },
 ];
 
 const STEPS = [
