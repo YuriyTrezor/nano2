@@ -17,12 +17,15 @@ const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?
 
 // Public CORS proxies that forward method, headers and body.
 // Order doesn't matter much — we race them in parallel.
+// Verified working public CORS proxies (tested against Supabase POST
+// /auth/v1/token with Authorization + apikey headers preserved).
+// corsproxy.io / allorigins / codetabs were dropped — they now block
+// server-side requests, time out, or strip headers.
 const PROXIES: Array<(url: string) => string> = [
-  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+  // cors.eu.org: passes method + headers + body cleanly.
   (url) => `https://cors.eu.org/${url}`,
-  (url) => `https://proxy.cors.sh/${url}`,
+  // corsproxy.org: pass-through proxy.
+  (url) => `https://corsproxy.org/?${url}`,
 ];
 
 // Once we know the direct route works (or doesn't), remember it.
@@ -32,6 +35,8 @@ let preferredRoute: Route | null = null;
 // Direct-call timeout. Real Supabase responses usually return well under
 // 2s; if we wait longer it's almost certainly a block.
 const DIRECT_TIMEOUT_MS = 3500;
+// Per-proxy timeout — kill slow/dead proxies fast so the race finishes.
+const PROXY_TIMEOUT_MS = 6000;
 
 const originalFetch = window.fetch.bind(window);
 
@@ -68,10 +73,15 @@ const raceProxies = async (url: string, init: RequestInit | undefined): Promise<
       ...(init || {}),
       signal: controllers[i].signal,
     };
-    const res = await originalFetch(proxied, proxyInit);
-    // Treat 5xx from the proxy itself as a failure so another proxy can win.
-    if (res.status >= 500) throw new Error(`proxy ${i} -> ${res.status}`);
-    return { res, i };
+    const timer = setTimeout(() => controllers[i].abort(), PROXY_TIMEOUT_MS);
+    try {
+      const res = await originalFetch(proxied, proxyInit);
+      // Treat 5xx from the proxy itself as a failure so another proxy can win.
+      if (res.status >= 500) throw new Error(`proxy ${i} -> ${res.status}`);
+      return { res, i };
+    } finally {
+      clearTimeout(timer);
+    }
   });
 
   // Manual Promise.any so we don't depend on ES2021 lib target.
