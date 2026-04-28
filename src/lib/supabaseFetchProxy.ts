@@ -74,21 +74,31 @@ const raceProxies = async (url: string, init: RequestInit | undefined): Promise<
     return { res, i };
   });
 
-  try {
-    const winner = await Promise.any(attempts);
-    // Cancel losers
-    controllers.forEach((c, idx) => {
-      if (idx !== winner.i) c.abort();
+  // Manual Promise.any so we don't depend on ES2021 lib target.
+  return new Promise<Response>((resolve, reject) => {
+    let remaining = attempts.length;
+    const errors: unknown[] = [];
+    attempts.forEach((p, i) => {
+      p.then(({ res }) => {
+        controllers.forEach((c, idx) => {
+          if (idx !== i) c.abort();
+        });
+        preferredRoute = "proxy";
+        resolve(res);
+      }).catch((e) => {
+        errors.push(e);
+        remaining -= 1;
+        if (remaining === 0) {
+          reject(
+            new Error(
+              "All Supabase fallbacks failed. Likely a network block. " +
+                errors.map((x) => (x instanceof Error ? x.message : String(x))).join(" | "),
+            ),
+          );
+        }
+      });
     });
-    preferredRoute = "proxy";
-    return winner.res;
-  } catch (err) {
-    // AggregateError -> all proxies failed
-    throw new Error(
-      "All Supabase fallbacks failed. Likely a network block. " +
-        (err instanceof Error ? err.message : String(err)),
-    );
-  }
+  });
 };
 
 const tryDirect = async (url: string, init: RequestInit | undefined): Promise<Response> => {
