@@ -1,4 +1,8 @@
 import { createRoot } from "react-dom/client";
+// Must be imported BEFORE App so the fetch monkey-patch is in place
+// before the Supabase client makes any request. This unblocks users in
+// regions (RU, etc.) where *.supabase.co is blocked by the ISP.
+import "./lib/supabaseFetchProxy";
 import App from "./App.tsx";
 import "./index.css";
 
