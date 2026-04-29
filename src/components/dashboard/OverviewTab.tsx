@@ -108,7 +108,14 @@ const OverviewTab = () => {
   const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
   const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Если рублёвых операций нет, а USD есть — счёт считается долларовым
+  const isUsdAccount = rubTransactions.length === 0 && usdTransactions.length > 0;
   const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
+    if (isUsdAccount) {
+      if (currency === "USD") return usdBalance;
+      if (currency === "RUB") return usdBalance * (fxRates.USD || 0);
+      return usdBalance * (fxRates.USD || 0) / (fxRates[currency] || 1);
+    }
     if (currency === "RUB") return balance;
     return balance / (fxRates[currency] || 1);
   };
