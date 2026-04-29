@@ -226,6 +226,9 @@ const TransfersTab = () => {
         </div>
         <p className="text-muted-foreground text-sm">
           Баланс: <span className="text-foreground font-semibold">₽ {balance.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}</span>
+          {usdBalance !== 0 && (
+            <> · <span className="text-foreground font-semibold">$ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></>
+          )}
         </p>
       </div>
 
