@@ -570,7 +570,14 @@ const AdminTab = () => {
               <Button variant={txDialog?.mode === "sub" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}>Списать</Button>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Валюта</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant={txDialog?.currency === "RUB" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, currency: "RUB" } : null)}>₽ Рубли</Button>
+                <Button type="button" variant={txDialog?.currency === "USD" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, currency: "USD" } : null)}>$ Доллары</Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма {txDialog?.currency === "USD" ? "$" : "₽"}</Label>
               <Input placeholder="10 000" value={txDialog?.amount ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)} type="number" />
             </div>
             <div>
