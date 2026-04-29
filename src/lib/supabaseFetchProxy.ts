@@ -15,8 +15,8 @@
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
-// Свой прокси (Cloudflare Worker на собственном домене). Если он отвечает —
-// используем его как основной маршрут, не зависим от публичных прокси.
+// Свой прокси (Cloudflare Worker на собственном домене).
+// Если задан — ВСЕ запросы к Supabase идут через него (для всех регионов).
 // Чтобы выключить — поставьте пустую строку.
 const OWN_PROXY_ORIGIN = "https://api.neowork.nl";
 
@@ -165,6 +165,19 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       credentials: input.credentials,
       mode: input.mode,
     };
+  }
+
+  // Если настроен собственный Cloudflare Worker — всегда идём через него.
+  // Это убирает зависимость от блокировок *.supabase.co и от публичных прокси.
+  if (OWN_PROXY_ORIGIN) {
+    const proxied = toOwnProxy(url);
+    try {
+      const res = await originalFetch(proxied, finalInit);
+      // 5xx от Worker'а — фолбэк на публичные прокси / direct.
+      if (res.status < 500) return res;
+    } catch {
+      // сеть/CORS — упадём в фолбэк ниже
+    }
   }
 
   // If we already learned the proxy route works, use it first.
