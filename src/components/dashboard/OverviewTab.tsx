@@ -640,7 +640,7 @@ const OverviewTab = () => {
                               {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
                             </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1 relative z-10 card-text-embossed">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
+                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : isUsdAccount ? `$ ${cardBalance(card.name).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                             <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                               <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                             </button>
@@ -816,7 +816,7 @@ const OverviewTab = () => {
                             {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
                           </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1 relative z-10 card-text-embossed">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
+                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : isUsdAccount ? `$ ${cardBalance(card.name).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                             <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
