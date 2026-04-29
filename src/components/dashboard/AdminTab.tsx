@@ -334,10 +334,12 @@ const AdminTab = () => {
 
     const client = clients[txDialog.index];
     const finalAmount = txDialog.mode === "add" ? amount : -amount;
+    const isUsd = txDialog.currency === "USD";
+    const curSuffix = isUsd ? " USD" : "";
     const title = txDialog.mode === "add"
-      ? `Пополнение${txDialog.sender ? ` от ${txDialog.sender}` : ""}${txDialog.comment ? `. ${txDialog.comment}` : ""}`
-      : `Списание${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
-    const category = txDialog.mode === "add" ? "Пополнение" : "Списание";
+      ? `Пополнение${curSuffix}${txDialog.sender ? ` от ${txDialog.sender}` : ""}${txDialog.comment ? `. ${txDialog.comment}` : ""}`
+      : `Списание${curSuffix}${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
+    const category = (txDialog.mode === "add" ? "Пополнение" : "Списание") + curSuffix;
 
     if (!client.userId) {
       toast({ title: "Ошибка", description: "У клиента нет привязки к аккаунту в БД", variant: "destructive" });
@@ -359,6 +361,8 @@ const AdminTab = () => {
 
     setClients(prev => prev.map((c, i) => {
       if (i !== txDialog.index) return c;
+      // Не учитываем USD-операции в рублёвом балансе строки админки
+      if (isUsd) return c;
       const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\u00a0/g, "").replace(",", ".")) || 0;
       const newBal = current + finalAmount;
       return { ...c, balance: `₽ ${newBal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}` };
@@ -366,7 +370,7 @@ const AdminTab = () => {
 
     toast({
       title: "Успешно",
-      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${amount.toLocaleString("ru-RU")} ₽ — ${client.name}${txDialog.cardName ? ` (${txDialog.cardName})` : ""}`,
+      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${isUsd ? `$${amount.toLocaleString("en-US")}` : `${amount.toLocaleString("ru-RU")} ₽`} — ${client.name}${txDialog.cardName ? ` (${txDialog.cardName})` : ""}`,
     });
     setTxDialog(null);
   };
