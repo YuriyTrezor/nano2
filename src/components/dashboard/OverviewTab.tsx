@@ -509,6 +509,11 @@ const OverviewTab = () => {
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
+                {!balanceHidden && usdBalance !== 0 && (
+                  <p className={`text-sm sm:text-base font-semibold mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/80" : "text-primary-foreground/90"}`}>
+                    $ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                )}
                 {/* Currency switcher */}
                 {!isBlocked && (
                   <div className="flex gap-1 mt-3">
