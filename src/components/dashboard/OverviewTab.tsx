@@ -130,7 +130,7 @@ const OverviewTab = () => {
   // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
     if (userCards.length === 1) return balance;
-    return transactions
+    return rubTransactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
   };
