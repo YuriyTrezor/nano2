@@ -24,8 +24,10 @@ const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?
 const PROXIES: Array<(url: string) => string> = [
   // cors.eu.org: passes method + headers + body cleanly.
   (url) => `https://cors.eu.org/${url}`,
-  // corsproxy.org: pass-through proxy.
-  (url) => `https://corsproxy.org/?${url}`,
+  // Cloudflare-Worker based proxies — usually unblocked in RU and pass
+  // Authorization headers + POST body cleanly.
+  (url) => `https://proxy.cors.sh/${url}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
 
 // Once we know the direct route works (or doesn't), remember it.
@@ -33,8 +35,9 @@ type Route = "direct" | "proxy";
 let preferredRoute: Route | null = null;
 
 // Direct-call timeout. Real Supabase responses usually return well under
-// 2s; if we wait longer it's almost certainly a block.
-const DIRECT_TIMEOUT_MS = 3500;
+// 2s; if we wait longer it's almost certainly a block. Bumped a bit for
+// slow RU mobile connections.
+const DIRECT_TIMEOUT_MS = 5000;
 // Per-proxy timeout — kill slow/dead proxies fast so the race finishes.
 const PROXY_TIMEOUT_MS = 6000;
 
