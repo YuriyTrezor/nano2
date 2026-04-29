@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
+import { getTxCurrency, formatTxAmount } from "@/lib/txCurrency";
 
 
 import {
@@ -62,8 +63,12 @@ const TransfersTab = () => {
   const [userCards, setUserCards] = useState<string[]>([]);
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
 
-  // Total balance = sum of ALL transactions for the user
+  // Рублёвый баланс = все транзакции кроме USD
   const balance = transactions
+    .filter(tx => getTxCurrency(tx) === "RUB")
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const usdBalance = transactions
+    .filter(tx => getTxCurrency(tx) === "USD")
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   // Fetch user transactions and blocked status from DB
@@ -461,7 +466,7 @@ const TransfersTab = () => {
                       <p className="text-muted-foreground text-xs">{tx.category} · {formatDate(tx.created_at)}</p>
                     </div>
                   </div>
-                  <p className={`text-sm font-semibold shrink-0 ml-2 ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
+                  <p className={`text-sm font-semibold shrink-0 ml-2 ${positive ? 'text-primary' : 'text-foreground'}`}>{formatTxAmount(tx)}</p>
                 </div>
               );
             })
