@@ -142,7 +142,7 @@ const OverviewTab = () => {
   // If user has only one card, that card holds the FULL balance.
   // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
-    if (userCards.length === 1) return balance;
+    if (userCards.length === 1) return isUsdAccount ? usdBalance : balance;
     return rubTransactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
