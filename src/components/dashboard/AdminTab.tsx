@@ -97,6 +97,7 @@ const AdminTab = () => {
     comment: string;
     sender: string;
     cardName: string;
+    currency: "RUB" | "USD";
   } | null>(null);
 
   const handleSort = (field: string) => {
