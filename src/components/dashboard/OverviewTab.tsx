@@ -755,7 +755,7 @@ const OverviewTab = () => {
                       <p className="text-muted-foreground text-xs truncate">{tx.category}</p>
                     </div>
                     <div className="text-right shrink-0 ml-2 whitespace-nowrap">
-                      <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
+                      <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatTxAmount(tx)}</p>
                       <p className="text-muted-foreground text-xs">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>
