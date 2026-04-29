@@ -110,6 +110,12 @@ const OverviewTab = () => {
   const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   // Если рублёвых операций нет, а USD есть — счёт считается долларовым
   const isUsdAccount = rubTransactions.length === 0 && usdTransactions.length > 0;
+  // Авто-переключение валюты на USD, когда счёт долларовый
+  useEffect(() => {
+    if (isUsdAccount && displayCurrency === "RUB") {
+      setDisplayCurrency("USD");
+    }
+  }, [isUsdAccount]);
   const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
     if (isUsdAccount) {
       if (currency === "USD") return usdBalance;
