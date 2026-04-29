@@ -519,7 +519,15 @@ const OverviewTab = () => {
             )}
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
+                  {isUsdAccount && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(150,70%,40%)] text-white text-[10px] font-bold uppercase tracking-wide shadow-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      USD · Долларовый счёт
+                    </span>
+                  )}
+                </div>
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
