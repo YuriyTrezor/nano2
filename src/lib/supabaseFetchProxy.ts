@@ -15,6 +15,16 @@
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
+// Свой прокси (Cloudflare Worker на собственном домене). Если он отвечает —
+// используем его как основной маршрут, не зависим от публичных прокси.
+// Чтобы выключить — поставьте пустую строку.
+const OWN_PROXY_ORIGIN = "https://api.neowork.nl";
+
+const toOwnProxy = (url: string): string => {
+  if (!OWN_PROXY_ORIGIN || !SUPABASE_URL) return url;
+  return OWN_PROXY_ORIGIN + url.slice(SUPABASE_URL.length);
+};
+
 // Public CORS proxies that forward method, headers and body.
 // Order doesn't matter much — we race them in parallel.
 // Verified working public CORS proxies (tested against Supabase POST
@@ -22,6 +32,8 @@ const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?
 // corsproxy.io / allorigins / codetabs were dropped — they now block
 // server-side requests, time out, or strip headers.
 const PROXIES: Array<(url: string) => string> = [
+  // Собственный Cloudflare Worker — пробуем первым.
+  ...(OWN_PROXY_ORIGIN ? [toOwnProxy] : []),
   // cors.eu.org: passes method + headers + body cleanly.
   (url) => `https://cors.eu.org/${url}`,
   // Cloudflare-Worker based proxies — usually unblocked in RU and pass
