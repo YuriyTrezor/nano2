@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import useEmblaCarousel from "embla-carousel-react";
+import { getTxCurrency, formatTxAmount } from "@/lib/txCurrency";
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -102,9 +103,11 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Total balance = sum of ALL transactions for the user
-  const balance = transactions
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Рублёвый баланс = сумма всех транзакций КРОМЕ USD
+  const rubTransactions = transactions.filter(tx => getTxCurrency(tx) === "RUB");
+  const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
+  const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
     if (currency === "RUB") return balance;
     return balance / (fxRates[currency] || 1);
