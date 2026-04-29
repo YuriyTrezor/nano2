@@ -964,7 +964,7 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
-                      <button onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
+                      <button onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "", currency: "RUB" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <DollarSign className="w-3 h-3" /> Операции
                       </button>
                       <button onClick={() => handleViewTransactions(originalIndex)} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
