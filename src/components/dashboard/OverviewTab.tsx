@@ -540,9 +540,35 @@ const OverviewTab = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className={`text-sm font-medium ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(30,60%,20%)]/80" : "text-primary-foreground/80"}`}>{t("Общий баланс")}</p>
                   {isUsdAccount && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(150,70%,40%)] text-white text-[10px] font-bold uppercase tracking-wide shadow-md">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      USD · Долларовый счёт
+                    <span
+                      className="relative inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider text-white overflow-hidden"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(150,75%,28%) 0%, hsl(155,80%,42%) 45%, hsl(150,70%,32%) 100%)",
+                        boxShadow:
+                          "0 6px 14px -4px hsl(150,80%,20%/0.6), 0 2px 4px hsl(150,80%,15%/0.4), inset 0 1px 0 hsl(150,90%,75%/0.6), inset 0 -1px 0 hsl(150,80%,15%/0.5)",
+                        textShadow: "0 1px 1px hsl(150,80%,12%/0.6)",
+                      }}
+                    >
+                      <span
+                        className="relative w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-black"
+                        style={{
+                          background: "radial-gradient(circle at 30% 25%, hsl(50,100%,80%) 0%, hsl(45,95%,55%) 45%, hsl(35,85%,38%) 100%)",
+                          color: "hsl(150,80%,18%)",
+                          boxShadow:
+                            "inset 0 1px 1px hsl(50,100%,90%/0.9), inset 0 -1px 1px hsl(30,80%,25%/0.6), 0 1px 2px hsl(0,0%,0%/0.4)",
+                          textShadow: "0 1px 0 hsl(50,100%,90%/0.5)",
+                        }}
+                      >
+                        $
+                      </span>
+                      <span className="relative">Долларовый счёт</span>
+                      <span
+                        className="pointer-events-none absolute inset-0 rounded-full"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, hsl(0,0%,100%/0.35) 0%, hsl(0,0%,100%/0.05) 45%, transparent 55%)",
+                        }}
+                      />
                     </span>
                   )}
                 </div>
