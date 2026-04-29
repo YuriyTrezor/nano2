@@ -108,7 +108,20 @@ const OverviewTab = () => {
   const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
   const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Если рублёвых операций нет, а USD есть — счёт считается долларовым
+  const isUsdAccount = rubTransactions.length === 0 && usdTransactions.length > 0;
+  // Авто-переключение валюты на USD, когда счёт долларовый
+  useEffect(() => {
+    if (isUsdAccount && displayCurrency === "RUB") {
+      setDisplayCurrency("USD");
+    }
+  }, [isUsdAccount]);
   const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
+    if (isUsdAccount) {
+      if (currency === "USD") return usdBalance;
+      if (currency === "RUB") return usdBalance * (fxRates.USD || 0);
+      return usdBalance * (fxRates.USD || 0) / (fxRates[currency] || 1);
+    }
     if (currency === "RUB") return balance;
     return balance / (fxRates[currency] || 1);
   };
@@ -129,7 +142,7 @@ const OverviewTab = () => {
   // If user has only one card, that card holds the FULL balance.
   // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
-    if (userCards.length === 1) return balance;
+    if (userCards.length === 1) return isUsdAccount ? usdBalance : balance;
     return rubTransactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -509,7 +522,7 @@ const OverviewTab = () => {
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
-                {!balanceHidden && usdBalance !== 0 && (
+                {!balanceHidden && usdBalance !== 0 && !isUsdAccount && (
                   <p className={`text-sm sm:text-base font-semibold mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/80" : "text-primary-foreground/90"}`}>
                     $ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
@@ -627,7 +640,7 @@ const OverviewTab = () => {
                               {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
                             </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1 relative z-10 card-text-embossed">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
+                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : isUsdAccount ? `$ ${cardBalance(card.name).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                             <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                               <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                             </button>
@@ -803,7 +816,7 @@ const OverviewTab = () => {
                             {card.name === "Diamond" ? <DiamondIcon3D className="w-8 h-8" /> : <Wifi className="w-4 h-4 text-white/40 rotate-90" />}
                           </div>
                           <p className="text-white/60 font-mono text-[10px] mb-1 relative z-10 card-text-embossed">BALANCE</p>
-                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
+                          <p className="text-white font-bold text-lg mb-2 relative z-10">{balanceHidden ? "••••••" : isUsdAccount ? `$ ${cardBalance(card.name).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : `₽ ${cardBalance(card.name).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}`}</p>
                           <button onClick={(e) => { e.stopPropagation(); toggleNumber(card.name); }} className="text-left relative z-10">
                             <p className="text-white font-mono text-base card-number-embossed mb-3">{numberVisible[card.name] ? card.fullNumber : card.number}</p>
                           </button>
