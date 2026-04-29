@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import useEmblaCarousel from "embla-carousel-react";
+import { getTxCurrency, formatTxAmount } from "@/lib/txCurrency";
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -102,9 +103,11 @@ const OverviewTab = () => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Пользователь";
 
-  // Total balance = sum of ALL transactions for the user
-  const balance = transactions
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Рублёвый баланс = сумма всех транзакций КРОМЕ USD
+  const rubTransactions = transactions.filter(tx => getTxCurrency(tx) === "RUB");
+  const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
+  const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
     if (currency === "RUB") return balance;
     return balance / (fxRates[currency] || 1);
@@ -127,7 +130,7 @@ const OverviewTab = () => {
   // Otherwise, sum transactions matching the card name.
   const cardBalance = (cardName: string) => {
     if (userCards.length === 1) return balance;
-    return transactions
+    return rubTransactions
       .filter(tx => tx.card_name === cardName)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
   };
@@ -506,6 +509,11 @@ const OverviewTab = () => {
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
+                {!balanceHidden && usdBalance !== 0 && (
+                  <p className={`text-sm sm:text-base font-semibold mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/80" : "text-primary-foreground/90"}`}>
+                    $ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                )}
                 {/* Currency switcher */}
                 {!isBlocked && (
                   <div className="flex gap-1 mt-3">
@@ -752,7 +760,7 @@ const OverviewTab = () => {
                       <p className="text-muted-foreground text-xs truncate">{tx.category}</p>
                     </div>
                     <div className="text-right shrink-0 ml-2 whitespace-nowrap">
-                      <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatAmount(tx.amount)}</p>
+                      <p className={`text-sm font-medium ${positive ? 'text-primary' : 'text-foreground'}`}>{formatTxAmount(tx)}</p>
                       <p className="text-muted-foreground text-xs">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>

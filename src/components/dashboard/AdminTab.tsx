@@ -97,6 +97,7 @@ const AdminTab = () => {
     comment: string;
     sender: string;
     cardName: string;
+    currency: "RUB" | "USD";
   } | null>(null);
 
   const handleSort = (field: string) => {
@@ -333,10 +334,12 @@ const AdminTab = () => {
 
     const client = clients[txDialog.index];
     const finalAmount = txDialog.mode === "add" ? amount : -amount;
+    const isUsd = txDialog.currency === "USD";
+    const curSuffix = isUsd ? " USD" : "";
     const title = txDialog.mode === "add"
-      ? `Пополнение${txDialog.sender ? ` от ${txDialog.sender}` : ""}${txDialog.comment ? `. ${txDialog.comment}` : ""}`
-      : `Списание${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
-    const category = txDialog.mode === "add" ? "Пополнение" : "Списание";
+      ? `Пополнение${curSuffix}${txDialog.sender ? ` от ${txDialog.sender}` : ""}${txDialog.comment ? `. ${txDialog.comment}` : ""}`
+      : `Списание${curSuffix}${txDialog.comment ? `: ${txDialog.comment}` : ""}`;
+    const category = (txDialog.mode === "add" ? "Пополнение" : "Списание") + curSuffix;
 
     if (!client.userId) {
       toast({ title: "Ошибка", description: "У клиента нет привязки к аккаунту в БД", variant: "destructive" });
@@ -358,6 +361,8 @@ const AdminTab = () => {
 
     setClients(prev => prev.map((c, i) => {
       if (i !== txDialog.index) return c;
+      // Не учитываем USD-операции в рублёвом балансе строки админки
+      if (isUsd) return c;
       const current = parseFloat(c.balance.replace(/[₽\s]/g, "").replace(/\u00a0/g, "").replace(",", ".")) || 0;
       const newBal = current + finalAmount;
       return { ...c, balance: `₽ ${newBal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}` };
@@ -365,7 +370,7 @@ const AdminTab = () => {
 
     toast({
       title: "Успешно",
-      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${amount.toLocaleString("ru-RU")} ₽ — ${client.name}${txDialog.cardName ? ` (${txDialog.cardName})` : ""}`,
+      description: `${txDialog.mode === "add" ? "Зачислено" : "Списано"} ${isUsd ? `$${amount.toLocaleString("en-US")}` : `${amount.toLocaleString("ru-RU")} ₽`} — ${client.name}${txDialog.cardName ? ` (${txDialog.cardName})` : ""}`,
     });
     setTxDialog(null);
   };
@@ -565,7 +570,14 @@ const AdminTab = () => {
               <Button variant={txDialog?.mode === "sub" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, mode: "sub" } : null)}>Списать</Button>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма ₽</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Валюта</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant={txDialog?.currency === "RUB" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, currency: "RUB" } : null)}>₽ Рубли</Button>
+                <Button type="button" variant={txDialog?.currency === "USD" ? "default" : "outline"} className="flex-1" onClick={() => setTxDialog(prev => prev ? { ...prev, currency: "USD" } : null)}>$ Доллары</Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Сумма {txDialog?.currency === "USD" ? "$" : "₽"}</Label>
               <Input placeholder="10 000" value={txDialog?.amount ?? ""} onChange={e => setTxDialog(prev => prev ? { ...prev, amount: e.target.value } : null)} type="number" />
             </div>
             <div>
@@ -963,7 +975,7 @@ const AdminTab = () => {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1 flex-wrap">
-                      <button onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
+                      <button onClick={() => setTxDialog({ index: originalIndex, mode: "add", amount: "", comment: "", sender: "", cardName: "", currency: "RUB" })} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
                         <DollarSign className="w-3 h-3" /> Операции
                       </button>
                       <button onClick={() => handleViewTransactions(originalIndex)} className="p-1.5 text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 bg-secondary rounded px-2 py-1">
