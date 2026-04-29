@@ -13,9 +13,9 @@ const ContactsSection = () => {
             <Phone className="w-5 h-5 text-primary" />
             <span className="text-lg">8 (800) 458-25-37</span>
           </a>
-          <a href="mailto:support@maxtrade.live" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
+          <a href="mailto:support@neobank.ru" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
             <Mail className="w-5 h-5 text-primary" />
-            <span className="text-lg">support@maxtrade.live</span>
+            <span className="text-lg">support@neobank.ru</span>
           </a>
           <a href="https://t.me/Neobank_manager" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
             <Send className="w-5 h-5 text-primary" />
