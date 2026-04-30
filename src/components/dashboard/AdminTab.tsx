@@ -94,6 +94,7 @@ const AdminTab = () => {
     usd_rub_rate: string;
     conversion_fee_percent: string;
     min_conversion_usd: string;
+    preview_amount?: string;
   } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
@@ -942,9 +943,9 @@ const AdminTab = () => {
                 </div>
               </div>
               {(() => {
-                const effRate = Number(clientComplianceDialog?.usd_rub_rate || globalCompliance?.usd_rub_rate || 90);
-                const effFee = Number(clientComplianceDialog?.conversion_fee_percent !== "" && clientComplianceDialog?.conversion_fee_percent != null ? clientComplianceDialog?.conversion_fee_percent : (globalCompliance?.conversion_fee_percent ?? 0));
-                const effMin = Number(clientComplianceDialog?.min_conversion_usd !== "" && clientComplianceDialog?.min_conversion_usd != null ? clientComplianceDialog?.min_conversion_usd : (globalCompliance?.min_conversion_usd ?? 0));
+                const effRate = Number(clientComplianceDialog?.usd_rub_rate || compliancePriceDialog?.usd_rub_rate || 90);
+                const effFee = Number(clientComplianceDialog?.conversion_fee_percent !== "" && clientComplianceDialog?.conversion_fee_percent != null && clientComplianceDialog?.conversion_fee_percent !== undefined ? clientComplianceDialog?.conversion_fee_percent : (compliancePriceDialog?.conversion_fee_percent ?? 0));
+                const effMin = Number(clientComplianceDialog?.min_conversion_usd !== "" && clientComplianceDialog?.min_conversion_usd != null && clientComplianceDialog?.min_conversion_usd !== undefined ? clientComplianceDialog?.min_conversion_usd : (compliancePriceDialog?.min_conversion_usd ?? 0));
                 const amt = Number((clientComplianceDialog?.preview_amount || "").toString().replace(",", ".")) || 0;
                 const fee = (amt * effFee) / 100;
                 const rub = amt * effRate;
