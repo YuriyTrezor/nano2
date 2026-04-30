@@ -525,7 +525,7 @@ const AdminTab = () => {
           <Button variant="outline" size="sm" onClick={async () => {
             const { data } = await supabase
               .from("compliance_settings" as any)
-              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount")
+              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount, usd_rub_rate, conversion_fee_percent")
               .limit(1)
               .single();
             if (data) {
@@ -536,6 +536,8 @@ const AdminTab = () => {
                 gold_discount: String(d.gold_discount),
                 platinum_discount: String(d.platinum_discount),
                 diamond_discount: String(d.diamond_discount),
+                usd_rub_rate: String(d.usd_rub_rate ?? "90"),
+                conversion_fee_percent: String(d.conversion_fee_percent ?? "1"),
               });
             } else {
               setCompliancePriceDialog({
@@ -544,6 +546,8 @@ const AdminTab = () => {
                 gold_discount: "10",
                 platinum_discount: "15",
                 diamond_discount: "25",
+                usd_rub_rate: "90",
+                conversion_fee_percent: "1",
               });
             }
           }} className="gap-2">
