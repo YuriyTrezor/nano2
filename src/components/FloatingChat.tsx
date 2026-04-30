@@ -31,6 +31,7 @@ const FloatingChat = () => {
   const [ticketId, setTicketId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,9 +173,13 @@ const FloatingChat = () => {
   };
 
   const handleSend = async () => {
-    if (!text.trim() || !user) return;
+    if (!text.trim() || !user || sending) return;
+    setSending(true);
     const tid = await ensureTicket();
-    if (!tid) return;
+    if (!tid) {
+      setSending(false);
+      return;
+    }
 
     const { error } = await supabase.from("support_messages").insert({
       ticket_id: tid,
@@ -185,10 +190,12 @@ const FloatingChat = () => {
 
     if (error) {
       toast({ title: "Ошибка отправки сообщения", variant: "destructive" });
+      setSending(false);
       return;
     }
 
     setText("");
+    setSending(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,10 +308,10 @@ const FloatingChat = () => {
               placeholder="Введите сообщение..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && !sending && handleSend()}
               className="text-sm h-9"
             />
-            <Button size="icon" className="h-9 w-9 shrink-0" onClick={handleSend}>
+            <Button size="icon" className="h-9 w-9 shrink-0" onClick={handleSend} disabled={sending || !text.trim()}>
               <Send className="w-3.5 h-3.5" />
             </Button>
           </div>
