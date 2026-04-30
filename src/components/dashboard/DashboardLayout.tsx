@@ -237,6 +237,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { to: "/dashboard/admin", icon: Shield, label: "Админ-панель" },
     { to: "/dashboard/support", icon: MessageSquare, label: "Обращения" },
     { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации" },
+    { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации" },
   ] : [];
 
   return (
