@@ -49,7 +49,6 @@ const OverviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [topUpAlert, setTopUpAlert] = useState(false);
-  const [usdAlert, setUsdAlert] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
