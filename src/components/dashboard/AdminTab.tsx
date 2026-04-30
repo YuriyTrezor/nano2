@@ -83,6 +83,7 @@ const AdminTab = () => {
     diamond_discount: string;
     usd_rub_rate: string;
     conversion_fee_percent: string;
+    min_conversion_usd: string;
   } | null>(null);
   const [clientComplianceDialog, setClientComplianceDialog] = useState<{
     index: number;
@@ -526,7 +527,7 @@ const AdminTab = () => {
           <Button variant="outline" size="sm" onClick={async () => {
             const { data } = await supabase
               .from("compliance_settings" as any)
-              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount, usd_rub_rate, conversion_fee_percent")
+              .select("assisted_price, full_price, gold_discount, platinum_discount, diamond_discount, usd_rub_rate, conversion_fee_percent, min_conversion_usd")
               .limit(1)
               .single();
             if (data) {
@@ -539,6 +540,7 @@ const AdminTab = () => {
                 diamond_discount: String(d.diamond_discount),
                 usd_rub_rate: String(d.usd_rub_rate ?? "90"),
                 conversion_fee_percent: String(d.conversion_fee_percent ?? "1"),
+                min_conversion_usd: String(d.min_conversion_usd ?? "100"),
               });
             } else {
               setCompliancePriceDialog({
@@ -549,6 +551,7 @@ const AdminTab = () => {
                 diamond_discount: "25",
                 usd_rub_rate: "90",
                 conversion_fee_percent: "1",
+                min_conversion_usd: "100",
               });
             }
           }} className="gap-2">
@@ -560,6 +563,10 @@ const AdminTab = () => {
             {t("Обновить")}
           </Button>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <ConversionRequestsAdmin />
       </div>
 
       {/* Transaction dialog */}
@@ -856,6 +863,10 @@ const AdminTab = () => {
                   <Label className="text-xs text-muted-foreground mb-1.5 block">Комиссия конвертации %</Label>
                   <Input type="number" step="0.01" value={compliancePriceDialog?.conversion_fee_percent ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, conversion_fee_percent: e.target.value } : null)} placeholder="1" />
                 </div>
+                <div className="col-span-2">
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Минимальная сумма конвертации (USD)</Label>
+                  <Input type="number" step="1" value={compliancePriceDialog?.min_conversion_usd ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, min_conversion_usd: e.target.value } : null)} placeholder="100" />
+                </div>
               </div>
             </div>
           </div>
@@ -873,6 +884,7 @@ const AdminTab = () => {
                   diamond_discount: parseInt(compliancePriceDialog.diamond_discount) || 0,
                   usd_rub_rate: parseFloat(compliancePriceDialog.usd_rub_rate) || 0,
                   conversion_fee_percent: parseFloat(compliancePriceDialog.conversion_fee_percent) || 0,
+                  min_conversion_usd: parseFloat(compliancePriceDialog.min_conversion_usd) || 0,
                 } as any)
                 .not("id", "is", null);
               if (error) {
@@ -1095,7 +1107,6 @@ const AdminTab = () => {
           </table>
         </div>
       </div>
-      <ConversionRequestsAdmin />
     </div>
   );
 };

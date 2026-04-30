@@ -17,6 +17,7 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
   const [comment, setComment] = useState("");
   const [rate, setRate] = useState<number>(90);
   const [feePercent, setFeePercent] = useState<number>(1);
+  const [minUsd, setMinUsd] = useState<number>(100);
   const [submitting, setSubmitting] = useState(false);
   const [hasPending, setHasPending] = useState(false);
 
@@ -26,13 +27,14 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
     setComment("");
     supabase
       .from("compliance_settings")
-      .select("usd_rub_rate, conversion_fee_percent")
+      .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setRate(Number((data as any).usd_rub_rate) || 90);
           setFeePercent(Number((data as any).conversion_fee_percent) || 0);
+          setMinUsd(Number((data as any).min_conversion_usd) || 0);
         }
       });
     if (user?.id) {
@@ -48,12 +50,15 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
 
   const amountNum = Number(amount.replace(",", ".")) || 0;
   const fee = (amountNum * feePercent) / 100;
-  const amountAfterFee = amountNum - fee;
-  const amountRub = amountAfterFee * rate;
+  // Комиссия оплачивается отдельно через МИР, поэтому к зачислению идёт полная сумма по курсу
+  const amountRub = amountNum * rate;
 
   const submit = async () => {
     if (!user?.id) return;
     if (amountNum <= 0) return toast.error("Введите сумму");
+    if (minUsd > 0 && amountNum < minUsd) {
+      return toast.error(`Минимальная сумма конвертации: $${minUsd}`);
+    }
     if (amountNum > usdBalance) return toast.error("Сумма превышает баланс");
     if (hasPending) return toast.error("У вас уже есть заявка на рассмотрении");
     setSubmitting(true);
@@ -99,6 +104,13 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
             <span className="text-foreground font-semibold">1 $ = {rate.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ₽</span>
           </div>
 
+          {minUsd > 0 && (
+            <div className="bg-secondary/60 rounded-xl p-3 flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Минимальная сумма</span>
+              <span className="text-foreground font-semibold">${minUsd.toLocaleString("en-US")}</span>
+            </div>
+          )}
+
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Сумма к конвертации (USD)</label>
             <div className="relative">
@@ -124,19 +136,25 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
                 Всё
               </button>
             </div>
+            {minUsd > 0 && amountNum > 0 && amountNum < minUsd && (
+              <p className="text-xs text-red-500 mt-1">Минимум для конвертации: ${minUsd}</p>
+            )}
           </div>
 
           <div className="bg-secondary/60 rounded-xl p-3 space-y-1.5 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Комиссия ({feePercent}%)</span>
-              <span className="text-foreground">−${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="flex items-center justify-between pt-1">
               <span className="text-foreground font-medium flex items-center gap-1">К зачислению <ArrowRight className="w-3 h-3" /></span>
               <span className="text-primary font-bold text-base">
                 {amountRub > 0 ? amountRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} ₽
               </span>
             </div>
+          </div>
+
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 dark:text-amber-400 space-y-1">
+            <p className="font-semibold">⚠️ Комиссия оплачивается отдельно</p>
+            <p>
+              Комиссия за конвертацию ({feePercent}%) — <span className="font-semibold">${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> — оплачивается отдельно через платёжный шлюз <span className="font-semibold">МИР</span> после подтверждения заявки администратором. Реквизиты для оплаты будут отправлены вам менеджером.
+            </p>
           </div>
 
           <div>
