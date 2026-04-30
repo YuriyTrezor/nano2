@@ -83,30 +83,84 @@ export type Database = {
       compliance_settings: {
         Row: {
           assisted_price: string
+          conversion_fee_percent: number
           diamond_discount: number
           full_price: string
           gold_discount: number
           id: string
           platinum_discount: number
           updated_at: string
+          usd_rub_rate: number
         }
         Insert: {
           assisted_price?: string
+          conversion_fee_percent?: number
           diamond_discount?: number
           full_price?: string
           gold_discount?: number
           id?: string
           platinum_discount?: number
           updated_at?: string
+          usd_rub_rate?: number
         }
         Update: {
           assisted_price?: string
+          conversion_fee_percent?: number
           diamond_discount?: number
           full_price?: string
           gold_discount?: number
           id?: string
           platinum_discount?: number
           updated_at?: string
+          usd_rub_rate?: number
+        }
+        Relationships: []
+      }
+      conversion_requests: {
+        Row: {
+          admin_comment: string | null
+          amount_rub: number
+          amount_usd: number
+          card_name: string
+          comment: string | null
+          created_at: string
+          fee_percent: number
+          id: string
+          processed_at: string | null
+          rate: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_comment?: string | null
+          amount_rub: number
+          amount_usd: number
+          card_name?: string
+          comment?: string | null
+          created_at?: string
+          fee_percent?: number
+          id?: string
+          processed_at?: string | null
+          rate: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_comment?: string | null
+          amount_rub?: number
+          amount_usd?: number
+          card_name?: string
+          comment?: string | null
+          created_at?: string
+          fee_percent?: number
+          id?: string
+          processed_at?: string | null
+          rate?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import useEmblaCarousel from "embla-carousel-react";
 import { getTxCurrency, formatTxAmount } from "@/lib/txCurrency";
+import ConvertUsdModal from "@/components/dashboard/ConvertUsdModal";
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -48,7 +49,7 @@ const OverviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [topUpAlert, setTopUpAlert] = useState(false);
-  const [usdAlert, setUsdAlert] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
   const [depositModal, setDepositModal] = useState(false);
@@ -299,23 +300,13 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* USD account — conversion required */}
-      <AlertDialog open={usdAlert} onOpenChange={setUsdAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center flex flex-col items-center gap-2">
-              <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[hsl(150,70%,40%)]/15">
-                <span className="text-2xl">$</span>
-              </span>
-              Требуется конвертация в рубли
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-foreground text-center">
-              Ваш счёт в долларах. Для перевода или оплаты необходимо конвертировать средства в рубли. Обратитесь в чат поддержки (внизу справа) или к Вашему менеджеру.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogAction className="w-full">Понятно</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* USD → RUB conversion modal */}
+      <ConvertUsdModal
+        open={convertOpen}
+        onClose={() => setConvertOpen(false)}
+        usdBalance={usdBalance}
+        cardName={userCards[0] || ""}
+      />
 
       {/* Transfer — direct navigate, no modal */}
 
@@ -603,6 +594,14 @@ const OverviewTab = () => {
                     1 {displayCurrency} ≈ {(fxRates[displayCurrency] || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽
                   </p>
                 )}
+                {isUsdAccount && !isBlocked && usdBalance > 0 && (
+                  <button
+                    onClick={() => setConvertOpen(true)}
+                    className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary-foreground text-primary px-4 py-2 rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                  >
+                    Конвертировать USD → RUB
+                  </button>
+                )}
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && !documentRequested && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
@@ -775,7 +774,7 @@ const OverviewTab = () => {
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-foreground font-semibold mb-3 text-sm">{t("Быстрые действия")}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onClick={() => { if (isUsdAccount) { setUsdAlert(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <button onClick={() => { if (isUsdAccount) { setConvertOpen(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <Send className="w-4 h-4 text-primary" />
                   </div>
@@ -787,7 +786,7 @@ const OverviewTab = () => {
                   </div>
                   <span className="text-foreground text-[11px]">{t("Пополнить")}</span>
                 </button>
-                <button onClick={() => { if (isUsdAccount) { setUsdAlert(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <button onClick={() => { if (isUsdAccount) { setConvertOpen(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <Receipt className="w-4 h-4 text-primary" />
                   </div>
@@ -947,7 +946,7 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Быстрые действия")}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => { if (isUsdAccount) { setUsdAlert(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (isUsdAccount) { setConvertOpen(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/transfers?new=1"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Send className="w-4 h-4 text-primary" />
                 </div>
@@ -959,7 +958,7 @@ const OverviewTab = () => {
                 </div>
                 <span className="text-foreground text-xs">{t("Пополнить")}</span>
               </button>
-              <button onClick={() => { if (isUsdAccount) { setUsdAlert(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => { if (isUsdAccount) { setConvertOpen(true); return; } if (documentRequested) { setDocAlert(true); return; } navigate("/dashboard/payments"); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Receipt className="w-4 h-4 text-primary" />
                 </div>
