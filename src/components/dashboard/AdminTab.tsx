@@ -1064,6 +1064,9 @@ const AdminTab = () => {
                             gold_discount: (cp as any).gold_discount != null ? String((cp as any).gold_discount) : "",
                             platinum_discount: (cp as any).platinum_discount != null ? String((cp as any).platinum_discount) : "",
                             diamond_discount: (cp as any).diamond_discount != null ? String((cp as any).diamond_discount) : "",
+                            usd_rub_rate: (cp as any).usd_rub_rate != null ? String((cp as any).usd_rub_rate) : "",
+                            conversion_fee_percent: (cp as any).conversion_fee_percent != null ? String((cp as any).conversion_fee_percent) : "",
+                            min_conversion_usd: (cp as any).min_conversion_usd != null ? String((cp as any).min_conversion_usd) : "",
                           });
                         }}
                         className={`p-1.5 text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${client.compliancePrices ? 'bg-[hsl(210,80%,50%)]/20 text-[hsl(210,80%,60%)]' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
