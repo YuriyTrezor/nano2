@@ -83,6 +83,7 @@ const AdminTab = () => {
     diamond_discount: string;
     usd_rub_rate: string;
     conversion_fee_percent: string;
+    min_conversion_usd: string;
   } | null>(null);
   const [clientComplianceDialog, setClientComplianceDialog] = useState<{
     index: number;
