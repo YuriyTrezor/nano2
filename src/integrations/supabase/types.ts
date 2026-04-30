@@ -88,6 +88,7 @@ export type Database = {
           full_price: string
           gold_discount: number
           id: string
+          min_conversion_usd: number
           platinum_discount: number
           updated_at: string
           usd_rub_rate: number
@@ -99,6 +100,7 @@ export type Database = {
           full_price?: string
           gold_discount?: number
           id?: string
+          min_conversion_usd?: number
           platinum_discount?: number
           updated_at?: string
           usd_rub_rate?: number
@@ -110,6 +112,7 @@ export type Database = {
           full_price?: string
           gold_discount?: number
           id?: string
+          min_conversion_usd?: number
           platinum_discount?: number
           updated_at?: string
           usd_rub_rate?: number

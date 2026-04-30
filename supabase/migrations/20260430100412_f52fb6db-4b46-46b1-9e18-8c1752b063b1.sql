@@ -1,0 +1,1 @@
+ALTER TABLE public.compliance_settings ADD COLUMN IF NOT EXISTS min_conversion_usd numeric NOT NULL DEFAULT 100;
