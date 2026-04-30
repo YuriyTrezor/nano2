@@ -56,6 +56,10 @@ const PROXY_TIMEOUT_MS = 6000;
 const originalFetch = window.fetch.bind(window);
 
 const isSupabaseUrl = (url: string) => !!SUPABASE_URL && url.startsWith(SUPABASE_URL);
+const isRetryableMethod = (method?: string) => {
+  const normalized = (method ?? "GET").toUpperCase();
+  return normalized === "GET" || normalized === "HEAD" || normalized === "OPTIONS";
+};
 
 const withTimeout = async (
   promise: Promise<Response>,
@@ -167,6 +171,9 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     };
   }
 
+  const method = (finalInit?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+  const canRetry = isRetryableMethod(method);
+
   // Если настроен собственный Cloudflare Worker — всегда идём через него.
   // Это убирает зависимость от блокировок *.supabase.co и от публичных прокси.
   if (OWN_PROXY_ORIGIN) {
@@ -174,10 +181,19 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     try {
       const res = await originalFetch(proxied, finalInit);
       // 5xx от Worker'а — фолбэк на публичные прокси / direct.
-      if (res.status < 500) return res;
-    } catch {
+      if (res.status < 500 || !canRetry) return res;
+    } catch (error) {
+      if (!canRetry) {
+        throw error instanceof Error ? error : new Error("Supabase request failed via own proxy");
+      }
       // сеть/CORS — упадём в фолбэк ниже
     }
+  }
+
+  if (!canRetry) {
+    const res = await tryDirect(url, finalInit);
+    preferredRoute = "direct";
+    return res;
   }
 
   // If we already learned the proxy route works, use it first.
