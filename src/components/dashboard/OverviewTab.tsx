@@ -594,6 +594,14 @@ const OverviewTab = () => {
                     1 {displayCurrency} ≈ {(fxRates[displayCurrency] || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽
                   </p>
                 )}
+                {isUsdAccount && !isBlocked && usdBalance > 0 && (
+                  <button
+                    onClick={() => setConvertOpen(true)}
+                    className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary-foreground text-primary px-4 py-2 rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                  >
+                    Конвертировать USD → RUB
+                  </button>
+                )}
                 {!isBlocked && !balanceHidden && !withdrawalBlocked && !documentRequested && percentChange !== null && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${percentChange >= 0 ? "bg-primary-foreground/20 text-primary-foreground" : "bg-destructive/20 text-destructive"}`}>
