@@ -56,10 +56,12 @@ const PROXY_TIMEOUT_MS = 6000;
 const originalFetch = window.fetch.bind(window);
 
 const isSupabaseUrl = (url: string) => !!SUPABASE_URL && url.startsWith(SUPABASE_URL);
-const isRetryableMethod = (method?: string) => {
-  const normalized = (method ?? "GET").toUpperCase();
-  return normalized === "GET" || normalized === "HEAD" || normalized === "OPTIONS";
-};
+// Для нашего прокси-фолбэка ЛЮБОЙ метод считаем безопасным для повтора:
+// если запрос не дошёл до сервера (network error / timeout), повтор не создаст
+// дубликат — Supabase его просто не получил. Это критично для POST /token
+// (логин), без этого пользователи в РФ не могут войти, когда наш CF Worker
+// недоступен.
+const isRetryableMethod = (_method?: string) => true;
 
 const withTimeout = async (
   promise: Promise<Response>,
@@ -174,19 +176,24 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const method = (finalInit?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
   const canRetry = isRetryableMethod(method);
 
-  // Если настроен собственный Cloudflare Worker — всегда идём через него.
-  // Это убирает зависимость от блокировок *.supabase.co и от публичных прокси.
+  // Сначала пробуем собственный CF Worker с КОРОТКИМ таймаутом.
+  // Если он не ответил быстро (или вообще недоступен у этого ISP) — идём в
+  // direct + публичные прокси.
   if (OWN_PROXY_ORIGIN) {
     const proxied = toOwnProxy(url);
+    const controller = new AbortController();
+    const callerSignal = finalInit?.signal;
+    if (callerSignal) {
+      if (callerSignal.aborted) controller.abort();
+      else callerSignal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+    const ownInit: RequestInit = { ...(finalInit || {}), signal: controller.signal };
     try {
-      const res = await originalFetch(proxied, finalInit);
-      // 5xx от Worker'а — фолбэк на публичные прокси / direct.
-      if (res.status < 500 || !canRetry) return res;
-    } catch (error) {
-      if (!canRetry) {
-        throw error instanceof Error ? error : new Error("Supabase request failed via own proxy");
-      }
-      // сеть/CORS — упадём в фолбэк ниже
+      const res = await withTimeout(originalFetch(proxied, ownInit), DIRECT_TIMEOUT_MS, controller);
+      if (res.status < 500) return res;
+      // 5xx от Worker'а — фолбэк ниже.
+    } catch {
+      // timeout / network — фолбэк ниже.
     }
   }
 
