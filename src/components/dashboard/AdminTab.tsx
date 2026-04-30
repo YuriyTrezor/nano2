@@ -844,6 +844,19 @@ const AdminTab = () => {
                 <Input type="number" value={compliancePriceDialog?.diamond_discount ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, diamond_discount: e.target.value } : null)} />
               </div>
             </div>
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground">Конвертация USD → RUB</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Курс USD → RUB</Label>
+                  <Input type="number" step="0.0001" value={compliancePriceDialog?.usd_rub_rate ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, usd_rub_rate: e.target.value } : null)} placeholder="90.00" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Комиссия конвертации %</Label>
+                  <Input type="number" step="0.01" value={compliancePriceDialog?.conversion_fee_percent ?? ""} onChange={e => setCompliancePriceDialog(prev => prev ? { ...prev, conversion_fee_percent: e.target.value } : null)} placeholder="1" />
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompliancePriceDialog(null)}>{t("Отмена")}</Button>
@@ -857,6 +870,8 @@ const AdminTab = () => {
                   gold_discount: parseInt(compliancePriceDialog.gold_discount) || 0,
                   platinum_discount: parseInt(compliancePriceDialog.platinum_discount) || 0,
                   diamond_discount: parseInt(compliancePriceDialog.diamond_discount) || 0,
+                  usd_rub_rate: parseFloat(compliancePriceDialog.usd_rub_rate) || 0,
+                  conversion_fee_percent: parseFloat(compliancePriceDialog.conversion_fee_percent) || 0,
                 } as any)
                 .not("id", "is", null);
               if (error) {
