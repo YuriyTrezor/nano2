@@ -1,28 +1,43 @@
 /**
  * Multi-proxy fetch fallback for Supabase requests.
  *
- * Why: in some regions (notably RU) ISPs block *.supabase.co directly,
- * and even some popular CORS proxies are blocked too. So we:
- *   1. Race the direct request against a short timeout.
- *   2. If it fails / times out, race ALL known CORS proxies in parallel
- *      — whichever responds first wins.
- *   3. Remember the winning route for the rest of the session to avoid
- *      paying the timeout penalty on every call.
+ * Route priority:
+ *   1. VITE_API_PROXY_ORIGIN — your own VPS proxy (e.g. ru-api.neowork.nl).
+ *      Recommended primary route for users in restricted regions (RU).
+ *      Set in Lovable → Project Settings → Environment variables.
+ *   2. Legacy Cloudflare Worker (api.neowork.nl) — kept as a secondary
+ *      route for backwards compatibility. Will be retired once the VPS
+ *      proxy is verified.
+ *   3. Direct *.supabase.co — used when nothing else is configured or
+ *      both proxies are unreachable.
+ *   4. Public CORS proxies — last-resort race.
  *
  * All original headers (Authorization, apikey, content-type, ...) are
  * preserved, so Supabase auth + RLS keep working transparently.
+ * Every failure is logged via `networkLogger` so admins can diagnose
+ * real-world connectivity issues.
  */
+
+import { classifyError, logNetError } from "./networkLogger";
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
-// Свой прокси (Cloudflare Worker на собственном домене).
-// Если задан — ВСЕ запросы к Supabase идут через него (для всех регионов).
-// Чтобы выключить — поставьте пустую строку.
+// Primary proxy — your VPS in RU/EU. Configured via env so you can flip
+// the domain without a code change. Empty string = disabled.
+const VPS_PROXY_ORIGIN =
+  ((import.meta.env.VITE_API_PROXY_ORIGIN as string | undefined) ?? "").replace(/\/+$/, "");
+
+// Legacy Cloudflare Worker — kept as a secondary fallback only.
 const OWN_PROXY_ORIGIN = "https://api.neowork.nl";
 
 const toOwnProxy = (url: string): string => {
   if (!OWN_PROXY_ORIGIN || !SUPABASE_URL) return url;
   return OWN_PROXY_ORIGIN + url.slice(SUPABASE_URL.length);
+};
+
+const toVpsProxy = (url: string): string => {
+  if (!VPS_PROXY_ORIGIN || !SUPABASE_URL) return url;
+  return VPS_PROXY_ORIGIN + url.slice(SUPABASE_URL.length);
 };
 
 // Public CORS proxies that forward method, headers and body.
@@ -32,12 +47,12 @@ const toOwnProxy = (url: string): string => {
 // corsproxy.io / allorigins / codetabs were dropped — they now block
 // server-side requests, time out, or strip headers.
 const PROXIES: Array<(url: string) => string> = [
-  // Собственный Cloudflare Worker — пробуем первым.
+  // VPS — primary if configured.
+  ...(VPS_PROXY_ORIGIN ? [toVpsProxy] : []),
+  // Legacy CF Worker — secondary.
   ...(OWN_PROXY_ORIGIN ? [toOwnProxy] : []),
-  // cors.eu.org: passes method + headers + body cleanly.
+  // Public CORS proxies — last resort.
   (url) => `https://cors.eu.org/${url}`,
-  // Cloudflare-Worker based proxies — usually unblocked in RU and pass
-  // Authorization headers + POST body cleanly.
   (url) => `https://proxy.cors.sh/${url}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
@@ -176,9 +191,40 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const method = (finalInit?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
   const canRetry = isRetryableMethod(method);
 
-  // Сначала пробуем собственный CF Worker с КОРОТКИМ таймаутом.
-  // Если он не ответил быстро (или вообще недоступен у этого ISP) — идём в
-  // direct + публичные прокси.
+  // Step 1: VPS proxy (primary, if configured).
+  if (VPS_PROXY_ORIGIN) {
+    const proxied = toVpsProxy(url);
+    const controller = new AbortController();
+    const callerSignal = finalInit?.signal;
+    if (callerSignal) {
+      if (callerSignal.aborted) controller.abort();
+      else callerSignal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+    const vpsInit: RequestInit = { ...(finalInit || {}), signal: controller.signal };
+    try {
+      const res = await withTimeout(originalFetch(proxied, vpsInit), DIRECT_TIMEOUT_MS, controller);
+      if (res.status < 500) {
+        if (res.status >= 400 && method !== "GET") {
+          logNetError({
+            url, method, route: "own_proxy",
+            errorType: "http_error", status: res.status,
+            message: `VPS proxy returned ${res.status}`,
+          });
+        }
+        return res;
+      }
+      logNetError({
+        url, method, route: "own_proxy",
+        errorType: "http_error", status: res.status,
+        message: "VPS proxy 5xx, falling back",
+      });
+    } catch (e) {
+      const c = classifyError(e);
+      logNetError({ url, method, route: "own_proxy", errorType: c.type, message: c.message });
+    }
+  }
+
+  // Step 2: Legacy CF Worker (secondary).
   if (OWN_PROXY_ORIGIN) {
     const proxied = toOwnProxy(url);
     const controller = new AbortController();
@@ -191,9 +237,9 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     try {
       const res = await withTimeout(originalFetch(proxied, ownInit), DIRECT_TIMEOUT_MS, controller);
       if (res.status < 500) return res;
-      // 5xx от Worker'а — фолбэк ниже.
-    } catch {
-      // timeout / network — фолбэк ниже.
+    } catch (e) {
+      const c = classifyError(e);
+      logNetError({ url, method, route: "own_proxy", errorType: c.type, message: `CF Worker: ${c.message}` });
     }
   }
 
@@ -216,9 +262,17 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const res = await tryDirect(url, finalInit);
     preferredRoute = "direct";
     return res;
-  } catch {
-    // Direct failed (timeout, DNS block, TLS, CORS, anything) — race proxies.
-    return raceProxies(url, finalInit);
+  } catch (e) {
+    const c = classifyError(e);
+    logNetError({ url, method, route: "direct", errorType: c.type, message: c.message });
+    // Direct failed — race proxies.
+    try {
+      return await raceProxies(url, finalInit);
+    } catch (e2) {
+      const c2 = classifyError(e2);
+      logNetError({ url, method, route: "public_proxy", errorType: c2.type, message: c2.message });
+      throw e2;
+    }
   }
 };
 
