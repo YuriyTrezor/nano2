@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllUserTransactions } from "@/lib/fetchAllUserTransactions";
 import useEmblaCarousel from "embla-carousel-react";
 import { getTxCurrency, formatTxAmount } from "@/lib/txCurrency";
+import ConvertUsdModal from "@/components/dashboard/ConvertUsdModal";
 
 const transliterate = (text: string): string => {
   const map: Record<string, string> = {
@@ -49,6 +50,7 @@ const OverviewTab = () => {
   const navigate = useNavigate();
   const [topUpAlert, setTopUpAlert] = useState(false);
   const [usdAlert, setUsdAlert] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
   const [payAlert, setPayAlert] = useState(false);
   const [docAlert, setDocAlert] = useState(false);
   const [depositModal, setDepositModal] = useState(false);
