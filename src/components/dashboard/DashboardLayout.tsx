@@ -31,6 +31,7 @@ const adminLinks = [
   { to: "/dashboard/admin", icon: Shield, label: "Админ-панель", highlight: true },
   { to: "/dashboard/support", icon: MessageSquare, label: "Обращения", highlight: true },
   { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации", highlight: true },
+  { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации", highlight: true },
 ];
 
 const bottomLinks = [
@@ -60,6 +61,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [allTransactions, setAllTransactions] = useState<Array<{ id: string; title: string; amount: number; created_at: string; category: string }>>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const [supportUnread, setSupportUnread] = useState(0);
+  const [conversionsPending, setConversionsPending] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
 
@@ -147,6 +149,26 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
 
+  // Fetch pending conversion requests count for admin
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchPending = async () => {
+      const { data } = await supabase
+        .from("conversion_requests")
+        .select("id")
+        .eq("status", "pending");
+      setConversionsPending(data?.length || 0);
+    };
+    fetchPending();
+    const channel = supabase
+      .channel("sidebar-conversions")
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversion_requests" }, () => {
+        fetchPending();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
@@ -215,6 +237,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { to: "/dashboard/admin", icon: Shield, label: "Админ-панель" },
     { to: "/dashboard/support", icon: MessageSquare, label: "Обращения" },
     { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации" },
+    { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации" },
   ] : [];
 
   return (
@@ -265,6 +288,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   {link.to === "/dashboard/support" && supportUnread > 0 && (
                     <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
                       {supportUnread}
+                    </span>
+                  )}
+                  {link.to === "/dashboard/conversions" && conversionsPending > 0 && (
+                    <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                      {conversionsPending}
                     </span>
                   )}
                 </NavLink>

@@ -25,18 +25,32 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
     if (!open) return;
     setAmount("");
     setComment("");
-    supabase
-      .from("compliance_settings")
-      .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setRate(Number((data as any).usd_rub_rate) || 90);
-          setFeePercent(Number((data as any).conversion_fee_percent) || 0);
-          setMinUsd(Number((data as any).min_conversion_usd) || 0);
+    (async () => {
+      const { data: globalData } = await supabase
+        .from("compliance_settings")
+        .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
+        .limit(1)
+        .maybeSingle();
+      let r = Number((globalData as any)?.usd_rub_rate) || 90;
+      let f = Number((globalData as any)?.conversion_fee_percent) || 0;
+      let m = Number((globalData as any)?.min_conversion_usd) || 0;
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("compliance_prices")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const cp = (profile as any)?.compliance_prices;
+        if (cp && typeof cp === "object") {
+          if (cp.usd_rub_rate != null && !isNaN(Number(cp.usd_rub_rate))) r = Number(cp.usd_rub_rate);
+          if (cp.conversion_fee_percent != null && !isNaN(Number(cp.conversion_fee_percent))) f = Number(cp.conversion_fee_percent);
+          if (cp.min_conversion_usd != null && !isNaN(Number(cp.min_conversion_usd))) m = Number(cp.min_conversion_usd);
         }
-      });
+      }
+      setRate(r);
+      setFeePercent(f);
+      setMinUsd(m);
+    })();
     if (user?.id) {
       supabase
         .from("conversion_requests")

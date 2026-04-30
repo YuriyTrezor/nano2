@@ -10,6 +10,7 @@ import SupportTab from "@/components/dashboard/SupportTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 import VerificationTab from "@/components/dashboard/VerificationTab";
 import AdminVerificationsTab from "@/components/dashboard/AdminVerificationsTab";
+import ConversionsAdminTab from "@/components/dashboard/ConversionsAdminTab";
 import CurrencyRatesWidget from "@/components/dashboard/CurrencyRatesWidget";
 import ComplianceTab from "@/components/dashboard/ComplianceTab";
 import SwiftDepositTab from "@/components/dashboard/SwiftDepositTab";
@@ -34,6 +35,7 @@ const Dashboard = () => {
         <Route path="settings" element={<SettingsTab />} />
         <Route path="verification" element={<VerificationTab />} />
         <Route path="verifications" element={<AdminVerificationsTab />} />
+        <Route path="conversions" element={<ConversionsAdminTab />} />
         <Route path="compliance" element={<ComplianceTab />} />
         <Route path="swift-deposit" element={<SwiftDepositTab />} />
         <Route path="payments" element={<PaymentsTab />} />
