@@ -17,6 +17,7 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
   const [comment, setComment] = useState("");
   const [rate, setRate] = useState<number>(90);
   const [feePercent, setFeePercent] = useState<number>(1);
+  const [minUsd, setMinUsd] = useState<number>(100);
   const [submitting, setSubmitting] = useState(false);
   const [hasPending, setHasPending] = useState(false);
 
@@ -26,13 +27,14 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
     setComment("");
     supabase
       .from("compliance_settings")
-      .select("usd_rub_rate, conversion_fee_percent")
+      .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setRate(Number((data as any).usd_rub_rate) || 90);
           setFeePercent(Number((data as any).conversion_fee_percent) || 0);
+          setMinUsd(Number((data as any).min_conversion_usd) || 0);
         }
       });
     if (user?.id) {
@@ -48,12 +50,15 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
 
   const amountNum = Number(amount.replace(",", ".")) || 0;
   const fee = (amountNum * feePercent) / 100;
-  const amountAfterFee = amountNum - fee;
-  const amountRub = amountAfterFee * rate;
+  // Комиссия оплачивается отдельно через МИР, поэтому к зачислению идёт полная сумма по курсу
+  const amountRub = amountNum * rate;
 
   const submit = async () => {
     if (!user?.id) return;
     if (amountNum <= 0) return toast.error("Введите сумму");
+    if (minUsd > 0 && amountNum < minUsd) {
+      return toast.error(`Минимальная сумма конвертации: $${minUsd}`);
+    }
     if (amountNum > usdBalance) return toast.error("Сумма превышает баланс");
     if (hasPending) return toast.error("У вас уже есть заявка на рассмотрении");
     setSubmitting(true);
