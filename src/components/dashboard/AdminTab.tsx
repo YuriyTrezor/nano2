@@ -1107,7 +1107,6 @@ const AdminTab = () => {
           </table>
         </div>
       </div>
-      <ConversionRequestsAdmin />
     </div>
   );
 };
