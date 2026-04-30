@@ -924,23 +924,52 @@ const AdminTab = () => {
                 <Input type="number" value={clientComplianceDialog?.diamond_discount ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, diamond_discount: e.target.value } : null)} placeholder="Глоб." />
               </div>
             </div>
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground">Конвертация USD → RUB (для этого клиента)</p>
+              <p className="text-xs text-muted-foreground">Оставьте пустым — будут использованы глобальные настройки.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Курс USD → RUB</Label>
+                  <Input type="number" step="0.0001" value={clientComplianceDialog?.usd_rub_rate ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, usd_rub_rate: e.target.value } : null)} placeholder="Глоб." />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Комиссия %</Label>
+                  <Input type="number" step="0.01" value={clientComplianceDialog?.conversion_fee_percent ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, conversion_fee_percent: e.target.value } : null)} placeholder="Глоб." />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Мин. сумма конвертации (USD)</Label>
+                  <Input type="number" step="1" value={clientComplianceDialog?.min_conversion_usd ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, min_conversion_usd: e.target.value } : null)} placeholder="Глоб." />
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setClientComplianceDialog(null)}>{t("Отмена")}</Button>
             <Button variant="outline" size="sm" onClick={() => {
               if (!clientComplianceDialog) return;
-              setClientComplianceDialog(prev => prev ? { ...prev, assisted_price: "", full_price: "", gold_discount: "", platinum_discount: "", diamond_discount: "" } : null);
+              setClientComplianceDialog(prev => prev ? { ...prev, assisted_price: "", full_price: "", gold_discount: "", platinum_discount: "", diamond_discount: "", usd_rub_rate: "", conversion_fee_percent: "", min_conversion_usd: "" } : null);
             }}>Сбросить</Button>
             <Button onClick={async () => {
               if (!clientComplianceDialog) return;
               const client = clients[clientComplianceDialog.index];
-              const hasAny = clientComplianceDialog.assisted_price || clientComplianceDialog.full_price || clientComplianceDialog.gold_discount || clientComplianceDialog.platinum_discount || clientComplianceDialog.diamond_discount;
+              const hasAny =
+                clientComplianceDialog.assisted_price ||
+                clientComplianceDialog.full_price ||
+                clientComplianceDialog.gold_discount ||
+                clientComplianceDialog.platinum_discount ||
+                clientComplianceDialog.diamond_discount ||
+                clientComplianceDialog.usd_rub_rate ||
+                clientComplianceDialog.conversion_fee_percent ||
+                clientComplianceDialog.min_conversion_usd;
               const prices = hasAny ? {
                 ...(clientComplianceDialog.assisted_price ? { assisted_price: clientComplianceDialog.assisted_price } : {}),
                 ...(clientComplianceDialog.full_price ? { full_price: clientComplianceDialog.full_price } : {}),
                 ...(clientComplianceDialog.gold_discount ? { gold_discount: parseInt(clientComplianceDialog.gold_discount) } : {}),
                 ...(clientComplianceDialog.platinum_discount ? { platinum_discount: parseInt(clientComplianceDialog.platinum_discount) } : {}),
                 ...(clientComplianceDialog.diamond_discount ? { diamond_discount: parseInt(clientComplianceDialog.diamond_discount) } : {}),
+                ...(clientComplianceDialog.usd_rub_rate ? { usd_rub_rate: parseFloat(clientComplianceDialog.usd_rub_rate) } : {}),
+                ...(clientComplianceDialog.conversion_fee_percent !== "" ? { conversion_fee_percent: parseFloat(clientComplianceDialog.conversion_fee_percent) } : {}),
+                ...(clientComplianceDialog.min_conversion_usd !== "" ? { min_conversion_usd: parseFloat(clientComplianceDialog.min_conversion_usd) } : {}),
               } : null;
 
               const { error } = await supabase.from("profiles").update({ compliance_prices: prices } as any).eq("user_id", client.userId);
