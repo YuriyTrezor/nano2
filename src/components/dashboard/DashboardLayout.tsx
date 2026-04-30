@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, PiggyBank, Landmark,
-  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck,
+  Shield, MessageSquare, Settings, HelpCircle, LogOut, Home, Search, Bell, X, User, Phone, Mail, Wallet, Activity, ShieldCheck, AlertTriangle,
   TrendingUp, Globe, Receipt, BarChart3, Menu
 } from "lucide-react";
 import neobankLogo from "@/assets/neobank-logo.png";
@@ -32,6 +32,7 @@ const adminLinks = [
   { to: "/dashboard/support", icon: MessageSquare, label: "Обращения", highlight: true },
   { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации", highlight: true },
   { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации", highlight: true },
+  { to: "/dashboard/network-logs", icon: AlertTriangle, label: "Сетевые ошибки", highlight: true },
 ];
 
 const bottomLinks = [
