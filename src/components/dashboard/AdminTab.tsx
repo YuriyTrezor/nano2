@@ -96,6 +96,7 @@ const AdminTab = () => {
     min_conversion_usd: string;
     preview_amount?: string;
   } | null>(null);
+  const [globalCompliance, setGlobalCompliance] = useState<{ usd_rub_rate: number; conversion_fee_percent: number; min_conversion_usd: number } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
