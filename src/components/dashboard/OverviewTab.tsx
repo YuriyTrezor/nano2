@@ -300,23 +300,13 @@ const OverviewTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* USD account — conversion required */}
-      <AlertDialog open={usdAlert} onOpenChange={setUsdAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center flex flex-col items-center gap-2">
-              <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[hsl(150,70%,40%)]/15">
-                <span className="text-2xl">$</span>
-              </span>
-              Требуется конвертация в рубли
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-foreground text-center">
-              Ваш счёт в долларах. Для перевода или оплаты необходимо конвертировать средства в рубли. Обратитесь в чат поддержки (внизу справа) или к Вашему менеджеру.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogAction className="w-full">Понятно</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* USD → RUB conversion modal */}
+      <ConvertUsdModal
+        open={convertOpen}
+        onClose={() => setConvertOpen(false)}
+        usdBalance={usdBalance}
+        cardName={userCards[0] || ""}
+      />
 
       {/* Transfer — direct navigate, no modal */}
 
