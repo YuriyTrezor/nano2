@@ -1,0 +1,1 @@
+DELETE FROM public.transactions WHERE id IN ('ca9764ee-6192-42ca-bfa4-02718de971cd','f3ba963f-594c-4fbe-b4ef-fbd2cac9bfcc','2ae647fe-1786-468d-af00-5bec9582e784');
