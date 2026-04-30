@@ -224,6 +224,51 @@ export type Database = {
         }
         Relationships: []
       }
+      network_logs: {
+        Row: {
+          created_at: string
+          email: string | null
+          error_type: string
+          id: string
+          message: string | null
+          method: string
+          region_hint: string | null
+          route: string | null
+          status: number | null
+          url: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          error_type: string
+          id?: string
+          message?: string | null
+          method?: string
+          region_hint?: string | null
+          route?: string | null
+          status?: number | null
+          url: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          error_type?: string
+          id?: string
+          message?: string | null
+          method?: string
+          region_hint?: string | null
+          route?: string | null
+          status?: number | null
+          url?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           blocked_cards: string[]
