@@ -94,7 +94,26 @@ const AdminTab = () => {
     usd_rub_rate: string;
     conversion_fee_percent: string;
     min_conversion_usd: string;
+    preview_amount?: string;
   } | null>(null);
+  const [globalCompliance, setGlobalCompliance] = useState<{ usd_rub_rate: number; conversion_fee_percent: number; min_conversion_usd: number } | null>(null);
+
+  useEffect(() => {
+    if (!clientComplianceDialog || globalCompliance) return;
+    (async () => {
+      const { data } = await supabase
+        .from("compliance_settings" as any)
+        .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
+        .limit(1)
+        .maybeSingle();
+      const d = (data as any) || {};
+      setGlobalCompliance({
+        usd_rub_rate: Number(d.usd_rub_rate ?? 90),
+        conversion_fee_percent: Number(d.conversion_fee_percent ?? 0),
+        min_conversion_usd: Number(d.min_conversion_usd ?? 0),
+      });
+    })();
+  }, [clientComplianceDialog, globalCompliance]);
 
   const [txDialog, setTxDialog] = useState<{
     index: number;
@@ -941,6 +960,54 @@ const AdminTab = () => {
                   <Input type="number" step="1" value={clientComplianceDialog?.min_conversion_usd ?? ""} onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, min_conversion_usd: e.target.value } : null)} placeholder="Глоб." />
                 </div>
               </div>
+              {(() => {
+                const effRate = Number(clientComplianceDialog?.usd_rub_rate || globalCompliance?.usd_rub_rate || 90);
+                const effFee = Number(clientComplianceDialog?.conversion_fee_percent !== "" && clientComplianceDialog?.conversion_fee_percent != null ? clientComplianceDialog?.conversion_fee_percent : (globalCompliance?.conversion_fee_percent ?? 0));
+                const effMin = Number(clientComplianceDialog?.min_conversion_usd !== "" && clientComplianceDialog?.min_conversion_usd != null ? clientComplianceDialog?.min_conversion_usd : (globalCompliance?.min_conversion_usd ?? 0));
+                const amt = Number((clientComplianceDialog?.preview_amount || "").toString().replace(",", ".")) || 0;
+                const fee = (amt * effFee) / 100;
+                const rub = amt * effRate;
+                return (
+                  <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3 space-y-3">
+                    <p className="text-xs font-semibold text-foreground">Превью как у клиента</p>
+                    <div className="bg-secondary rounded-xl p-2.5 flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Курс банка</span>
+                      <span className="text-foreground font-semibold">1 $ = {effRate.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ₽</span>
+                    </div>
+                    {effMin > 0 && (
+                      <div className="bg-secondary rounded-xl p-2.5 flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Минимальная сумма</span>
+                        <span className="text-foreground font-semibold">${effMin.toLocaleString("en-US")}</span>
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground mb-1 block">Сумма для проверки (USD)</Label>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        value={clientComplianceDialog?.preview_amount ?? ""}
+                        onChange={e => setClientComplianceDialog(prev => prev ? { ...prev, preview_amount: e.target.value.replace(/[^0-9.,]/g, "") } : null)}
+                      />
+                    </div>
+                    <div className="bg-secondary rounded-xl p-2.5 flex items-center justify-between text-xs">
+                      <span className="text-foreground font-medium">К зачислению →</span>
+                      <span className="text-primary font-bold text-sm">
+                        {rub > 0 ? rub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} ₽
+                      </span>
+                    </div>
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 text-[11px] text-amber-600 dark:text-amber-400 space-y-1">
+                      <p className="font-semibold">⚠️ Комиссия оплачивается отдельно</p>
+                      <p>
+                        Комиссия ({effFee}%) — <span className="font-semibold">${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> — отдельно через шлюз <span className="font-semibold">МИР</span>.
+                      </p>
+                    </div>
+                    {effMin > 0 && amt > 0 && amt < effMin && (
+                      <p className="text-[11px] text-red-500">Минимум для конвертации: ${effMin}</p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
           <DialogFooter>
