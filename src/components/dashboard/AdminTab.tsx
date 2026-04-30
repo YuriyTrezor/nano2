@@ -91,6 +91,9 @@ const AdminTab = () => {
     gold_discount: string;
     platinum_discount: string;
     diamond_discount: string;
+    usd_rub_rate: string;
+    conversion_fee_percent: string;
+    min_conversion_usd: string;
   } | null>(null);
 
   const [txDialog, setTxDialog] = useState<{
