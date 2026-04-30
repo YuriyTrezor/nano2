@@ -72,8 +72,8 @@ export default function ConversionRequestsAdmin() {
     }
     const { error: errCredit } = await supabase.from("transactions").insert({
       user_id: r.user_id,
-      title: `Конвертация $${r.amount_usd} по курсу ${r.rate}`,
-      category: "Конвертация",
+      title: `Зачисление от конвертации (курс ${r.rate} ₽)`,
+      category: "Конвертация RUB",
       amount: Number(r.amount_rub),
       card_name: r.card_name || "",
     });
