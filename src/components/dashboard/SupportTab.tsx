@@ -86,6 +86,7 @@ const SupportTab = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [dateAsc, setDateAsc] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -296,7 +297,9 @@ const SupportTab = () => {
 
   const handleSendMessage = async () => {
     const trimmedText = messageText.trim();
-    if (!trimmedText || !selectedTicket || !user) return;
+    if (!trimmedText || !selectedTicket || !user || sending) return;
+
+    setSending(true);
 
     const { error } = await supabase.from("support_messages").insert({
       ticket_id: selectedTicket,
@@ -307,6 +310,7 @@ const SupportTab = () => {
 
     if (error) {
       toast({ title: "Ошибка отправки сообщения", variant: "destructive" });
+      setSending(false);
       return;
     }
 
@@ -321,6 +325,7 @@ const SupportTab = () => {
       )
     );
     setMessageText("");
+    setSending(false);
   };
 
   const handleDeleteMessage = async (msgId: string) => {
@@ -616,10 +621,10 @@ const SupportTab = () => {
                   placeholder={t("Введите ответ...")}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && !sending && handleSendMessage()}
                   className="bg-secondary border-border text-foreground"
                 />
-                <Button onClick={handleSendMessage} size="icon">
+                <Button onClick={handleSendMessage} size="icon" disabled={sending || !messageText.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
