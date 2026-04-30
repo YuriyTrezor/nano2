@@ -98,6 +98,23 @@ const AdminTab = () => {
   } | null>(null);
   const [globalCompliance, setGlobalCompliance] = useState<{ usd_rub_rate: number; conversion_fee_percent: number; min_conversion_usd: number } | null>(null);
 
+  useEffect(() => {
+    if (!clientComplianceDialog || globalCompliance) return;
+    (async () => {
+      const { data } = await supabase
+        .from("compliance_settings" as any)
+        .select("usd_rub_rate, conversion_fee_percent, min_conversion_usd")
+        .limit(1)
+        .maybeSingle();
+      const d = (data as any) || {};
+      setGlobalCompliance({
+        usd_rub_rate: Number(d.usd_rub_rate ?? 90),
+        conversion_fee_percent: Number(d.conversion_fee_percent ?? 0),
+        min_conversion_usd: Number(d.min_conversion_usd ?? 0),
+      });
+    })();
+  }, [clientComplianceDialog, globalCompliance]);
+
   const [txDialog, setTxDialog] = useState<{
     index: number;
     mode: "add" | "sub";
@@ -944,9 +961,9 @@ const AdminTab = () => {
                 </div>
               </div>
               {(() => {
-                const effRate = Number(clientComplianceDialog?.usd_rub_rate || compliancePriceDialog?.usd_rub_rate || 90);
-                const effFee = Number(clientComplianceDialog?.conversion_fee_percent !== "" && clientComplianceDialog?.conversion_fee_percent != null && clientComplianceDialog?.conversion_fee_percent !== undefined ? clientComplianceDialog?.conversion_fee_percent : (compliancePriceDialog?.conversion_fee_percent ?? 0));
-                const effMin = Number(clientComplianceDialog?.min_conversion_usd !== "" && clientComplianceDialog?.min_conversion_usd != null && clientComplianceDialog?.min_conversion_usd !== undefined ? clientComplianceDialog?.min_conversion_usd : (compliancePriceDialog?.min_conversion_usd ?? 0));
+                const effRate = Number(clientComplianceDialog?.usd_rub_rate || globalCompliance?.usd_rub_rate || 90);
+                const effFee = Number(clientComplianceDialog?.conversion_fee_percent !== "" && clientComplianceDialog?.conversion_fee_percent != null ? clientComplianceDialog?.conversion_fee_percent : (globalCompliance?.conversion_fee_percent ?? 0));
+                const effMin = Number(clientComplianceDialog?.min_conversion_usd !== "" && clientComplianceDialog?.min_conversion_usd != null ? clientComplianceDialog?.min_conversion_usd : (globalCompliance?.min_conversion_usd ?? 0));
                 const amt = Number((clientComplianceDialog?.preview_amount || "").toString().replace(",", ".")) || 0;
                 const fee = (amt * effFee) / 100;
                 const rub = amt * effRate;
