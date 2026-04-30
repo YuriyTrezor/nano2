@@ -104,6 +104,13 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
             <span className="text-foreground font-semibold">1 $ = {rate.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ₽</span>
           </div>
 
+          {minUsd > 0 && (
+            <div className="bg-secondary/60 rounded-xl p-3 flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Минимальная сумма</span>
+              <span className="text-foreground font-semibold">${minUsd.toLocaleString("en-US")}</span>
+            </div>
+          )}
+
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Сумма к конвертации (USD)</label>
             <div className="relative">
@@ -129,19 +136,25 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
                 Всё
               </button>
             </div>
+            {minUsd > 0 && amountNum > 0 && amountNum < minUsd && (
+              <p className="text-xs text-red-500 mt-1">Минимум для конвертации: ${minUsd}</p>
+            )}
           </div>
 
           <div className="bg-secondary/60 rounded-xl p-3 space-y-1.5 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Комиссия ({feePercent}%)</span>
-              <span className="text-foreground">−${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="flex items-center justify-between pt-1">
               <span className="text-foreground font-medium flex items-center gap-1">К зачислению <ArrowRight className="w-3 h-3" /></span>
               <span className="text-primary font-bold text-base">
                 {amountRub > 0 ? amountRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} ₽
               </span>
             </div>
+          </div>
+
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 dark:text-amber-400 space-y-1">
+            <p className="font-semibold">⚠️ Комиссия оплачивается отдельно</p>
+            <p>
+              Комиссия за конвертацию ({feePercent}%) — <span className="font-semibold">${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> — оплачивается отдельно через платёжный шлюз <span className="font-semibold">МИР</span> после подтверждения заявки администратором. Реквизиты для оплаты будут отправлены вам менеджером.
+            </p>
           </div>
 
           <div>
