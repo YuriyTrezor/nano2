@@ -565,6 +565,10 @@ const AdminTab = () => {
         </div>
       </div>
 
+      <div className="mb-6">
+        <ConversionRequestsAdmin />
+      </div>
+
       {/* Transaction dialog */}
       <Dialog open={!!txDialog} onOpenChange={open => !open && setTxDialog(null)}>
         <DialogContent className="max-w-md">
