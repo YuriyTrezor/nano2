@@ -22,10 +22,13 @@ import { classifyError, logNetError } from "./networkLogger";
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
-// Primary proxy — your VPS in RU/EU. Configured via env so you can flip
-// the domain without a code change. Empty string = disabled.
-const VPS_PROXY_ORIGIN =
-  ((import.meta.env.VITE_API_PROXY_ORIGIN as string | undefined) ?? "").replace(/\/+$/, "");
+// Primary proxy — your VPS in RU/EU. Hardcoded because Lovable doesn't
+// expose a UI for build-time VITE_* variables. This is a public URL,
+// not a secret. Override via env if available, otherwise use default.
+const VPS_PROXY_ORIGIN = (
+  (import.meta.env.VITE_API_PROXY_ORIGIN as string | undefined) ??
+  "https://ru-api.neowork.nl"
+).replace(/\/+$/, "");
 
 // Legacy Cloudflare Worker — kept as a secondary fallback only.
 const OWN_PROXY_ORIGIN = "https://api.neowork.nl";
