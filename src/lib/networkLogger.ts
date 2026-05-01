@@ -21,7 +21,7 @@ export type NetErrorType =
 export interface NetLogPayload {
   url: string;
   method: string;
-  route: "own_proxy" | "direct" | "public_proxy" | "unknown";
+  route: "vps_proxy" | "own_proxy" | "direct" | "public_proxy" | "unknown";
   errorType: NetErrorType;
   status?: number;
   message?: string;
