@@ -30,6 +30,13 @@ const VPS_PROXY_ORIGIN = (
   "https://ru-api.neowork.nl"
 ).replace(/\/+$/, "");
 
+// Bump this when the proxy logic changes so HMR / browser cache evicts the
+// old module in the user's preview tab. Otherwise users keep running the
+// stale build that hits supabase.co directly and fails in RU.
+// v3 — 2026-05-01: separate vps_proxy / own_proxy logging so we can tell
+// which hop fails from network logs.
+console.info("[fetchProxy] v3 active, VPS:", VPS_PROXY_ORIGIN || "(disabled)");
+
 // Legacy Cloudflare Worker — kept as a secondary fallback only.
 const OWN_PROXY_ORIGIN = "https://api.neowork.nl";
 
@@ -209,7 +216,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       if (res.status < 500) {
         if (res.status >= 400 && method !== "GET") {
           logNetError({
-            url, method, route: "own_proxy",
+            url, method, route: "vps_proxy",
             errorType: "http_error", status: res.status,
             message: `VPS proxy returned ${res.status}`,
           });
@@ -217,13 +224,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         return res;
       }
       logNetError({
-        url, method, route: "own_proxy",
+        url, method, route: "vps_proxy",
         errorType: "http_error", status: res.status,
         message: "VPS proxy 5xx, falling back",
       });
     } catch (e) {
       const c = classifyError(e);
-      logNetError({ url, method, route: "own_proxy", errorType: c.type, message: c.message });
+      logNetError({ url, method, route: "vps_proxy", errorType: c.type, message: c.message });
     }
   }
 
