@@ -39,9 +39,11 @@ try {
 
 const PROXY_ENABLED = (() => {
   try {
-    return typeof window !== "undefined" &&
-      window.localStorage.getItem("use_supabase_proxy") === "1";
-  } catch { return false; }
+    if (typeof window === "undefined") return false;
+    // Явное отключение через ?proxy=0 или localStorage = "0"
+    if (window.localStorage.getItem("use_supabase_proxy") === "0") return false;
+    return true;
+  } catch { return true; }
 })();
 
 const isSupabaseUrl = (url: string): boolean =>
