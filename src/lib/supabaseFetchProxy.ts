@@ -1,154 +1,150 @@
 /**
- * FORCE-PROXY mode (v5).
+ * Опциональный proxy для Supabase.
  *
- * Все запросы к *.supabase.co (включая Realtime WebSocket) переписываются
- * на наш VPS https://ru-api.neowork.nl. Прямые обращения к supabase.co
- * запрещены — это критично для пользователей в РФ, где supabase.co
- * заблокирован провайдерами.
+ * По умолчанию ВЫКЛЮЧЕН — все запросы идут напрямую в *.supabase.co.
+ * Это нужно, потому что наш VPS-прокси может быть недоступен (падение,
+ * рестарт, истёкший SSL и т.п.), и в таком режиме принудительный
+ * редирект полностью ломает сайт во ВСЕХ регионах, включая те, где
+ * Supabase прекрасно работает напрямую.
  *
- * Никаких "direct"/"public CORS" фолбэков больше нет: прокси стабильно
- * работает по HTTPS, лишние пути только маскируют реальные ошибки.
+ * Включить proxy можно ТОЛЬКО явно, одним из способов:
+ *   1) localStorage.setItem("use_supabase_proxy", "1")
+ *   2) ?proxy=1 в URL (запоминается в localStorage)
+ *
+ * Выключить:
+ *   localStorage.removeItem("use_supabase_proxy")  или  ?proxy=0
  */
 
 import { classifyError, logNetError } from "./networkLogger";
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
-
-// Жёстко зашитый VPS-прокси. Public URL, не секрет.
 const VPS_PROXY_ORIGIN = "https://ru-api.neowork.nl";
 
-// Убираем хост Supabase из URL и подставляем хост прокси.
-// Работает и для https://, и для wss:// (Realtime).
 const SUPABASE_HOST = (() => {
-  try {
-    return new URL(SUPABASE_URL).host;
-  } catch {
-    return "";
-  }
+  try { return new URL(SUPABASE_URL).host; } catch { return ""; }
 })();
 const PROXY_HOST = (() => {
-  try {
-    return new URL(VPS_PROXY_ORIGIN).host;
-  } catch {
-    return "";
-  }
+  try { return new URL(VPS_PROXY_ORIGIN).host; } catch { return ""; }
 })();
+
+// ── Включение/выключение через URL-параметр ─────────────────────────────────
+try {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get("proxy");
+    if (flag === "1") localStorage.setItem("use_supabase_proxy", "1");
+    if (flag === "0") localStorage.removeItem("use_supabase_proxy");
+  }
+} catch { /* ignore */ }
+
+const PROXY_ENABLED = (() => {
+  try {
+    return typeof window !== "undefined" &&
+      window.localStorage.getItem("use_supabase_proxy") === "1";
+  } catch { return false; }
+})();
+
+const isSupabaseUrl = (url: string): boolean =>
+  !!SUPABASE_HOST && url.includes(`//${SUPABASE_HOST}`);
 
 const rewriteUrl = (url: string): string => {
   if (!SUPABASE_HOST || !PROXY_HOST) return url;
-  // https://xxx.supabase.co/...  →  https://ru-api.neowork.nl/...
-  // wss://xxx.supabase.co/...    →  wss://ru-api.neowork.nl/...
   if (url.includes(`//${SUPABASE_HOST}`)) {
     return url.replace(`//${SUPABASE_HOST}`, `//${PROXY_HOST}`);
   }
   return url;
 };
 
-const isSupabaseUrl = (url: string): boolean =>
-  !!SUPABASE_HOST && url.includes(`//${SUPABASE_HOST}`);
+if (PROXY_ENABLED) {
+  console.info(
+    "[fetchProxy] PROXY ON. supabase.co →", VPS_PROXY_ORIGIN,
+  );
+} else {
+  console.info("[fetchProxy] direct mode (no proxy). Включить: ?proxy=1");
+}
 
-console.info(
-  "[fetchProxy] v6 FORCE-PROXY active. supabase.co →",
-  VPS_PROXY_ORIGIN,
-  "(host:", SUPABASE_HOST, "→", PROXY_HOST + ")",
-);
+// ── fetch override (только если proxy включён) ──────────────────────────────
+if (PROXY_ENABLED) {
+  const originalFetch = window.fetch.bind(window);
 
-// ─── fetch override ──────────────────────────────────────────────────────────
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.toString()
+        : input.url;
 
-const originalFetch = window.fetch.bind(window);
+    if (!isSupabaseUrl(url)) {
+      return originalFetch(input as any, init);
+    }
 
-window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  const url =
-    typeof input === "string"
-      ? input
-      : input instanceof URL
-      ? input.toString()
-      : input.url;
+    const proxied = rewriteUrl(url);
+    const method = (
+      init?.method ?? (input instanceof Request ? input.method : "GET")
+    ).toUpperCase();
 
-  if (!isSupabaseUrl(url)) {
-    return originalFetch(input as any, init);
-  }
+    const mergedHeaders = new Headers();
+    if (input instanceof Request) {
+      input.headers.forEach((v, k) => mergedHeaders.set(k, v));
+    }
+    if (init?.headers) {
+      new Headers(init.headers).forEach((v, k) => mergedHeaders.set(k, v));
+    }
 
-  const proxied = rewriteUrl(url);
-  const method = (
-    init?.method ?? (input instanceof Request ? input.method : "GET")
-  ).toUpperCase();
+    let body: BodyInit | null | undefined = init?.body;
+    if (body === undefined && input instanceof Request && method !== "GET" && method !== "HEAD") {
+      body = await input.clone().arrayBuffer();
+    }
 
-  // Собираем заголовки: сначала из Request (если был), потом перекрываем init.headers.
-  const mergedHeaders = new Headers();
-  if (input instanceof Request) {
-    input.headers.forEach((v, k) => mergedHeaders.set(k, v));
-  }
-  if (init?.headers) {
-    new Headers(init.headers).forEach((v, k) => mergedHeaders.set(k, v));
-  }
+    const finalInit: RequestInit = {
+      method,
+      headers: mergedHeaders,
+      body,
+      credentials: init?.credentials ?? (input instanceof Request ? input.credentials : undefined),
+      mode: init?.mode ?? (input instanceof Request ? input.mode : undefined),
+      cache: init?.cache,
+      redirect: init?.redirect,
+      referrer: init?.referrer,
+      integrity: init?.integrity,
+      signal: init?.signal ?? (input instanceof Request ? input.signal : undefined),
+    };
 
-  // Тело: из init, иначе из Request.
-  let body: BodyInit | null | undefined = init?.body;
-  if (
-    body === undefined &&
-    input instanceof Request &&
-    method !== "GET" &&
-    method !== "HEAD"
-  ) {
-    body = await input.clone().arrayBuffer();
-  }
-
-  const finalInit: RequestInit = {
-    method,
-    headers: mergedHeaders,
-    body,
-    credentials: init?.credentials ?? (input instanceof Request ? input.credentials : undefined),
-    mode: init?.mode ?? (input instanceof Request ? input.mode : undefined),
-    cache: init?.cache,
-    redirect: init?.redirect,
-    referrer: init?.referrer,
-    integrity: init?.integrity,
-    signal: init?.signal ?? (input instanceof Request ? input.signal : undefined),
+    try {
+      return await originalFetch(proxied, finalInit);
+    } catch (e) {
+      const c = classifyError(e);
+      logNetError({
+        url, method, route: "vps_proxy",
+        errorType: c.type,
+        message: `proxy failed: ${c.message}`,
+      });
+      // Fallback на прямой запрос — лучше показать сайт, чем белый экран.
+      return originalFetch(input as any, init);
+    }
   };
 
-  try {
-    return await originalFetch(proxied, finalInit);
-  } catch (e) {
-    const c = classifyError(e);
-    logNetError({
-      url,
-      method,
-      route: "vps_proxy",
-      errorType: c.type,
-      message: `force-proxy failed: ${c.message}`,
-    });
-    throw e;
+  // WebSocket override — тоже только при включённом proxy.
+  const OriginalWebSocket = window.WebSocket;
+  class ProxiedWebSocket extends OriginalWebSocket {
+    constructor(url: string | URL, protocols?: string | string[]) {
+      const u = typeof url === "string" ? url : url.toString();
+      const rewritten = isSupabaseUrl(u) ? rewriteUrl(u) : u;
+      super(rewritten, protocols);
+    }
   }
-};
+  window.WebSocket = ProxiedWebSocket as any;
 
-// ─── WebSocket override (для Supabase Realtime) ──────────────────────────────
-
-const OriginalWebSocket = window.WebSocket;
-class ProxiedWebSocket extends OriginalWebSocket {
-  constructor(url: string | URL, protocols?: string | string[]) {
+  const OriginalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (
+    method: string,
+    url: string | URL,
+    ...rest: any[]
+  ) {
     const u = typeof url === "string" ? url : url.toString();
-    const rewritten = isSupabaseUrl(u) ? rewriteUrl(u) : u;
-    super(rewritten, protocols);
-  }
+    const final = isSupabaseUrl(u) ? rewriteUrl(u) : u;
+    return OriginalXHROpen.call(this, method, final, ...(rest as []));
+  };
 }
-// Статические свойства (CONNECTING, OPEN, CLOSING, CLOSED) и прототип
-// уже унаследованы через `extends`. Переопределять `prototype` нельзя —
-// это non-configurable свойство функции и приводит к
-// "TypeError: Cannot redefine property: prototype".
-window.WebSocket = ProxiedWebSocket as any;
-
-// ─── XMLHttpRequest override (на случай, если что-то использует XHR) ─────────
-
-const OriginalXHROpen = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function (
-  method: string,
-  url: string | URL,
-  ...rest: any[]
-) {
-  const u = typeof url === "string" ? url : url.toString();
-  const final = isSupabaseUrl(u) ? rewriteUrl(u) : u;
-  return OriginalXHROpen.call(this, method, final, ...(rest as []));
-};
 
 export {};
