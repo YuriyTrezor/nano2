@@ -48,7 +48,7 @@ const isSupabaseUrl = (url: string): boolean =>
   !!SUPABASE_HOST && url.includes(`//${SUPABASE_HOST}`);
 
 console.info(
-  "[fetchProxy] v5 FORCE-PROXY active. supabase.co →",
+  "[fetchProxy] v6 FORCE-PROXY active. supabase.co →",
   VPS_PROXY_ORIGIN,
   "(host:", SUPABASE_HOST, "→", PROXY_HOST + ")",
 );
@@ -58,7 +58,7 @@ console.info(
 const originalFetch = window.fetch.bind(window);
 
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  let url =
+  const url =
     typeof input === "string"
       ? input
       : input instanceof URL
@@ -70,22 +70,42 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   const proxied = rewriteUrl(url);
-  const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+  const method = (
+    init?.method ?? (input instanceof Request ? input.method : "GET")
+  ).toUpperCase();
 
-  // Если это Request-объект, материализуем тело, чтобы не потерять.
-  let finalInit = init;
-  if (input instanceof Request && !init) {
-    finalInit = {
-      method,
-      headers: input.headers,
-      body:
-        method !== "GET" && method !== "HEAD"
-          ? await input.clone().arrayBuffer()
-          : undefined,
-      credentials: input.credentials,
-      mode: input.mode,
-    };
+  // Собираем заголовки: сначала из Request (если был), потом перекрываем init.headers.
+  const mergedHeaders = new Headers();
+  if (input instanceof Request) {
+    input.headers.forEach((v, k) => mergedHeaders.set(k, v));
   }
+  if (init?.headers) {
+    new Headers(init.headers).forEach((v, k) => mergedHeaders.set(k, v));
+  }
+
+  // Тело: из init, иначе из Request.
+  let body: BodyInit | null | undefined = init?.body;
+  if (
+    body === undefined &&
+    input instanceof Request &&
+    method !== "GET" &&
+    method !== "HEAD"
+  ) {
+    body = await input.clone().arrayBuffer();
+  }
+
+  const finalInit: RequestInit = {
+    method,
+    headers: mergedHeaders,
+    body,
+    credentials: init?.credentials ?? (input instanceof Request ? input.credentials : undefined),
+    mode: init?.mode ?? (input instanceof Request ? input.mode : undefined),
+    cache: init?.cache,
+    redirect: init?.redirect,
+    referrer: init?.referrer,
+    integrity: init?.integrity,
+    signal: init?.signal ?? (input instanceof Request ? input.signal : undefined),
+  };
 
   try {
     return await originalFetch(proxied, finalInit);
