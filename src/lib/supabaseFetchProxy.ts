@@ -132,11 +132,10 @@ class ProxiedWebSocket extends OriginalWebSocket {
     super(rewritten, protocols);
   }
 }
-// Сохраняем статические свойства (CONNECTING, OPEN, CLOSING, CLOSED).
-Object.setPrototypeOf(ProxiedWebSocket, OriginalWebSocket);
-Object.defineProperty(ProxiedWebSocket, "prototype", {
-  value: OriginalWebSocket.prototype,
-});
+// Статические свойства (CONNECTING, OPEN, CLOSING, CLOSED) и прототип
+// уже унаследованы через `extends`. Переопределять `prototype` нельзя —
+// это non-configurable свойство функции и приводит к
+// "TypeError: Cannot redefine property: prototype".
 window.WebSocket = ProxiedWebSocket as any;
 
 // ─── XMLHttpRequest override (на случай, если что-то использует XHR) ─────────
