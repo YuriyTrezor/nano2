@@ -18,7 +18,7 @@
 import { classifyError, logNetError } from "./networkLogger";
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
-const VPS_PROXY_ORIGIN = "https://neowork.nl/api";
+const VPS_PROXY_ORIGIN = "https://ru-api.neowork.nl";
 
 const SUPABASE_HOST = (() => {
   try { return new URL(SUPABASE_URL).host; } catch { return ""; }
