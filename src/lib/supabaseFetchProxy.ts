@@ -18,14 +18,16 @@
 import { classifyError, logNetError } from "./networkLogger";
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
-const VPS_PROXY_ORIGIN = "https://ru-api.neowork.nl";
+const VPS_PROXY_ORIGIN = "https://neowork.nl/api";
 
 const SUPABASE_HOST = (() => {
   try { return new URL(SUPABASE_URL).host; } catch { return ""; }
 })();
-const PROXY_HOST = (() => {
-  try { return new URL(VPS_PROXY_ORIGIN).host; } catch { return ""; }
+const PROXY_URL = (() => {
+  try { return new URL(VPS_PROXY_ORIGIN); } catch { return null; }
 })();
+const PROXY_HOST = PROXY_URL?.host ?? "";
+const PROXY_PATH = (PROXY_URL?.pathname ?? "").replace(/\/$/, "");
 
 // ── Включение/выключение через URL-параметр ─────────────────────────────────
 try {
@@ -52,7 +54,7 @@ const isSupabaseUrl = (url: string): boolean =>
 const rewriteUrl = (url: string): string => {
   if (!SUPABASE_HOST || !PROXY_HOST) return url;
   if (url.includes(`//${SUPABASE_HOST}`)) {
-    return url.replace(`//${SUPABASE_HOST}`, `//${PROXY_HOST}`);
+    return url.replace(`//${SUPABASE_HOST}`, `//${PROXY_HOST}${PROXY_PATH}`);
   }
   return url;
 };
