@@ -1,54 +1,63 @@
-## Цель
+# Починка «Нет операций» в кабинете
 
-Вернуть проект к простой схеме: `Пользователь → neoplace.nl → Lovable → Supabase` напрямую, без посредников.
+## Что подтверждено диагностикой
 
-## Что удаляю из кода
+- В БД у `olegkarygow4@gmail.com` (user_id `71a44c06…`) **9 транзакций**, последняя сегодня в 09:44 МСК.
+- RLS-политики на `transactions` корректные: `auth.uid() = user_id`.
+- В коде нет фильтра, который бы скрывал транзакции при `document_requested = true`.
+- Auth-логи показывают успешный логин клиента (status 200) с IP `5.45.94.85` (РФ, через `neoplace.nl`).
 
-1. **`src/lib/supabaseFetchProxy.ts`** — удалить файл полностью. Это monkey-patch для `window.fetch`, `WebSocket` и `XMLHttpRequest`, который перенаправлял запросы на VPS `92.53.96.132:3001`. Сейчас он по умолчанию выключен, но сам факт его наличия + код переопределения глобалов — лишний риск.
+Вывод: запрос `select * from transactions` уходит **до того, как Supabase JS клиент успел подставить JWT в заголовок**. PostgREST + RLS отдаёт пустой массив (без ошибки!), фронт ставит `transactions = []` и больше никогда не перезапрашивает. На быстром канале это незаметно, на медленном русском — стабильно ломается.
 
-2. **`src/main.tsx`** — убрать строку:
-   ```ts
-   import "./lib/supabaseFetchProxy";
-   ```
-   Остальную логику (очистка service worker / caches / legacy auth keys) оставляю — она полезна, чтобы у пользователей со старым кэшем всё корректно сбросилось при следующем заходе.
+То же самое уже описано в нашей базе знаний (см. `useAuthReady` паттерн).
 
-3. **`vps-proxy/`** — удалить папку целиком (`README.md`, `nginx.conf`, `package.json`, `server.js`, `systemd.service`).
+## Что меняется
 
-4. **`cloudflare-worker/`** — удалить папку целиком (`worker.js`).
+### 1. `src/lib/fetchAllUserTransactions.ts` — добавить guard и retry
 
-## Что НЕ трогаю
+Перед запросом:
+- если переданный `userId` пустой — вернуть `[]` без вызова сети;
+- если первый запрос вернул `0` строк, но сессии **ещё не было** в момент вызова, подождать `supabase.auth.getSession()` и сделать **один повтор**.
 
-- **`src/integrations/supabase/client.ts`** — уже использует прямое подключение через `VITE_SUPABASE_URL`. Менять нечего.
-- **`public/sw.js`** — оставляю как есть. Это «kill-switch» service worker, который сам себя удаляет и чистит кэши у пользователей, у которых висит старая версия. Полезен ещё какое-то время.
-- **`src/lib/networkLogger.ts`** — общая утилита логирования сетевых ошибок, не связана только с прокси.
-- **`src/main.tsx`** в части SW/cache cleanup — оставляю.
+### 2. `OverviewTab.tsx` и `TransfersTab.tsx` — ждать готовности сессии
 
-## Итоговая схема после правок
+Сейчас оба `useEffect` стартуют по `user` из `useAuth()`. Но `user` приходит из `applySession`, а сам Supabase-клиент в момент монтирования ещё может не иметь живого `access_token` в `localStorage` (особенно сразу после логина / refresh). Делаем:
 
-```text
-Пользователь → neoplace.nl (Squarespace DNS)
-            → Lovable (185.158.133.1)
-            → Supabase (jvibhsjnspvucjwvhfht.supabase.co) напрямую
+- Добавить в `AuthContext` флаг `sessionReady: boolean` — становится `true` только после первого успешного `getSession()` *с* непустым `access_token` (или подтверждённого «гостя»).
+- В `OverviewTab` и `TransfersTab` `useEffect` зависит от `[user, sessionReady]` и не дёргает запрос пока `sessionReady === false`.
+
+### 3. Realtime-подписка на `transactions` (опционально, но добавлю)
+
+Сейчас, если админ создаёт операцию, клиент видит её только после ручного refresh. Подписываем Overview/Transfers на изменения своей строки в `transactions` через `postgres_changes`. Это бесплатный бонус и заодно автоматически закрывает кейс «зашёл, увидел пусто из-за гонки» — подписка перезапросит данные.
+
+Для этого нужно одной миграцией включить realtime-публикацию:
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.transactions;
+ALTER TABLE public.transactions REPLICA IDENTITY FULL;
 ```
 
-Никакого VPS, никакого Cloudflare Worker, никакого `?proxy=1`.
+### 4. Диагностический лог (временно)
 
-## Что нужно сделать тебе вручную (вне кода)
+В `fetchAllUserTransactions` логировать в `network_logs` случай «сессия есть, запрос успешен, но 0 строк при ожидаемых >0». Так через сутки увидим, остались ли затронутые клиенты.
 
-Эти шаги я выполнить не могу — они в твоих внешних кабинетах:
+## Чего НЕ делаю
 
-1. **Cloudflare**: удалить Worker `supabase-proxy` и custom domain `api.neowork.nl` (или просто отключить домен от Cloudflare целиком, если он больше не нужен).
-2. **Lovable → Domains**: убедиться, что подключён только `neoplace.nl` (и `www.neoplace.nl`). Если висит `neowork.nl` — отключить.
-3. **Timeweb VPS (92.53.96.132)**: можно гасить — он в схеме больше не участвует.
-4. **Squarespace DNS для neoplace.nl**: ничего менять не нужно — он уже корректно указывает на Lovable.
+- Не трогаю RLS — они корректные.
+- Не трогаю VPS / DNS / Timeweb — это не сетевая проблема, а гонка в JS.
+- Не меняю `supabase/client.ts` (запрещено).
 
-## Проверка после деплоя
+## Технические детали
 
-1. Открыть https://neoplace.nl — должен загрузиться сайт.
-2. Войти в кабинет — авторизация должна работать.
-3. В DevTools → Network: запросы должны идти на `jvibhsjnspvucjwvhfht.supabase.co` напрямую, без `92.53.96.132` и без `api.neowork.nl`.
-4. В Console не должно быть строки `[fetchProxy] PROXY ON` или `[fetchProxy] direct mode`.
-5. Сделать любую правку через Lovable — проверить, что обновление прилетает в реальном времени на neoplace.nl.
-6. Отдельно (когда будут реальные жалобы): проверить, заходит ли сайт из РФ без VPN. Если массовых жалоб нет — VPS-прокси и не нужен.
+```text
+AuthProvider
+  ├─ getSession() ──► applySession(session)
+  │                    ├─ setUser(session.user)
+  │                    └─ setSessionReady(true)   ← новое
+  │
+OverviewTab.useEffect([user, sessionReady])
+  └─ if (!user || !sessionReady) return;
+     fetchAllUserTransactions(user.id) ──► 9 строк ✓
+```
 
-После твоего «да» переключусь в рабочий режим и сделаю все четыре правки одним заходом.
+После одобрения внесу правки в 4 файла + 1 миграция.
