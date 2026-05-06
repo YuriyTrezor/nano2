@@ -11,10 +11,27 @@ export interface BalanceTransaction {
   created_at: string;
 }
 
+const waitForSession = async (timeoutMs = 5000): Promise<boolean> => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) return true;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  return false;
+};
+
 export const fetchAllUserTransactions = async <T = BalanceTransaction>(
   userId: string,
   selectColumns = "id, title, category, amount, card_name, created_at"
 ): Promise<T[]> => {
+  if (!userId) return [];
+
+  // Make sure the JWT is actually attached before issuing the query.
+  // Without this, RLS sees auth.uid() as null and silently returns 0 rows
+  // (no error) — looks like "Нет операций" to the user.
+  await waitForSession();
+
   const allTransactions: T[] = [];
   let from = 0;
 
