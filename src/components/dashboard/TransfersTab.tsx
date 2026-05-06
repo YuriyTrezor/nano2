@@ -98,6 +98,23 @@ const TransfersTab = () => {
       setLoading(false);
     };
     fetchData();
+
+    const txChannel = supabase
+      .channel(`tx-transfers-${user.id}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "transactions",
+        filter: `user_id=eq.${user.id}`,
+      }, async () => {
+        try {
+          const fresh = await fetchAllUserTransactions<Transaction>(user.id);
+          setTransactions(fresh);
+        } catch {}
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(txChannel); };
   }, [user]);
 
   useEffect(() => {
