@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initSupabaseProxy } from "./lib/supabaseProxy";
 
 // Belt-and-suspenders: kill any service worker / cache that may still be
 // alive after the inline cleanup in index.html ran. This protects users in
@@ -28,4 +29,9 @@ import "./index.css";
   } catch {}
 })();
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Install the Supabase proxy fallback BEFORE rendering, so that the very
+// first auth/getSession() call (fired by AuthProvider on mount) already
+// goes through the proxy if the direct host is blocked (e.g. RKN in RU).
+initSupabaseProxy().finally(() => {
+  createRoot(document.getElementById("root")!).render(<App />);
+});
