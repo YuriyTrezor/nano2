@@ -1,6 +1,6 @@
-// Routes Supabase traffic through a self-hosted Cloudflare Worker proxy
-// (api.neowork.nl) when the direct Supabase host is unreachable — e.g. for
-// users in Russia where *.supabase.co is blocked by RKN.
+// Routes Supabase traffic through a Deno Deploy proxy
+// (close-robin-93.yuriytrezor.deno.net) when the direct Supabase host is
+// unreachable — e.g. for users in Russia where *.supabase.co is blocked by RKN.
 //
 // Strategy:
 //   1) On boot, do a fast HEAD probe to the direct Supabase host (1.2s budget).
@@ -11,12 +11,12 @@
 //   4) Decision is cached in sessionStorage so we probe at most once per tab.
 //
 // The proxy URL is taken from VITE_SUPABASE_PROXY_URL if set, otherwise
-// defaults to https://api.neowork.nl.
+// defaults to https://close-robin-93.yuriytrezor.deno.net.
 
 const DIRECT_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 const PROXY_URL =
   (import.meta.env.VITE_SUPABASE_PROXY_URL as string | undefined) ??
-  "https://api.neowork.nl";
+  "https://close-robin-93.yuriytrezor.deno.net";
 
 const CACHE_KEY = "sb_route_v1"; // "direct" | "proxy"
 const PROBE_TIMEOUT_MS = 1200;
