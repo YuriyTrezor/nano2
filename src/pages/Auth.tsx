@@ -33,8 +33,14 @@ const Auth = () => {
       if (error) {
         toast({ title: "Ошибка регистрации", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Регистрация успешна", description: "Вы можете войти в аккаунт." });
-        navigate("/dashboard");
+        // Auto-login right after signup
+        const { error: signInError } = await signIn(email, password);
+        if (signInError) {
+          toast({ title: "Регистрация успешна", description: "Войдите в аккаунт." });
+          setIsLogin(true);
+        } else {
+          navigate("/dashboard");
+        }
       }
     }
 
