@@ -71,8 +71,8 @@ const OverviewTab = () => {
   const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
   const [mirAlert, setMirAlert] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD" | "EUR">("RUB");
-  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90, EUR: 98 });
+  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD">("RUB");
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90 });
 
   // Fetch FX rates for currency switcher
   useEffect(() => {
@@ -110,36 +110,31 @@ const OverviewTab = () => {
   const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
   const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
-  // Если рублёвых операций нет, а USD есть — счёт считается долларовым
+  // Признак "только долларовый счёт" (нет рублёвых операций) — оставляем для UI-меток
   const isUsdAccount = rubTransactions.length === 0 && usdTransactions.length > 0;
-  // Авто-переключение валюты на USD, когда счёт долларовый
-  useEffect(() => {
-    if (isUsdAccount && displayCurrency === "RUB") {
-      setDisplayCurrency("USD");
-    }
-  }, [isUsdAccount]);
-  const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
-    if (isUsdAccount) {
-      if (currency === "USD") return usdBalance;
-      if (currency === "RUB") return usdBalance * (fxRates.USD || 0);
-      return usdBalance * (fxRates.USD || 0) / (fxRates[currency] || 1);
-    }
-    if (currency === "RUB") return balance;
-    return balance / (fxRates[currency] || 1);
-  };
-  const getCurrencySymbol = (currency: "RUB" | "USD" | "EUR") => {
-    if (currency === "RUB") return "₽";
-    if (currency === "USD") return "$";
-    return "€";
-  };
-  const formatCurrencyAmount = (currency: "RUB" | "USD" | "EUR") => {
-    const amount = convertBalance(currency);
-    return `${getCurrencySymbol(currency)} ${amount.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Единый баланс мультивалютного счёта: суммируем все валюты в выбранной
+  const usdRate = Number(fxRates.USD) || 0;
+  const totalInRub = balance + (usdRate ? usdBalance * usdRate : 0);
+  const totalInUsd = usdBalance + (usdRate ? balance / usdRate : 0);
+  const convertBalance = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? totalInRub : totalInUsd;
+  // Сырой остаток конкретного счёта (без конвертации)
+  const rawBalance = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? balance : usdBalance;
+  const getCurrencySymbol = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? "₽" : "$";
+  const formatRawAmount = (currency: "RUB" | "USD") => {
+    const amount = rawBalance(currency);
+    const locale = currency === "RUB" ? "ru-RU" : "en-US";
+    return `${getCurrencySymbol(currency)} ${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const currencySymbol = getCurrencySymbol(displayCurrency);
   const convertedBalance = convertBalance(displayCurrency);
-  const convertedBalanceFormatted = convertedBalance.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const convertedBalanceFormatted = convertedBalance.toLocaleString(
+    displayCurrency === "RUB" ? "ru-RU" : "en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  );
 
   // If user has only one card, that card holds the FULL balance.
   // Otherwise, sum transactions matching the card name.
