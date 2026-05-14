@@ -579,15 +579,17 @@ const OverviewTab = () => {
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
-                {!balanceHidden && usdBalance !== 0 && !isUsdAccount && (
-                  <p className={`text-sm sm:text-base font-semibold mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/80" : "text-primary-foreground/90"}`}>
-                    $ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {!balanceHidden && usdRate > 0 && (
+                  <p className={`text-xs sm:text-sm font-medium mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/70"}`}>
+                    {displayCurrency === "RUB"
+                      ? `≈ $ ${totalInUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : `≈ ${totalInRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`}
                   </p>
                 )}
                 {/* Currency switcher */}
                 {!isBlocked && (
                   <div className="flex gap-1 mt-3">
-                    {(["RUB", "USD", "EUR"] as const).map(c => (
+                    {(["RUB", "USD"] as const).map(c => (
                       <button
                         key={c}
                         onClick={() => setDisplayCurrency(c)}
@@ -990,7 +992,7 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Мои счета")}</h3>
             <div className="space-y-3">
-              {(["RUB", "USD", "EUR"] as const).map((currency) => {
+              {(["RUB", "USD"] as const).map((currency) => {
                 const selected = displayCurrency === currency;
                 return (
                   <button
@@ -1003,12 +1005,12 @@ const OverviewTab = () => {
                         {currency}
                       </div>
                       <div>
-                        <p className="text-foreground text-sm font-medium">{currency === "RUB" ? t("Общий счёт") : `${currency} счёт`}</p>
-                        <p className="text-muted-foreground text-xs">{currency === "RUB" ? "Основная валюта" : "Конвертация по текущему курсу"}</p>
+                        <p className="text-foreground text-sm font-medium">{currency === "RUB" ? t("Рублёвый счёт") : "Долларовый счёт"}</p>
+                        <p className="text-muted-foreground text-xs">{currency === "RUB" ? "Основная валюта" : "Доллары США"}</p>
                       </div>
                     </div>
                     <p className={`text-sm font-medium ${selected ? "text-primary" : isBlocked ? "text-destructive" : "text-foreground"}`}>
-                      {balanceHidden ? "••••••" : formatCurrencyAmount(currency)}
+                      {balanceHidden ? "••••••" : formatRawAmount(currency)}
                     </p>
                   </button>
                 );
