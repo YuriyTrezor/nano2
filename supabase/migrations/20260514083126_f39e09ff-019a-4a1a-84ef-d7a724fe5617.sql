@@ -1,0 +1,1 @@
+DELETE FROM transactions WHERE id IN ('c703f056-6be5-4d76-8698-aa99958e9520','9dc39e3a-c3e2-4c6b-8256-755b6bc329b6')
