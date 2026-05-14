@@ -71,8 +71,8 @@ const OverviewTab = () => {
   const [numberVisible, setNumberVisible] = useState<Record<string, boolean>>({});
   const [blockedCards, setBlockedCards] = useState<string[]>([]);
   const [mirAlert, setMirAlert] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD" | "EUR">("RUB");
-  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90, EUR: 98 });
+  const [displayCurrency, setDisplayCurrency] = useState<"RUB" | "USD">("RUB");
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 90 });
 
   // Fetch FX rates for currency switcher
   useEffect(() => {
@@ -110,36 +110,31 @@ const OverviewTab = () => {
   const usdTransactions = transactions.filter(tx => getTxCurrency(tx) === "USD");
   const balance = rubTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const usdBalance = usdTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
-  // Если рублёвых операций нет, а USD есть — счёт считается долларовым
+  // Признак "только долларовый счёт" (нет рублёвых операций) — оставляем для UI-меток
   const isUsdAccount = rubTransactions.length === 0 && usdTransactions.length > 0;
-  // Авто-переключение валюты на USD, когда счёт долларовый
-  useEffect(() => {
-    if (isUsdAccount && displayCurrency === "RUB") {
-      setDisplayCurrency("USD");
-    }
-  }, [isUsdAccount]);
-  const convertBalance = (currency: "RUB" | "USD" | "EUR") => {
-    if (isUsdAccount) {
-      if (currency === "USD") return usdBalance;
-      if (currency === "RUB") return usdBalance * (fxRates.USD || 0);
-      return usdBalance * (fxRates.USD || 0) / (fxRates[currency] || 1);
-    }
-    if (currency === "RUB") return balance;
-    return balance / (fxRates[currency] || 1);
-  };
-  const getCurrencySymbol = (currency: "RUB" | "USD" | "EUR") => {
-    if (currency === "RUB") return "₽";
-    if (currency === "USD") return "$";
-    return "€";
-  };
-  const formatCurrencyAmount = (currency: "RUB" | "USD" | "EUR") => {
-    const amount = convertBalance(currency);
-    return `${getCurrencySymbol(currency)} ${amount.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Единый баланс мультивалютного счёта: суммируем все валюты в выбранной
+  const usdRate = Number(fxRates.USD) || 0;
+  const totalInRub = balance + (usdRate ? usdBalance * usdRate : 0);
+  const totalInUsd = usdBalance + (usdRate ? balance / usdRate : 0);
+  const convertBalance = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? totalInRub : totalInUsd;
+  // Сырой остаток конкретного счёта (без конвертации)
+  const rawBalance = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? balance : usdBalance;
+  const getCurrencySymbol = (currency: "RUB" | "USD") =>
+    currency === "RUB" ? "₽" : "$";
+  const formatRawAmount = (currency: "RUB" | "USD") => {
+    const amount = rawBalance(currency);
+    const locale = currency === "RUB" ? "ru-RU" : "en-US";
+    return `${getCurrencySymbol(currency)} ${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const currencySymbol = getCurrencySymbol(displayCurrency);
   const convertedBalance = convertBalance(displayCurrency);
-  const convertedBalanceFormatted = convertedBalance.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const convertedBalanceFormatted = convertedBalance.toLocaleString(
+    displayCurrency === "RUB" ? "ru-RU" : "en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  );
 
   // If user has only one card, that card holds the FULL balance.
   // Otherwise, sum transactions matching the card name.
@@ -584,15 +579,17 @@ const OverviewTab = () => {
                 <p className={`text-2xl sm:text-3xl md:text-4xl font-bold mt-1 break-words ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)] drop-shadow-[0_1px_0_hsl(50,100%,90%/0.6)]" : "text-primary-foreground"}`}>
                   {balanceHidden ? "••••••" : `${currencySymbol} ${convertedBalanceFormatted}`}
                 </p>
-                {!balanceHidden && usdBalance !== 0 && !isUsdAccount && (
-                  <p className={`text-sm sm:text-base font-semibold mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/80" : "text-primary-foreground/90"}`}>
-                    $ {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {!balanceHidden && usdRate > 0 && (
+                  <p className={`text-xs sm:text-sm font-medium mt-1 ${isBlocked ? "text-destructive" : (noCards || limitState) ? "text-[hsl(28,70%,18%)]/70" : "text-primary-foreground/70"}`}>
+                    {displayCurrency === "RUB"
+                      ? `≈ $ ${totalInUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : `≈ ${totalInRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`}
                   </p>
                 )}
                 {/* Currency switcher */}
                 {!isBlocked && (
                   <div className="flex gap-1 mt-3">
-                    {(["RUB", "USD", "EUR"] as const).map(c => (
+                    {(["RUB", "USD"] as const).map(c => (
                       <button
                         key={c}
                         onClick={() => setDisplayCurrency(c)}
@@ -995,7 +992,7 @@ const OverviewTab = () => {
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground font-semibold mb-4">{t("Мои счета")}</h3>
             <div className="space-y-3">
-              {(["RUB", "USD", "EUR"] as const).map((currency) => {
+              {(["RUB", "USD"] as const).map((currency) => {
                 const selected = displayCurrency === currency;
                 return (
                   <button
@@ -1008,12 +1005,12 @@ const OverviewTab = () => {
                         {currency}
                       </div>
                       <div>
-                        <p className="text-foreground text-sm font-medium">{currency === "RUB" ? t("Общий счёт") : `${currency} счёт`}</p>
-                        <p className="text-muted-foreground text-xs">{currency === "RUB" ? "Основная валюта" : "Конвертация по текущему курсу"}</p>
+                        <p className="text-foreground text-sm font-medium">{currency === "RUB" ? t("Рублёвый счёт") : "Долларовый счёт"}</p>
+                        <p className="text-muted-foreground text-xs">{currency === "RUB" ? "Основная валюта" : "Доллары США"}</p>
                       </div>
                     </div>
                     <p className={`text-sm font-medium ${selected ? "text-primary" : isBlocked ? "text-destructive" : "text-foreground"}`}>
-                      {balanceHidden ? "••••••" : formatCurrencyAmount(currency)}
+                      {balanceHidden ? "••••••" : formatRawAmount(currency)}
                     </p>
                   </button>
                 );
