@@ -206,11 +206,12 @@ const installProxyPatch = () => {
   }
 
   PatchedWS.prototype = OriginalWS.prototype;
-  (PatchedWS as typeof WebSocket).CONNECTING = OriginalWS.CONNECTING;
-  (PatchedWS as typeof WebSocket).OPEN = OriginalWS.OPEN;
-  (PatchedWS as typeof WebSocket).CLOSING = OriginalWS.CLOSING;
-  (PatchedWS as typeof WebSocket).CLOSED = OriginalWS.CLOSED;
-  window.WebSocket = PatchedWS as typeof WebSocket;
+  const PatchedWSAny = PatchedWS as any;
+  PatchedWSAny.CONNECTING = OriginalWS.CONNECTING;
+  PatchedWSAny.OPEN = OriginalWS.OPEN;
+  PatchedWSAny.CLOSING = OriginalWS.CLOSING;
+  PatchedWSAny.CLOSED = OriginalWS.CLOSED;
+  window.WebSocket = PatchedWSAny as typeof WebSocket;
 };
 
 export const initSupabaseProxy = async (): Promise<void> => {
