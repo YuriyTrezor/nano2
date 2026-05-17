@@ -92,6 +92,9 @@ const getProxyCandidates = (): string[] => {
 
   addCandidate(ENV_PROXY_URL);
 
+  // Cloudflare Worker (full-site + /__supabase backend) — основной прокси для РФ.
+  addCandidate("https://black-glitter-a2e2.andreyromanov20265.workers.dev/__supabase");
+
   if (typeof window !== "undefined") {
     const origin = normalizeBase(window.location.origin);
     const hostname = window.location.hostname;
