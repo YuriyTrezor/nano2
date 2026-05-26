@@ -811,6 +811,28 @@ const AdminTab = () => {
                 >
                   <Edit className="w-3.5 h-3.5" />
                 </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm("Удалить операцию?")) return;
+                    const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+                    if (error) {
+                      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+                      return;
+                    }
+                    if (txViewDialog) {
+                      setTxViewDialog({
+                        ...txViewDialog,
+                        transactions: txViewDialog.transactions.filter(t => t.id !== tx.id),
+                      });
+                    }
+                    toast({ title: "Удалено", description: "Операция удалена" });
+                    fetchRegistrations();
+                  }}
+                  className="p-1.5 text-muted-foreground hover:text-destructive"
+                  title="Удалить"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
