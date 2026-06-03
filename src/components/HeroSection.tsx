@@ -86,6 +86,14 @@ const HeroSection = () => {
               {t("Войти в личный кабинет")} <ArrowRight className="w-5 h-5" />
             </Button>
           </a>
+          <Button
+            size="lg"
+            variant="outline"
+            className="ml-3 gap-2 px-8"
+            onClick={() => document.getElementById("cards")?.scrollIntoView({ behavior: "smooth" })}
+          >
+            {t("Заказать карту")}
+          </Button>
         </div>
         {/* Mobile: stacked vertically; Desktop: overlapped */}
         <div className="flex flex-col items-center gap-4 sm:hidden mt-2">
