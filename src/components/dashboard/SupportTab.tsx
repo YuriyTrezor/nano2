@@ -480,12 +480,12 @@ const SupportTab = () => {
                     <div className="flex items-center gap-2.5">
                       <Avatar className={`w-8 h-8 shrink-0 ${hasUnread ? "ring-2 ring-primary" : ""}`}>
                         <AvatarFallback className={`text-[10px] font-bold ${hasUnread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                          {getInitials(ticket.display_name)}
+                          {getInitials(`${ticket.display_name ?? ""} ${ticket.last_name ?? ""}`.trim())}
                         </AvatarFallback>
                       </Avatar>
                         <div className="flex-1 min-w-0">
                         <p className={`text-sm truncate ${hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
-                          {ticket.display_name}
+                          {[ticket.display_name, ticket.last_name].filter(Boolean).join(" ")}
                         </p>
                         <p className="text-xs truncate text-primary/80">
                           {ticket.email}
@@ -515,12 +515,12 @@ const SupportTab = () => {
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                      {getInitials(currentTicket.display_name)}
+                      {getInitials(`${currentTicket.display_name ?? ""} ${currentTicket.last_name ?? ""}`.trim())}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-foreground font-semibold">{currentTicket.display_name}</p>
+                      <p className="text-foreground font-semibold">{[currentTicket.display_name, currentTicket.last_name].filter(Boolean).join(" ")}</p>
                       <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0">
                         <User className="w-2.5 h-2.5" />
                         Клиент
@@ -574,7 +574,7 @@ const SupportTab = () => {
                         {!isSupport && (
                           <Avatar className="w-6 h-6 mr-2 mt-1 shrink-0">
                             <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
-                              {getInitials(currentTicket.display_name)}
+                              {getInitials(`${currentTicket.display_name ?? ""} ${currentTicket.last_name ?? ""}`.trim())}
                             </AvatarFallback>
                           </Avatar>
                         )}
@@ -584,7 +584,7 @@ const SupportTab = () => {
                           }`}
                         >
                           {!isSupport && (
-                            <p className="text-[10px] font-semibold opacity-70 mb-0.5">{currentTicket.display_name}</p>
+                            <p className="text-[10px] font-semibold opacity-70 mb-0.5">{[currentTicket.display_name, currentTicket.last_name].filter(Boolean).join(" ")}</p>
                           )}
                           {isSupport && (
                             <p className="text-[10px] font-semibold opacity-70 mb-0.5 flex items-center gap-1">
