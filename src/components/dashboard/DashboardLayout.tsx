@@ -29,6 +29,7 @@ const mainLinks = [
 
 const adminLinks = [
   { to: "/dashboard/admin", icon: Shield, label: "Админ-панель", highlight: true },
+  { to: "/dashboard/activity", icon: Activity, label: "Активность", highlight: true },
   { to: "/dashboard/support", icon: MessageSquare, label: "Обращения", highlight: true },
   { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации", highlight: true },
   { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации", highlight: true },
@@ -65,6 +66,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [conversionsPending, setConversionsPending] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [adminNotifs, setAdminNotifs] = useState<Array<{ id: string; event_type: string; client_name: string | null; title: string; amount: number | null; currency: string | null; is_read: boolean; created_at: string }>>([]);
+
+  // Admin: fetch realtime notifications of client activity
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchAdminNotifs = async () => {
+      const { data } = await supabase
+        .from("admin_notifications" as any)
+        .select("id, event_type, client_name, title, amount, currency, is_read, created_at")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (data) setAdminNotifs(data as any);
+    };
+    fetchAdminNotifs();
+    const ch = supabase
+      .channel("admin-notifs-bell")
+      .on("postgres_changes", { event: "*", schema: "public", table: "admin_notifications" }, () => {
+        fetchAdminNotifs();
+        try {
+          const audio = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
+          audio.volume = 0.3;
+          audio.play().catch(() => {});
+        } catch {}
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isAdmin]);
 
   // Fetch transactions for search
   useEffect(() => {
@@ -207,6 +235,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [searchQuery]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const adminUnreadCount = adminNotifs.filter(n => !n.is_read).length;
+
+  const markAdminNotifsRead = async () => {
+    const ids = adminNotifs.filter(n => !n.is_read).map(n => n.id);
+    if (ids.length === 0) return;
+    await supabase.from("admin_notifications" as any).update({ is_read: true }).in("id", ids);
+    setAdminNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
   const initials = displayName.substring(0, 2).toUpperCase();
