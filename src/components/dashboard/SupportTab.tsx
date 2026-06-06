@@ -134,9 +134,12 @@ const SupportTab = () => {
         latestMessagesPromise,
       ]);
 
-      const profileMap: Record<string, string> = {};
+      const profileMap: Record<string, { name: string; email: string }> = {};
       profilesData?.forEach((p) => {
-        profileMap[p.user_id] = p.display_name || "Пользователь";
+        profileMap[p.user_id] = {
+          name: p.display_name || "Пользователь",
+          email: p.email || "",
+        };
       });
 
       const counts: Record<string, number> = {};
