@@ -29,6 +29,7 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   display_name?: string;
+  email?: string;
   last_activity_at: string;
 }
 
