@@ -326,6 +326,7 @@ export type Database = {
           email: string | null
           id: string
           is_blocked: boolean
+          last_name: string | null
           last_sign_in_at: string | null
           last_sign_in_ip: string | null
           limit_exceeded: boolean
@@ -345,6 +346,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_blocked?: boolean
+          last_name?: string | null
           last_sign_in_at?: string | null
           last_sign_in_ip?: string | null
           limit_exceeded?: boolean
@@ -364,6 +366,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_blocked?: boolean
+          last_name?: string | null
           last_sign_in_at?: string | null
           last_sign_in_ip?: string | null
           limit_exceeded?: boolean
