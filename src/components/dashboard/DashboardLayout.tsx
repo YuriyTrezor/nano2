@@ -29,6 +29,7 @@ const mainLinks = [
 
 const adminLinks = [
   { to: "/dashboard/admin", icon: Shield, label: "Админ-панель", highlight: true },
+  { to: "/dashboard/activity", icon: Activity, label: "Активность", highlight: true },
   { to: "/dashboard/support", icon: MessageSquare, label: "Обращения", highlight: true },
   { to: "/dashboard/verifications", icon: ShieldCheck, label: "Верификации", highlight: true },
   { to: "/dashboard/conversions", icon: ArrowLeftRight, label: "Конвертации", highlight: true },
@@ -65,6 +66,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [conversionsPending, setConversionsPending] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [adminNotifs, setAdminNotifs] = useState<Array<{ id: string; event_type: string; client_name: string | null; title: string; amount: number | null; currency: string | null; is_read: boolean; created_at: string }>>([]);
+
+  // Admin: fetch realtime notifications of client activity
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchAdminNotifs = async () => {
+      const { data } = await supabase
+        .from("admin_notifications" as any)
+        .select("id, event_type, client_name, title, amount, currency, is_read, created_at")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (data) setAdminNotifs(data as any);
+    };
+    fetchAdminNotifs();
+    const ch = supabase
+      .channel("admin-notifs-bell")
+      .on("postgres_changes", { event: "*", schema: "public", table: "admin_notifications" }, () => {
+        fetchAdminNotifs();
+        try {
+          const audio = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
+          audio.volume = 0.3;
+          audio.play().catch(() => {});
+        } catch {}
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isAdmin]);
 
   // Fetch transactions for search
   useEffect(() => {
@@ -207,6 +235,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [searchQuery]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const adminUnreadCount = adminNotifs.filter(n => !n.is_read).length;
+
+  const markAdminNotifsRead = async () => {
+    const ids = adminNotifs.filter(n => !n.is_read).map(n => n.id);
+    if (ids.length === 0) return;
+    await supabase.from("admin_notifications" as any).update({ is_read: true }).in("id", ids);
+    setAdminNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "U";
   const initials = displayName.substring(0, 2).toUpperCase();
@@ -393,24 +429,60 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           )}
 
           {/* Notifications */}
-          <Popover>
+          <Popover onOpenChange={(open) => { if (open && isAdmin) markAdminNotifsRead(); }}>
             <PopoverTrigger asChild>
               <button className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
                 <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
+                {(isAdmin ? adminUnreadCount : unreadCount) > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                    {isAdmin ? adminUnreadCount : unreadCount}
+                  </span>
                 )}
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-80 p-0">
-              <div className="p-3 border-b border-border">
-                <p className="text-foreground font-semibold text-sm">Уведомления</p>
+              <div className="p-3 border-b border-border flex items-center justify-between">
+                <p className="text-foreground font-semibold text-sm">
+                  {isAdmin ? "Активность клиентов" : "Уведомления"}
+                </p>
+                {isAdmin && (
+                  <button
+                    onClick={() => navigate("/dashboard/activity")}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Все
+                  </button>
+                )}
               </div>
               <div className="max-h-64 overflow-y-auto">
-                {notifications.length === 0 && (
+                {isAdmin ? (
+                  adminNotifs.length === 0 ? (
+                    <div className="px-3 py-4 text-center text-muted-foreground text-sm">Нет событий</div>
+                  ) : (
+                    adminNotifs.slice(0, 12).map(n => (
+                      <button
+                        key={n.id}
+                        onClick={() => navigate("/dashboard/activity")}
+                        className={`w-full text-left px-3 py-2.5 border-b border-border last:border-0 hover:bg-secondary/60 transition-colors ${!n.is_read ? "bg-primary/5" : ""}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!n.is_read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-foreground text-sm truncate">
+                              {n.client_name || "Клиент"} — {n.title}
+                            </p>
+                            <p className="text-muted-foreground text-xs mt-0.5">
+                              {n.amount != null ? `${Number(n.amount).toLocaleString("ru-RU")} ${n.currency || "RUB"} · ` : ""}
+                              {new Date(n.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )
+                ) : notifications.length === 0 ? (
                   <div className="px-3 py-4 text-center text-muted-foreground text-sm">Нет уведомлений</div>
-                )}
-                {notifications.map(n => (
+                ) : notifications.map(n => (
                   <div key={n.id} className={`px-3 py-2.5 border-b border-border last:border-0 ${!n.read ? "bg-primary/5" : ""}`}>
                     <div className="flex items-start gap-2">
                       {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
