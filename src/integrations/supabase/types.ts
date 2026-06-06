@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          amount: number | null
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          event_type: string
+          id: string
+          is_read: boolean
+          metadata: Json | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_type: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       card_orders: {
         Row: {
           address_line: string
