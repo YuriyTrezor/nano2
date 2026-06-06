@@ -29,6 +29,7 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   display_name?: string;
+  last_name?: string;
   email?: string;
   last_activity_at: string;
 }
@@ -111,8 +112,8 @@ const SupportTab = () => {
       const ticketIds = ticketsData.map((t) => t.id);
 
       const profilesPromise = userIds.length
-        ? supabase.from("profiles").select("user_id, display_name, email").in("user_id", userIds)
-        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null; email: string | null }> });
+        ? supabase.from("profiles").select("user_id, display_name, last_name, email").in("user_id", userIds)
+        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null; last_name: string | null; email: string | null }> });
 
       const unreadPromise = supabase
         .from("support_messages")
@@ -134,10 +135,11 @@ const SupportTab = () => {
         latestMessagesPromise,
       ]);
 
-      const profileMap: Record<string, { name: string; email: string }> = {};
-      profilesData?.forEach((p) => {
+      const profileMap: Record<string, { name: string; last_name: string; email: string }> = {};
+      profilesData?.forEach((p: any) => {
         profileMap[p.user_id] = {
           name: p.display_name || "Пользователь",
+          last_name: p.last_name || "",
           email: p.email || "",
         };
       });
@@ -160,6 +162,7 @@ const SupportTab = () => {
         return {
           ...t,
           display_name: profile?.name || "Пользователь",
+          last_name: profile?.last_name || "",
           email: profile?.email || "",
           last_activity_at: latestByTicket[t.id] || t.updated_at || t.created_at,
         };
