@@ -29,6 +29,7 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   display_name?: string;
+  email?: string;
   last_activity_at: string;
 }
 
@@ -110,8 +111,8 @@ const SupportTab = () => {
       const ticketIds = ticketsData.map((t) => t.id);
 
       const profilesPromise = userIds.length
-        ? supabase.from("profiles").select("user_id, display_name").in("user_id", userIds)
-        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null }> });
+        ? supabase.from("profiles").select("user_id, display_name, email").in("user_id", userIds)
+        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null; email: string | null }> });
 
       const unreadPromise = supabase
         .from("support_messages")
@@ -133,9 +134,12 @@ const SupportTab = () => {
         latestMessagesPromise,
       ]);
 
-      const profileMap: Record<string, string> = {};
+      const profileMap: Record<string, { name: string; email: string }> = {};
       profilesData?.forEach((p) => {
-        profileMap[p.user_id] = p.display_name || "Пользователь";
+        profileMap[p.user_id] = {
+          name: p.display_name || "Пользователь",
+          email: p.email || "",
+        };
       });
 
       const counts: Record<string, number> = {};
@@ -151,13 +155,16 @@ const SupportTab = () => {
         }
       });
 
-      setTickets(
-        ticketsData.map((t) => ({
+      const mapped = ticketsData.map((t) => {
+        const profile = profileMap[t.user_id];
+        return {
           ...t,
-          display_name: profileMap[t.user_id] || "Пользователь",
+          display_name: profile?.name || "Пользователь",
+          email: profile?.email || "",
           last_activity_at: latestByTicket[t.id] || t.updated_at || t.created_at,
-        }))
-      );
+        };
+      });
+      setTickets(mapped);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -473,9 +480,12 @@ const SupportTab = () => {
                           {getInitials(ticket.display_name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
                         <p className={`text-sm truncate ${hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
                           {ticket.display_name}
+                        </p>
+                        <p className="text-xs truncate text-primary/80">
+                          {ticket.email}
                         </p>
                         <p className={`text-xs truncate ${hasUnread ? "text-foreground/70" : "text-muted-foreground"}`}>
                           {ticket.subject}
@@ -513,6 +523,7 @@ const SupportTab = () => {
                         Клиент
                       </Badge>
                     </div>
+                    <p className="text-primary/80 text-xs">{currentTicket.email}</p>
                     <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
                   </div>
                 </div>
