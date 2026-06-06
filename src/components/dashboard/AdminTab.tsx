@@ -70,6 +70,7 @@ const AdminTab = () => {
   const [sessionsView, setSessionsView] = useState<{ index: number; sessions: { ip: string; device: string; time: string }[] } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [priceDialog, setPriceDialog] = useState<{ index: number; prices: Record<string, string> } | null>(null);
   const [txViewDialog, setTxViewDialog] = useState<{ index: number; transactions: Transaction[] } | null>(null);
   const [editTx, setEditTx] = useState<{ txId: string; title: string; amount: string; created_at: string } | null>(null);
@@ -148,6 +149,16 @@ const AdminTab = () => {
     }
     const cmp = valA.localeCompare(valB, "ru");
     return sortAsc ? cmp : -cmp;
+  });
+
+  const filteredClients = sortedClients.filter((c) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (c.email || "").toLowerCase().includes(q) ||
+      (c.name || "").toLowerCase().includes(q) ||
+      (c.phone || "").toLowerCase().includes(q)
+    );
   });
 
   const fetchRegistrations = async () => {
@@ -525,6 +536,12 @@ const AdminTab = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Input
+            placeholder="Поиск: email, имя, фамилия, телефон"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+          />
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
@@ -1094,7 +1111,7 @@ const AdminTab = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedClients.map((client, i) => {
+              {filteredClients.map((client, i) => {
                 const originalIndex = clients.indexOf(client);
                 return (
                 <tr key={client.userId || i} className="border-b border-border last:border-0">
