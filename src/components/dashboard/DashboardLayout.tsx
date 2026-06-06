@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { formatTxAmount } from "@/lib/txCurrency";
 
 const mainLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Обзор", end: true },
@@ -109,7 +110,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         // Also use for notifications
         setNotifications(data.slice(0, 10).map(tx => ({
           id: tx.id,
-          text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
+          text: `${formatTxAmount({ amount: Number(tx.amount), title: tx.title, category: tx.category })} — ${tx.title}`,
           time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
           read: true,
         })));
@@ -125,7 +126,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         setAllTransactions(prev => [newTx, ...prev]);
         setNotifications(prev => [{
           id: tx.id,
-          text: `${Number(tx.amount) >= 0 ? "+" : ""}${Number(tx.amount).toLocaleString("ru-RU")} ₽ — ${tx.title}`,
+          text: `${formatTxAmount({ amount: Number(tx.amount), title: tx.title, category: tx.category })} — ${tx.title}`,
           time: new Date(tx.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
           read: false,
         }, ...prev].slice(0, 10));
@@ -410,7 +411,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                             <p className="text-muted-foreground text-xs">{tx.category}</p>
                           </div>
                           <span className={`text-sm font-medium shrink-0 ml-2 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
-                            {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
+                            {formatTxAmount(tx)}
                           </span>
                         </button>
                       ))}
