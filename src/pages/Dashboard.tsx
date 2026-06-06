@@ -18,6 +18,7 @@ import SwiftDepositTab from "@/components/dashboard/SwiftDepositTab";
 import PaymentsTab from "@/components/dashboard/PaymentsTab";
 import BonusesTab from "@/components/dashboard/BonusesTab";
 import InvestmentsTab from "@/components/dashboard/InvestmentsTab";
+import ActivityTab from "@/components/dashboard/ActivityTab";
 import FloatingChat from "@/components/FloatingChat";
 
 
@@ -43,6 +44,7 @@ const Dashboard = () => {
         <Route path="payments" element={<PaymentsTab />} />
         <Route path="bonuses" element={<BonusesTab />} />
         <Route path="investments" element={<InvestmentsTab />} />
+        <Route path="activity" element={<ActivityTab />} />
       </Routes>
       <FloatingChat />
     </DashboardLayout>
