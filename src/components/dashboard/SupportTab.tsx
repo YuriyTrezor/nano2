@@ -480,9 +480,12 @@ const SupportTab = () => {
                           {getInitials(ticket.display_name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
                         <p className={`text-sm truncate ${hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
                           {ticket.display_name}
+                        </p>
+                        <p className="text-xs truncate text-primary/80">
+                          {ticket.email}
                         </p>
                         <p className={`text-xs truncate ${hasUnread ? "text-foreground/70" : "text-muted-foreground"}`}>
                           {ticket.subject}
