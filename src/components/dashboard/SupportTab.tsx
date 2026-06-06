@@ -111,8 +111,8 @@ const SupportTab = () => {
       const ticketIds = ticketsData.map((t) => t.id);
 
       const profilesPromise = userIds.length
-        ? supabase.from("profiles").select("user_id, display_name").in("user_id", userIds)
-        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null }> });
+        ? supabase.from("profiles").select("user_id, display_name, email").in("user_id", userIds)
+        : Promise.resolve({ data: [] as Array<{ user_id: string; display_name: string | null; email: string | null }> });
 
       const unreadPromise = supabase
         .from("support_messages")
