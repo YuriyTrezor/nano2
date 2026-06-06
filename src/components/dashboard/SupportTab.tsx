@@ -523,6 +523,7 @@ const SupportTab = () => {
                         Клиент
                       </Badge>
                     </div>
+                    <p className="text-primary/80 text-xs">{currentTicket.email}</p>
                     <p className="text-muted-foreground text-xs">{currentTicket.subject}</p>
                   </div>
                 </div>
