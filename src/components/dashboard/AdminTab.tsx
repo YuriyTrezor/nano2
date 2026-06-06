@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { formatTxAmount, getTxCurrency } from "@/lib/txCurrency";
 
 interface Client {
   userId: string;
@@ -818,8 +819,9 @@ const AdminTab = () => {
                     <span>{new Date(tx.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
                 </div>
-                <p className={`text-sm font-medium shrink-0 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
-                  {tx.amount >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString("ru-RU")} ₽
+                <p className={`text-sm font-semibold shrink-0 ${tx.amount >= 0 ? "text-primary" : "text-foreground"}`}>
+                  {formatTxAmount(tx)}
+                  <span className="ml-1 text-[10px] uppercase text-muted-foreground">{getTxCurrency(tx)}</span>
                 </p>
                 <button
                   onClick={() => setEditTx({ txId: tx.id, title: tx.title, amount: String(tx.amount), created_at: new Date(tx.created_at).toISOString().slice(0, 16) })}
