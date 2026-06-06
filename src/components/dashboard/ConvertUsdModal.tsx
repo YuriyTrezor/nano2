@@ -113,20 +113,21 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
         </div>
 
         <div className="space-y-4">
-          <div className="bg-secondary rounded-xl p-3 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Курс банка</span>
-            <span className="text-foreground font-semibold">1 $ = {rate.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ₽</span>
+          <div className="bg-secondary rounded-xl p-3 space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Курс банка</span>
+              <span className="text-foreground font-semibold">1 USD = {rate.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} RUB</span>
+            </div>
+            {minUsd > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Минимальная сумма</span>
+                <span className="text-foreground font-semibold">{minUsd.toLocaleString("en-US")} USD</span>
+              </div>
+            )}
           </div>
 
-          {minUsd > 0 && (
-            <div className="bg-secondary/60 rounded-xl p-3 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Минимальная сумма</span>
-              <span className="text-foreground font-semibold">${minUsd.toLocaleString("en-US")}</span>
-            </div>
-          )}
-
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Сумма к конвертации (USD)</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Спишется со счёта USD</label>
             <div className="relative">
               <input
                 type="text"
@@ -134,13 +135,13 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
                 value={amount}
                 onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
                 placeholder="0.00"
-                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground text-lg font-semibold pr-12 outline-none focus:border-primary"
+                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground text-lg font-semibold pr-16 outline-none focus:border-primary"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-semibold">USD</span>
             </div>
             <div className="flex items-center justify-between mt-1.5 text-xs">
               <span className="text-muted-foreground">
-                Доступно: ${usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Доступно: {usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
               </span>
               <button
                 type="button"
@@ -151,15 +152,19 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
               </button>
             </div>
             {minUsd > 0 && amountNum > 0 && amountNum < minUsd && (
-              <p className="text-xs text-red-500 mt-1">Минимум для конвертации: ${minUsd}</p>
+              <p className="text-xs text-red-500 mt-1">Минимум для конвертации: {minUsd} USD</p>
             )}
           </div>
 
-          <div className="bg-secondary/60 rounded-xl p-3 space-y-1.5 text-sm">
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-foreground font-medium flex items-center gap-1">К зачислению <ArrowRight className="w-3 h-3" /></span>
+          <div className="bg-secondary/60 rounded-xl p-3 space-y-2 text-sm">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Расчёт</span>
+              <span>{amountNum > 0 ? `${amountNum.toLocaleString("en-US")} × ${rate}` : "—"}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-2">
+              <span className="text-foreground font-medium flex items-center gap-1">Зачислится на счёт RUB <ArrowRight className="w-3 h-3" /></span>
               <span className="text-primary font-bold text-base">
-                {amountRub > 0 ? amountRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} ₽
+                {amountRub > 0 ? amountRub.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} RUB
               </span>
             </div>
           </div>
@@ -167,7 +172,7 @@ export default function ConvertUsdModal({ open, onClose, usdBalance, cardName = 
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 dark:text-amber-400 space-y-1">
             <p className="font-semibold">⚠️ Комиссия оплачивается отдельно</p>
             <p>
-              Комиссия за конвертацию ({feePercent}%) — <span className="font-semibold">${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> — оплачивается отдельно через платёжный шлюз <span className="font-semibold">МИР</span> после подтверждения заявки администратором. Реквизиты для оплаты будут отправлены вам менеджером.
+              Комиссия за конвертацию ({feePercent}%) — <span className="font-semibold">{fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span> — оплачивается отдельно через платёжный шлюз <span className="font-semibold">МИР</span> после подтверждения заявки администратором. Реквизиты для оплаты вышлет менеджер. Комиссия НЕ списывается со счёта USD автоматически.
             </p>
           </div>
 

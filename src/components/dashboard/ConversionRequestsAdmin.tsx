@@ -60,7 +60,7 @@ export default function ConversionRequestsAdmin() {
     // Create two transactions: -USD and +RUB
     const { error: errDebit } = await supabase.from("transactions").insert({
       user_id: r.user_id,
-      title: `Конвертация USD → RUB`,
+      title: `Списание USD (конвертация в RUB): ${Number(r.amount_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`,
       category: "USD конвертация",
       amount: -Number(r.amount_usd),
       card_name: r.card_name || "",
@@ -72,7 +72,7 @@ export default function ConversionRequestsAdmin() {
     }
     const { error: errCredit } = await supabase.from("transactions").insert({
       user_id: r.user_id,
-      title: `Конвертация $${r.amount_usd} по курсу ${r.rate}`,
+      title: `Зачисление RUB от конвертации (${Number(r.amount_usd).toLocaleString("en-US")} USD × ${r.rate})`,
       category: "Конвертация",
       amount: Number(r.amount_rub),
       card_name: r.card_name || "",
@@ -127,11 +127,15 @@ export default function ConversionRequestsAdmin() {
             {new Date(r.created_at).toLocaleString("ru-RU")}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-foreground font-bold">${Number(r.amount_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        <div className="flex items-center gap-2 text-sm flex-wrap">
+          <span className="px-2 py-0.5 rounded bg-destructive/10 text-destructive font-bold text-xs">
+            − {Number(r.amount_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+          </span>
           <ArrowRight className="w-3 h-3 text-muted-foreground" />
-          <span className="text-primary font-bold">{Number(r.amount_rub).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</span>
-          <span className="text-xs text-muted-foreground ml-2">курс {r.rate}, комиссия {r.fee_percent}%</span>
+          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-xs">
+            + {Number(r.amount_rub).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} RUB
+          </span>
+          <span className="text-xs text-muted-foreground ml-1">курс 1 USD = {r.rate} RUB, комиссия {r.fee_percent}% (вне счёта)</span>
         </div>
         {r.comment && <div className="text-xs text-muted-foreground italic">«{r.comment}»</div>}
         {r.status === "pending" ? (
