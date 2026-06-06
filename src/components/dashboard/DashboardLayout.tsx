@@ -368,7 +368,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Main content */}
       <main className="flex-1 md:ml-48 pb-24 md:pb-6 overflow-x-hidden">
         {/* Top header bar */}
-        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-end gap-3">
+        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+          {/* Mobile logo — back to landing */}
+          <NavLink
+            to="/"
+            aria-label="На главную"
+            className="md:hidden flex items-center gap-2 active:scale-95 transition-transform"
+          >
+            <img src={neobankLogo} alt="NeoBank" className="h-7 rounded-md opacity-90 brightness-90" />
+          </NavLink>
+          <div className="hidden md:block" />
+          <div className="flex items-center gap-2">
           {/* Search */}
           {searchOpen ? (
             <div className="relative flex items-center gap-2 flex-1 max-w-sm">
@@ -424,18 +434,25 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               )}
             </div>
           ) : (
-            <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-              <Search className="w-4 h-4" />
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Поиск"
+              className="w-10 h-10 rounded-2xl bg-gradient-to-br from-secondary to-secondary/60 border border-border/60 shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 hover:shadow-md active:scale-95 transition-all"
+            >
+              <Search className="w-[18px] h-[18px]" />
             </button>
           )}
 
           {/* Notifications */}
           <Popover onOpenChange={(open) => { if (open && isAdmin) markAdminNotifsRead(); }}>
             <PopoverTrigger asChild>
-              <button className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
-                <Bell className="w-4 h-4" />
+              <button
+                aria-label="Уведомления"
+                className="w-10 h-10 rounded-2xl bg-gradient-to-br from-secondary to-secondary/60 border border-border/60 shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 hover:shadow-md active:scale-95 transition-all relative"
+              >
+                <Bell className="w-[18px] h-[18px]" />
                 {(isAdmin ? adminUnreadCount : unreadCount) > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center ring-2 ring-background">
                     {isAdmin ? adminUnreadCount : unreadCount}
                   </span>
                 )}
@@ -501,7 +518,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* User avatar menu */}
           <Popover>
             <PopoverTrigger asChild>
-              <button className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+              <button
+                aria-label="Профиль"
+                className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-xs font-bold shadow-md shadow-primary/30 ring-1 ring-primary/40 hover:shadow-lg hover:shadow-primary/40 active:scale-95 transition-all"
+              >
                 {initials}
               </button>
             </PopoverTrigger>
@@ -568,6 +588,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
             </PopoverContent>
           </Popover>
+          </div>
         </div>
         <div className="p-4 md:p-6">
           {children}
