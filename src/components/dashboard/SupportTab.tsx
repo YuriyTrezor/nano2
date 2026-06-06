@@ -155,13 +155,16 @@ const SupportTab = () => {
         }
       });
 
-      setTickets(
-        ticketsData.map((t) => ({
+      const mapped = ticketsData.map((t) => {
+        const profile = profileMap[t.user_id];
+        return {
           ...t,
-          display_name: profileMap[t.user_id] || "Пользователь",
+          display_name: profile?.name || "Пользователь",
+          email: profile?.email || "",
           last_activity_at: latestByTicket[t.id] || t.updated_at || t.created_at,
-        }))
-      );
+        };
+      });
+      setTickets(mapped);
     } finally {
       if (!silent) setLoading(false);
     }
