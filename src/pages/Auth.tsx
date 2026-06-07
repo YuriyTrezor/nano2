@@ -17,6 +17,29 @@ const Auth = () => {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
 
+  const getAuthErrorMessage = (error: any): string => {
+    const msg = (error?.message || "").toLowerCase();
+    if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already")) {
+      return "Аккаунт с таким email уже существует. Пожалуйста, войдите в систему.";
+    }
+    if (msg.includes("invalid login credentials")) {
+      return "Неверный email или пароль.";
+    }
+    if (msg.includes("email not confirmed")) {
+      return "Email не подтверждён. Пожалуйста, проверьте почту.";
+    }
+    if (msg.includes("password") && msg.includes("6")) {
+      return "Пароль должен содержать не менее 6 символов.";
+    }
+    if (msg.includes("rate limit")) {
+      return "Слишком много попыток. Пожалуйста, подождите немного.";
+    }
+    if (msg.includes("valid email")) {
+      return "Пожалуйста, введите корректный email адрес.";
+    }
+    return error?.message || "Произошла ошибка. Пожалуйста, попробуйте позже.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -24,19 +47,25 @@ const Auth = () => {
     if (isLogin) {
       const { error } = await signIn(email, password);
       if (error) {
-        toast({ title: "Ошибка входа", description: error.message, variant: "destructive" });
+        toast({ title: "Ошибка входа", description: getAuthErrorMessage(error), variant: "destructive" });
       } else {
         navigate("/dashboard");
       }
     } else {
-      const { error } = await signUp(email, password, displayName, phone, lastName);
+      const { data, error } = await signUp(email, password, displayName, phone, lastName);
       if (error) {
-        toast({ title: "Ошибка регистрации", description: error.message, variant: "destructive" });
+        toast({ title: "Ошибка регистрации", description: getAuthErrorMessage(error), variant: "destructive" });
+      } else if (!data?.user) {
+        toast({
+          title: "Аккаунт уже существует",
+          description: "Пользователь с таким email уже зарегистрирован. Пожалуйста, войдите в систему.",
+          variant: "destructive",
+        });
+        setIsLogin(true);
       } else {
-        // Auto-login right after signup
         const { error: signInError } = await signIn(email, password);
         if (signInError) {
-          toast({ title: "Регистрация успешна", description: "Войдите в аккаунт." });
+          toast({ title: "Регистрация успешна", description: "Войдите в аккаунт, используя ваши данные." });
           setIsLogin(true);
         } else {
           navigate("/dashboard");
