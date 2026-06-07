@@ -568,6 +568,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <span>{user?.user_metadata?.phone || "Не указан"}</span>
                 </div>
               </div>
+              {/* Information */}
+              <div className="p-2 border-b border-border">
+                <p className="px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                  Информация
+                </p>
+                <button onClick={() => navigate("/swift")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <ArrowLeftRight className="w-4 h-4" />
+                  SWIFT-реквизиты
+                </button>
+                <button onClick={() => navigate("/documents")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
+                  Источник средств
+                </button>
+                <button onClick={() => navigate("/about")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <Landmark className="w-4 h-4" />
+                  О банке
+                </button>
+              </div>
               {/* Actions */}
               <div className="p-2">
                 <button onClick={() => navigate("/dashboard/settings")} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
