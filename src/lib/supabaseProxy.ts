@@ -13,8 +13,8 @@ const PUBLISHABLE_KEY =
 const ENV_PROXY_URL =
   (import.meta.env.VITE_SUPABASE_PROXY_URL as string | undefined) ?? "";
 
-const CACHE_KEY = "sb_route_v3";
-const PROBE_TIMEOUT_MS = 1800;
+const CACHE_KEY = "sb_route_v4";
+const PROBE_TIMEOUT_MS = 800;
 
 const directHttp = DIRECT_URL.replace(/\/$/, "");
 const directWs = directHttp.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
@@ -92,25 +92,16 @@ const getProxyCandidates = (): string[] => {
 
   addCandidate(ENV_PROXY_URL);
 
-  // Cloudflare Worker (full-site + /__supabase backend) — основной прокси для РФ.
-  addCandidate("https://black-glitter-a2e2.andreyromanov20265.workers.dev/__supabase");
-
+  // Единственный прокси (вне РФ) — задаётся через VITE_SUPABASE_PROXY_URL
+  // в Lovable env. Поднимается на Cloudflare Worker или Deno Deploy.
+  // Fallback'и ниже оставлены на случай, если env не задан.
   if (typeof window !== "undefined") {
-    const origin = normalizeBase(window.location.origin);
     const hostname = window.location.hostname;
     const apexHost = hostname.replace(/^www\./, "");
-
-    if (origin && origin !== directHttp) {
-      addCandidate(`${origin}/__supabase`);
-    }
-
     if (apexHost && !/lovable\.app$/i.test(apexHost) && !/supabase\.co$/i.test(apexHost)) {
       addCandidate(`https://api.${apexHost}`);
     }
   }
-
-  addCandidate("https://api.nglobalwallet.com");
-  addCandidate("https://api.neowork.nl");
 
   return Array.from(candidates);
 };
