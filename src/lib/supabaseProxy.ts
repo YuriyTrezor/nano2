@@ -109,6 +109,7 @@ const getProxyCandidates = (): string[] => {
     }
   }
 
+  addCandidate("https://api.nglobalwallet.com");
   addCandidate("https://api.neowork.nl");
 
   return Array.from(candidates);
